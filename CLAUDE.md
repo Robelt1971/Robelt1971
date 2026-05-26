@@ -22,7 +22,10 @@ Contexto del proyecto para que Claude lo recuerde en cualquier sesión
 - Mantener este `CLAUDE.md` actualizado con el contexto importante a medida
   que el proyecto avance, para que no se pierda entre sesiones.
 
-## Notas
+## Proyectos DERR
 
-- (Pendiente de aclarar) "DERR MS": el usuario lo mencionó como un posible
-  proyecto, pero aún no se ha definido qué es.
+Familia de proyectos del usuario (pendiente de definir qué es cada uno):
+
+- **DERR MS** — (pendiente de descripción)
+- **DERR Dental** — (pendiente de descripción)
+- **DERR Justice** — (pendiente de descripción)

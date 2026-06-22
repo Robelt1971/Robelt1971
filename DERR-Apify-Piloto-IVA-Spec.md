@@ -177,10 +177,18 @@ y el plan ministerial.
 
 ## 9. Siguientes pasos
 
-1. Reunir los datos de la Sección 5.
-2. Decidir Opción A (Actor del Store) vs. B (a medida).
-3. Implementar, conectar los MCP Connectors y correr el plan de pruebas (Sección 7).
-4. Operar en sombra 2 semanas; luego confiar en las alertas de cara al 1 de junio.
+**Estado (2026-06-22):** ✅ Apify MCP conectado a la app de escritorio (OAuth).
+✅ Actor `web-drift-detector` configurado y **primera ejecución (baseline)
+realizada** sobre `kwaliteitsthemas`, `geneesmiddelen` y portada de iva.aw.
+
+Pendiente:
+1. ~~Reunir los datos de la Sección 5.~~ (hecho lo esencial)
+2. ~~Decidir Opción A vs. B.~~ → Opción A: `web-drift-detector`.
+3. ~~Implementar y correr una primera prueba.~~ → baseline capturado.
+4. **Programar** el Actor para que corra solo (p.ej. 1×/día) vía Apify Schedules.
+5. **Conectar la alerta** a Slack (`#derr-regulatorio`) y/o Notion vía webhook/
+   MCP Connector.
+6. Operar en sombra ~2 semanas y ajustar `sensitivityLevel` para eliminar ruido.
 
 ---
 

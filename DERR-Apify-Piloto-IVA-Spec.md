@@ -8,9 +8,15 @@
 
 ## 1. Objetivo y alcance
 
-**Objetivo:** detectar cambios en la normativa/guía oficial de **IVA** y notificar
-de forma automática, para no perder actualizaciones antes del deadline anual del
-**1 de junio**.
+> **Aclaración clave:** **IVA = Inspectie Volksgezondheid Aruba** (Inspección de
+> Salud Pública de Aruba), el **regulador sanitario** — NO el impuesto IVA/BBO.
+> Sitio oficial: `https://www.iva.aw/` (contenido en papiamento). Encaja de lleno
+> con la vigilancia regulatoria de DERR.
+
+**Objetivo:** detectar cambios en la normativa, guías y reportes publicados por
+**IVA (Inspección de Salud Pública de Aruba)** y notificar de forma automática,
+para no perder actualizaciones regulatorias relevantes para la práctica clínica
+y el plan ministerial.
 
 **En alcance:**
 - Scrapeo periódico de la(s) página(s) oficial(es) de IVA.
@@ -56,8 +62,18 @@ de forma automática, para no perder actualizaciones antes del deadline anual de
 ## 3. Componentes
 
 ### 3.1 Actor de scraping
-- **Opción A (rápida):** usar un Actor genérico de *website content monitoring*
-  del Apify Store, configurando la URL de IVA.
+- **Opción A (ELEGIDA):** `muhammad-bilal/web-drift-detector` — *Website Change
+  Monitoring & Content Diff* del Apify Store. Detecta cambios, genera diffs
+  estructurados, severidad, snapshots históricos y alertas por webhook.
+  - Identificado vía búsqueda en el Apify MCP server (2026-06-22).
+  - Tier **FREE**, modelo *pay-per-event* (~$0.0002 por página revisada →
+    céntimos al mes con frecuencia diaria).
+  - Campos de entrada relevantes: `startUrls` (requerido),
+    `enableChangeDetection`, `enableSemanticDiff`, `enableAISummary`,
+    `sensitivityLevel`.
+  - Nota: la portada `iva.aw` bloquea fetches simples (HTTP 403); el Actor
+    renderiza como navegador real y sortea ese bloqueo. Esto justifica usar
+    Apify en lugar de un script casero.
 - **Opción B (a medida):** Actor propio (Node/Python) que:
   1. Hace `GET` de la URL oficial.
   2. Extrae solo el bloque de contenido relevante (selector CSS/XPath) para
@@ -96,13 +112,24 @@ de forma automática, para no perder actualizaciones antes del deadline anual de
 
 ---
 
-## 5. Datos de entrada (a completar antes de arrancar)
+## 5. Datos de entrada (estado actual)
 
-- [ ] **URL(s) oficial(es) exacta(s)** de la guía/normativa de IVA a vigilar.
-- [ ] Selector(es) CSS/XPath del bloque de contenido relevante.
+- [x] **Fuente confirmada:** IVA = Inspectie Volksgezondheid Aruba. Portada:
+      `https://www.iva.aw/`. Sección vista: `https://www.iva.aw/sectornan-di-cuido`
+      ("Sectornan di Cuido" — sectores de cuido que IVA monitorea).
+- [ ] **URL(s) exacta(s) a vigilar:** decidir si la portada, la sección de
+      noticias/publicaciones, `sectornan-di-cuido`, o varias. *Recomendado:*
+      apuntar a la página de **noticias/publicaciones/reportes** (donde aparecen
+      los cambios), no solo a la portada.
+- [x] **Actor elegido:** `muhammad-bilal/web-drift-detector` (ver 3.1).
+- [ ] Selector(es) CSS/XPath del bloque relevante (o usar detección semántica
+      del Actor con `sensitivityLevel` ajustado para reducir ruido del banner de
+      cookies "Inspectie Volksgezondheid Aruba uses cookies").
 - [ ] Workspace/canal de Slack (`#derr-regulatorio`) y permisos.
 - [ ] Base de datos de Notion destino (ID) y esquema de propiedades.
-- [ ] Token de Apify y presupuesto mensual aceptable para el Actor.
+- [x] **Apify conectado:** vía MCP server (app de escritorio, OAuth). Saldo
+      disponible ~$5. Permisos en "Needs approval".
+- [ ] Confirmar presupuesto mensual aceptable para el Actor.
 
 ---
 

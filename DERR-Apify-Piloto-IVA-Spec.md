@@ -175,20 +175,41 @@ y el plan ministerial.
 
 ---
 
-## 9. Siguientes pasos
+## 9. Implementación final (lo que realmente quedó corriendo)
 
-**Estado (2026-06-22):** ✅ Apify MCP conectado a la app de escritorio (OAuth).
-✅ Actor `web-drift-detector` configurado y **primera ejecución (baseline)
-realizada** sobre `kwaliteitsthemas`, `geneesmiddelen` y portada de iva.aw.
+> **Nota de implementación (2026-06-22):** el piloto se montó finalmente con
+> **Firecrawl monitor** (no con el Actor de Apify `web-drift-detector`). Firecrawl
+> trae programación, email con diffs y "juez de cambios" integrados, lo que
+> resultó un encaje más simple para este caso. El análisis de Apify de las
+> secciones anteriores sigue válido como alternativa y para otros casos del plan;
+> el Apify MCP server queda conectado como palanca de dev (ver
+> `DERR-Apify-MCP-Server-Setup.md`).
 
-Pendiente:
-1. ~~Reunir los datos de la Sección 5.~~ (hecho lo esencial)
-2. ~~Decidir Opción A vs. B.~~ → Opción A: `web-drift-detector`.
-3. ~~Implementar y correr una primera prueba.~~ → baseline capturado.
-4. **Programar** el Actor para que corra solo (p.ej. 1×/día) vía Apify Schedules.
-5. **Conectar la alerta** a Slack (`#derr-regulatorio`) y/o Notion vía webhook/
-   MCP Connector.
-6. Operar en sombra ~2 semanas y ajustar `sensitivityLevel` para eliminar ruido.
+**Configuración final del monitor (Firecrawl):**
+
+| Campo | Valor |
+|---|---|
+| Horario | Cada día **08:00 hora de Aruba** (`America/Aruba`, AST) |
+| Próxima ejecución | 2026-06-23 08:00 AST (12:00 UTC) |
+| Notificación | Email a `medischedienstdoctor@gmail.com`, con diffs |
+| Juez de cambios | Activado (solo cambios sustantivos → bajo ruido) |
+| URLs vigiladas | 3 (`kwaliteitsthemas`, `geneesmiddelen`, portada iva.aw) |
+| Retención | 30 días |
+| Coste | ~180 créditos/mes |
+
+- ✅ Baseline: la corrida de mañana fija la línea base limpia; las alertas
+  empiezan **desde la segunda** ejecución.
+
+**⚠️ Gotcha operativo (importante):** el `update` de Firecrawl **reemplaza**
+campos, no los fusiona. Al editar solo el horario se borró la configuración de
+email (`notification: {}`). Tuvo que restaurarse. **Regla:** si en el futuro
+editas cualquier campo del monitor, **reenvía también la notificación** en el
+mismo `update`.
+
+**Pendiente (opcional):**
+1. Tras 1-2 semanas, revisar si el "juez de cambios" deja pasar ruido o silencia
+   cambios reales; ajustar.
+2. Si quieres además Slack/Notion (no solo email), añadir ese destino.
 
 ---
 

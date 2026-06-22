@@ -117,10 +117,18 @@ y el plan ministerial.
 - [x] **Fuente confirmada:** IVA = Inspectie Volksgezondheid Aruba. Portada:
       `https://www.iva.aw/`. Sección vista: `https://www.iva.aw/sectornan-di-cuido`
       ("Sectornan di Cuido" — sectores de cuido que IVA monitorea).
-- [ ] **URL(s) exacta(s) a vigilar:** decidir si la portada, la sección de
-      noticias/publicaciones, `sectornan-di-cuido`, o varias. *Recomendado:*
-      apuntar a la página de **noticias/publicaciones/reportes** (donde aparecen
-      los cambios), no solo a la portada.
+- [ ] **URL(s) exacta(s) a vigilar.** Estructura del sitio descubierta
+      (2026-06-22). Páginas recomendadas para el monitor:
+      - `https://www.iva.aw/kwaliteitsthemas` — **Temas de calidad** (6 temas
+        para el ciclo de 3 años). Alta prioridad: encaja con el ciclo trianual.
+      - `https://www.iva.aw/geneesmiddelen` — **Medicamentos** (seguridad/calidad,
+        farmacovigilancia, retiros).
+      - `https://www.iva.aw/` — **portada**, capta nuevas publicaciones mensuales
+        y avisos.
+      - `https://www.iva.aw/sectornan-di-cuido` — sectores de cuido (manejo y
+        reportes por sector).
+      - Informes anuales (Jaarverslag), p.ej. `_flysystem/media/jaarverslag-AAAA.pdf`.
+      *Recomendación de arranque:* `kwaliteitsthemas` + `geneesmiddelen` + portada.
 - [x] **Actor elegido:** `muhammad-bilal/web-drift-detector` (ver 3.1).
 - [ ] Selector(es) CSS/XPath del bloque relevante (o usar detección semántica
       del Actor con `sensitivityLevel` ajustado para reducir ruido del banner de

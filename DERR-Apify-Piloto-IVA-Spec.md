@@ -2,7 +2,9 @@
 
 > Especificación de implementación del primer caso piloto de Apify para el
 > ecosistema DERR. **Sin PHI.** Caso aislado, no toca el core clínico.
-> Fecha: 2026-06-22 · Estado: borrador para implementar
+> Fecha: 2026-06-22 · **Estado: EN PAUSA (on hold)** — funcionalidad validada
+> (primer email base recibido 2026-06-23); monitor pausado por decisión del
+> usuario. Listo para reactivar desde esta spec cuando se requiera.
 
 ---
 

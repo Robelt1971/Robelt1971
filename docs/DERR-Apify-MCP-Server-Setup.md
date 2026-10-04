@@ -123,6 +123,10 @@ Apify (p.ej. una búsqueda con `google-search-scraper`) y confirma que responde.
   mezcles con el core clínico de DERR.
 - **Mínimo privilegio:** acota `tools=` a lo que realmente uses (Sección 6).
 - **Rotación:** rota el token periódicamente y de inmediato si se expone.
+- **Skills y plugins externos:** antes de instalar cualquier skill, plugin o
+  servidor MCP de terceros, escanéalo con **NVIDIA SkillSpector** y sigue la
+  regla DERR descrita en `DERR-Seguridad-Skills-SkillSpector.md` (incluye el
+  guardián `skillspector-gate` que bloquea skills no aprobadas).
 
 ---
 

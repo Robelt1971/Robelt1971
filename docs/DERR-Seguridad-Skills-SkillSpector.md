@@ -225,13 +225,16 @@ conversacional y aceptando que corre un fork.
       con `skillspector --version`.
 - [ ] Escanear `skillspector-gate` con SkillSpector y, si da `SAFE`, instalarlo
       como guardián (§4).
-- [ ] Crear `docs/skills-aprobadas.md` con el registro de la §3.4 cuando se
-      apruebe la primera skill externa.
+- [x] Crear `docs/skills-aprobadas.md` con el registro de la §3.4. Hecho el
+      2026-10-04 con las dos primeras skills (`no-ai-slop` y Thermos),
+      aprobadas por revisión manual; su escaneo con SkillSpector sigue pendiente
+      del paso anterior.
 - [ ] Añadir a este doc cualquier falso positivo recurrente y cómo se resolvió.
 
-Hoy (2026-10-04) el entorno DERR **no tiene ninguna skill externa instalada**:
-solo las integradas de Anthropic. Por eso la regla entra en vigor sin deuda
-previa.
+Las skills externas instaladas en este repo están listadas, con hash y
+revisión, en `docs/skills-aprobadas.md`. Se vendorizan en `.claude/skills/` y
+`.claude/agents/` en lugar de instalarse desde un marketplace, para que lo que
+se ejecuta sea exactamente lo que se revisó.
 
 ---
 

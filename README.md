@@ -1,4 +1,4 @@
-<div class="center">
+<div align="center">
   <h1><abbr title="DERR = Developing Electronic Records Reliably&#10;ES: Desarrollo de Registros Electrónicos Confiables&#10;NL: Ontwikkeling van Betrouwbare Elektronische Dossiers&#10;PAP: Desaroyo di Registronan Electronico Confiabel">DERR</abbr> Group</h1>
 </div>
 

@@ -93,7 +93,8 @@ le pasa (texto, diff, archivos) entra en el contexto del modelo.
     `settings.local.json`) el modo por defecto, las listas y los hooks; que no
     tenga agentes ni skills con el mismo nombre que los de Thermos; y, en cada
     `SKILL.md` y agente suyo, que no haya comandos de shell que se ejecuten al
-    cargarse, ni `allowed-tools` con herramientas que actúan, ni hooks;
+    cargarse, ni herramientas que actúan en su cabecera (`allowed-tools` en
+    skills, `tools` en agentes), ni hooks;
   - no responder "no volver a preguntar" durante una ejecución;
   - en PRs de terceros, leer el diff a mano antes, o no lanzarlo;
   - su veredicto no sustituye la revisión humana.
@@ -105,7 +106,7 @@ le pasa (texto, diff, archivos) entra en el contexto del modelo.
 1. Clonar el origen en una carpeta temporal y leer todos los archivos a mano.
    Buscar: scripts, hooks, URLs, `curl`/`wget`, `eval`, `exec`, `base64`, rutas
    `~/` o `$HOME`, variables de entorno, tokens, herramientas con red en
-   agentes, `allowed-tools` en skills.
+   agentes, `allowed-tools` y comandos `!`...`` en skills.
 2. En el clon: borrar lo que no se va a instalar (conservar `LICENSE` para el
    paso 6) y hacer las modificaciones locales (espacios de nombres,
    herramientas que sobran). Por cada archivo modificado, guardar su hash de

@@ -1,0 +1,94 @@
+:root {
+  --fondo: #0f1419;
+  --panel: #171d24;
+  --borde: #2a333d;
+  --texto: #e6e9ec;
+  --texto-suave: #9aa5b1;
+  --acento: #3fa7d6;
+  --acento-2: #f2c14e;
+  --ok: #4caf7d;
+  --error: #e05d5d;
+  --radio: 8px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; height: 100%; background: var(--fondo); color: var(--texto); }
+body { display: flex; flex-direction: column; min-height: 100vh; }
+a { color: var(--acento); }
+h2 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--texto-suave); margin: 0 0 0.5rem; }
+button { font: inherit; cursor: pointer; border-radius: var(--radio); border: 1px solid var(--borde); background: #202932; color: var(--texto); padding: 0.45rem 0.8rem; }
+button:hover { border-color: var(--acento); }
+button.sec { font-size: 0.85rem; }
+button.peligro:hover { border-color: var(--error); color: var(--error); }
+button:disabled { opacity: 0.5; cursor: default; }
+input[type="search"], select { font: inherit; width: 100%; padding: 0.45rem 0.6rem; border-radius: var(--radio); border: 1px solid var(--borde); background: #0c1015; color: var(--texto); }
+select { width: auto; }
+
+.barra { display: flex; align-items: center; gap: 1rem; padding: 0.5rem 1rem; border-bottom: 1px solid var(--borde); background: var(--panel); flex-wrap: wrap; }
+.marca { display: flex; align-items: baseline; gap: 0.6rem; }
+.logo { font-weight: 800; letter-spacing: 0.12em; color: var(--acento); }
+.titulo { font-weight: 600; }
+.modos { display: flex; gap: 0.25rem; margin-left: auto; }
+.modo { background: transparent; border-color: transparent; }
+.modo.activo { background: #243240; border-color: var(--acento); }
+.ajustes { display: flex; gap: 0.75rem; }
+.campo-sel { display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--texto-suave); }
+
+.cuerpo { flex: 1; display: grid; grid-template-columns: 300px 1fr 340px; min-height: 0; }
+.panel { background: var(--panel); border-right: 1px solid var(--borde); padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 1.25rem; }
+.panel-der { border-right: 0; border-left: 1px solid var(--borde); }
+.escena { position: relative; min-height: 50vh; }
+#lienzo { width: 100%; height: 100%; display: block; }
+
+.capas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+.capas li { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; }
+.capas label { display: flex; align-items: center; gap: 0.5rem; flex: 1; cursor: pointer; }
+.capas .muestra { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.capas .n { color: var(--texto-suave); font-size: 0.75rem; }
+.capas .solo { font-size: 0.7rem; padding: 0.15rem 0.4rem; }
+.fila-botones { display: flex; gap: 0.4rem; margin-top: 0.6rem; flex-wrap: wrap; }
+
+.resultados { list-style: none; margin: 0.4rem 0 0; padding: 0; max-height: 40vh; overflow-y: auto; }
+.resultados li { padding: 0.35rem 0.4rem; border-radius: 4px; cursor: pointer; font-size: 0.9rem; }
+.resultados li:hover { background: #243240; }
+.resultados .sub { color: var(--texto-suave); font-size: 0.75rem; display: block; }
+
+.tooltip { position: absolute; pointer-events: none; background: rgba(12,16,21,0.92); border: 1px solid var(--borde); padding: 0.3rem 0.5rem; border-radius: 4px; font-size: 0.85rem; transform: translate(12px, 12px); max-width: 260px; }
+.ayuda { position: absolute; left: 0; right: 0; bottom: 0; text-align: center; font-size: 0.75rem; color: var(--texto-suave); padding: 0.3rem; pointer-events: none; }
+.carga { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.6rem; background: rgba(15,20,25,0.6); font-size: 0.9rem; }
+.barra-carga { width: 240px; height: 6px; background: #243240; border-radius: 3px; overflow: hidden; }
+#carga-progreso { height: 100%; width: 0; background: var(--acento); transition: width 0.2s; }
+
+.ficha .vacio { color: var(--texto-suave); font-size: 0.9rem; }
+.ficha h3 { margin: 0 0 0.2rem; font-size: 1.25rem; }
+.ficha .ruta { font-size: 0.75rem; color: var(--texto-suave); margin-bottom: 0.6rem; }
+.ficha dl { display: grid; grid-template-columns: auto 1fr; gap: 0.2rem 0.6rem; margin: 0 0 0.75rem; font-size: 0.9rem; }
+.ficha dt { color: var(--texto-suave); }
+.ficha dd { margin: 0; }
+.ficha .def { font-size: 0.9rem; line-height: 1.45; }
+.ficha .def a { font-size: 0.8rem; }
+.ficha .etiqueta { display: inline-block; font-size: 0.7rem; padding: 0.1rem 0.4rem; border-radius: 3px; background: #243240; color: var(--texto-suave); margin-left: 0.4rem; vertical-align: middle; }
+
+.estudio .pregunta { font-size: 1.05rem; margin: 0.4rem 0 0.8rem; line-height: 1.4; }
+.estudio .opciones { display: flex; flex-direction: column; gap: 0.4rem; }
+.estudio .opciones button { text-align: left; }
+.estudio .opciones button.ok { border-color: var(--ok); background: #1d3a2c; }
+.estudio .opciones button.mal { border-color: var(--error); background: #3a1d1d; }
+.estudio .resultado { margin: 0.6rem 0; font-weight: 600; }
+.estudio .resultado.ok { color: var(--ok); }
+.estudio .resultado.mal { color: var(--error); }
+.estudio .marcador { font-size: 0.85rem; color: var(--texto-suave); margin-bottom: 0.5rem; }
+.estudio .alcance { font-size: 0.85rem; margin-bottom: 0.6rem; display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap; }
+.estudio .acciones { display: flex; gap: 0.4rem; margin-top: 0.6rem; flex-wrap: wrap; }
+.progreso-resumen { font-size: 0.85rem; color: var(--texto-suave); margin-bottom: 0.5rem; }
+.progreso-resumen b { color: var(--texto); }
+.creditos { margin-top: auto; font-size: 0.7rem; color: var(--texto-suave); line-height: 1.4; }
+
+@media (max-width: 1000px) {
+  .cuerpo { grid-template-columns: 1fr; grid-template-rows: auto 60vh auto; }
+  .panel { border: 0; border-bottom: 1px solid var(--borde); }
+  .panel-der { border-top: 1px solid var(--borde); }
+  .modos { margin-left: 0; }
+}

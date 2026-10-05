@@ -12,3 +12,9 @@
 | Español           | Desarrollo de Registros Electrónicos Confiables |
 | Nederlands        | Ontwikkeling van Betrouwbare Elektronische Dossiers |
 | Papiamento        | Desaroyo di Registronan Electronico Confiabel |
+
+## DERR Medical
+
+| Módulo | Estado | Dónde |
+|---|---|---|
+| Estudio de anatomía 3D (base [Z-Anatomy](https://github.com/Z-Anatomy/The-blend), CC BY-SA 4.0) | v0.2 funcional | [`derr-medical/estudio-anatomia/`](derr-medical/estudio-anatomia/) · spec en [`docs/DERR-Medical-Modulo-Estudio-Anatomia.md`](docs/DERR-Medical-Modulo-Estudio-Anatomia.md) |

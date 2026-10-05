@@ -22,8 +22,8 @@ le pasa (texto, diff, archivos) entra en el contexto del modelo.
 - **SkillSpector:** `pendiente`, o `<puntuación máxima> <su veredicto> (<fecha>)`
   entre los informes de la sección (ver "Escanear").
 - **Estado:** `Provisional` (sin SkillSpector; uso limitado al "Uso previsto"),
-  `Aprobada` (SkillSpector conforme a la guía §3.4), `Rechazada`, `Retirada`
-  (estuvo instalada; se conserva la fila).
+  `Aprobada` (SkillSpector conforme a la guía §3.4), `Rechazada` (solo la
+  fila, sin sección), `Retirada` (estuvo instalada; se conserva la fila).
 
 ---
 
@@ -59,60 +59,57 @@ le pasa (texto, diff, archivos) entra en el contexto del modelo.
   pierde el prefijo `thermos:` del plugin, porque al vendorizar en
   `.claude/skills/` desaparece ese espacio de nombres; (2) línea `tools:` de los
   dos agentes (hallazgo resuelto 2026-10-05).
-- **Revisión manual (2026-10-05):** solo Markdown y JSON. Sin scripts, sin
-  hooks. Sin URLs salvo las del `plugin.json` (no instalado). Herramientas de
-  los subagentes tras (2): `Read`, `Grep`, `Glob` (alcanzan cualquier ruta del
-  disco) y `Skill` (puede cargar cualquier skill de la máquina; no añade
-  herramientas). Ambos declaran un contrato de solo lectura. El orquestador
-  tiene `disable-model-invocation: true` (solo lo lanza el usuario).
+- **Revisión manual (2026-10-05):** en lo vendorizado, solo Markdown. Sin
+  scripts, sin hooks, sin URLs. Línea `tools:` de los dos subagentes tras (2):
+  `Read, Grep, Glob, Skill`. Ambos declaran un contrato de solo lectura. El
+  orquestador tiene `disable-model-invocation: true` (solo lo lanza el
+  usuario).
 - **Hallazgos:**
   - *Resuelto (2026-10-05):* los subagentes tenían `Bash` (y el de revisión
     profunda `WebFetch`) y reciben el diff, que en un PR ajeno es contenido no
-    confiable. Se quitaron: `Read`, `Grep` y `Glob` bastan para revisar. Coste:
-    los cuerpos de los agentes, sin cambios, siguen hablando de `gh`/`glab`, de
-    tests y de `git log`; esas partes quedan inoperantes y nada garantiza que el
-    agente lo avise.
+    confiable. Se quitaron; las herramientas de lectura bastan para revisar.
+    Coste: el cuerpo del agente de revisión profunda, sin cambios, sigue
+    hablando de `gh`/`glab` y de ejecutar tests; esas partes quedan inoperantes
+    y nada garantiza que lo avise.
   - *Aceptado (2026-10-05):* el riesgo vive en el orquestador, que es la sesión
-    principal de Claude Code con todas sus herramientas, red incluida: recoge
-    el diff con `Bash`, lo lee, y recibe los informes de los subagentes, sobre
-    los que actúa. Una inyección en un diff ajeno puede sesgar el veredicto,
-    hacer que un subagente copie archivos del disco en su informe, y pedir al
-    orquestador que ejecute algo. El control real es el aviso de permisos de
-    Claude Code en cada llamada a `Bash` del orquestador. Se acepta porque es el
-    riesgo base de abrir ese diff en cualquier sesión de Claude Code, no uno
-    que Thermos añada.
+    principal de Claude Code con todas sus herramientas (`Bash`, `WebFetch`,
+    `Write`, servidores MCP) y red. Una inyección en un diff ajeno puede sesgar
+    el veredicto, hacer que un subagente copie en su informe cualquier archivo
+    del disco (sus herramientas de lectura no se limitan al repo) y pedir al
+    orquestador que actúe. El control real son los avisos de permisos del
+    orquestador, de todas las clases de herramienta. Se acepta porque es el
+    mismo tipo de riesgo que abrir ese diff en cualquier sesión de Claude Code,
+    automatizado.
 - **Uso previsto:** revisión de ramas en los repos de código propios (MS, Dental,
   Q-Engine); en este repo de perfil tiene poco que revisar. Para usarlo allí,
   copiar la carpeta `.claude/` o instalarlo a nivel de usuario. Reglas del
-  operador: no lanzarlo con los permisos omitidos ni con comandos con red en
-  una lista de permitidos (del repo o de usuario); en PRs de terceros, leer el
-  diff a mano antes, o no lanzarlo; su veredicto no sustituye la revisión
-  humana.
+  operador: no lanzarlo con los permisos omitidos; ninguna herramienta con red
+  (`Bash`, `WebFetch`, MCP) en listas de permitidos del repo ni de usuario; no
+  responder "no volver a preguntar" durante una ejecución; en PRs de terceros,
+  leer el diff a mano antes, o no lanzarlo; su veredicto no sustituye la
+  revisión humana.
 
 ---
 
 ## Cómo añadir la próxima
 
-Si tras el paso 6 la guía (§3.4) no permite instalar: deshacer los pasos 2 a 5
-y dejar solo una fila `Rechazada`.
-
-1. Clonar el origen en una carpeta temporal, leer todos los archivos a mano
-   (buscar: scripts, hooks, URLs, `curl`/`wget`, `eval`, `exec`, `base64`,
-   rutas `~/` o `$HOME`, variables de entorno, tokens, herramientas con red en
-   agentes) y **escanear el clon** (ver "Escanear"). Esto cumple "antes de
-   instalar": nada ha entrado aún en `.claude/`.
-2. Copiar solo lo necesario a `.claude/skills/<nombre>/` (y `.claude/agents/`
-   si trae agentes).
-3. Hacer las modificaciones locales que hagan falta (espacios de nombres,
-   herramientas que sobran).
-4. Desde dentro de `.claude/`: añadir a `SHA256SUMS` un marcador
-   `# --- <nombre> @ <owner/repo> <commit> (<fecha>) [<subruta>]` y debajo la
-   salida de `sha256sum <archivos>`. Por cada archivo modificado en el paso 3,
-   añadir su hash de origen en una línea de comentario `(origen)`. Comprobar
-   (comando en la cabecera de `SHA256SUMS`).
-5. Pegar el texto de la licencia en `THIRD-PARTY-LICENSES.md` bajo `## <nombre>`.
-6. **Escanear lo instalado** (ver "Escanear"): exactamente los bytes que acaban
-   de recibir hash, modificaciones locales incluidas.
+1. Clonar el origen en una carpeta temporal y leer todos los archivos a mano.
+   Buscar: scripts, hooks, URLs, `curl`/`wget`, `eval`, `exec`, `base64`, rutas
+   `~/` o `$HOME`, variables de entorno, tokens, herramientas con red en
+   agentes.
+2. En el clon: borrar lo que no se va a instalar y hacer las modificaciones
+   locales (espacios de nombres, herramientas que sobran). Por cada archivo
+   modificado, guardar su hash de origen: `git show HEAD:<ruta> | sha256sum`.
+3. Escanear el clon (ver "Escanear"). Si la guía (§3.4) no permite instalar:
+   borrar el clon y añadir solo una fila `Rechazada`. Fin.
+4. Copiar tal cual a `.claude/skills/<nombre>/` (y `.claude/agents/` si trae
+   agentes). Lo escaneado y lo instalado son los mismos bytes.
+5. Desde dentro de `.claude/`: añadir a `SHA256SUMS` un marcador
+   `# --- <nombre> @ <owner/repo> <commit> (<fecha>) [<subruta>]`, debajo la
+   salida de `sha256sum <archivos>`, y por cada archivo modificado una línea de
+   comentario `(origen)` con el hash del paso 2. Comprobar (comando en la
+   cabecera de `SHA256SUMS`).
+6. Pegar el texto de la licencia en `THIRD-PARTY-LICENSES.md` bajo `## <nombre>`.
 7. Añadir aquí una fila al resumen y una sección `## <nombre>` con estas
    viñetas, en este orden y con esta propiedad: *qué hace* (función y uso);
    *excluido del origen*; *modificaciones locales* (solo qué cambió respecto al
@@ -122,11 +119,9 @@ y dejar solo una fila `Rechazada`.
 
 ### Escanear
 
-SkillSpector trata un directorio como una sola skill, así que un informe por
-carpeta, desde la raíz del repo. `<ruta>` es la carpeta del clon (paso 1) o la
-instalada (paso 6); para los agentes, `.claude/agents/` con `<carpeta>` =
-`agents`. Esa carpeta es compartida: su informe cuenta para toda sección que
-tenga agentes en ella.
+SkillSpector trata un directorio como una sola skill: un informe por carpeta
+que se vaya a instalar, desde la raíz del repo. `<carpeta>` es el último
+componente de `<ruta>`.
 
 ```bash
 skillspector scan <ruta> --no-llm --format markdown \

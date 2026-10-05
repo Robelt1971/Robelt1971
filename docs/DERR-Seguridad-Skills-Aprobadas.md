@@ -17,7 +17,7 @@ Los archivos están vendorizados (copiados con hash fijo) en `.claude/skills/` y
 | Carpeta | Origen | Commit origen | Revisión | Estado |
 |---|---|---|---|---|
 | `skills/no-ai-slop` | [petergyang/no-ai-slop](https://github.com/petergyang/no-ai-slop) | `000650b` (2026-09-01) | manual, 2026-10-04 | **Aprobada** · escaneo SkillSpector pendiente |
-| `skills/thermos` (+ 2 rúbricas, + 2 agentes) | [theocarranza/thermos-claude](https://github.com/theocarranza/thermos-claude) | `ffe74b3` (2026-09-16) | manual, 2026-10-04 | **Aprobada con nota** · escaneo SkillSpector pendiente |
+| `skills/thermos` (+ 2 rúbricas, + 2 agentes) | [theocarranza/thermos-claude](https://github.com/theocarranza/thermos-claude) | `ffe74b3` (2026-09-16) | manual, 2026-10-04 (rev. 2026-10-05) | **Aprobada** · escaneo SkillSpector pendiente |
 
 Estados posibles: `Aprobada`, `Aprobada con nota`, `Rechazada`, `Retirada`. El
 sufijo "escaneo SkillSpector pendiente" se quita, y se anota la puntuación,
@@ -56,10 +56,12 @@ cuando se ejecute `skillspector scan --no-llm .claude/` desde la máquina local.
 - **Instalado:** `.claude/skills/thermos/`, `.claude/skills/thermo-nuclear-review/`,
   `.claude/skills/thermo-nuclear-code-quality-review/` (las tres idénticas al
   origen) y los dos agentes en `.claude/agents/`.
-- **Modificación local (única):** en los dos agentes, la llamada a la rúbrica
+- **Modificaciones locales:** (1) en los dos agentes, la llamada a la rúbrica
   pierde el prefijo `thermos:` del plugin, porque al vendorizar en
-  `.claude/skills/` desaparece ese espacio de nombres. Una línea por archivo.
-  Los hashes del origen están como comentario en `.claude/SHA256SUMS`.
+  `.claude/skills/` desaparece ese espacio de nombres; (2) en el agente de
+  revisión profunda se quitó `WebFetch` de la línea `tools:` (2026-10-05, ver
+  hallazgo abajo). Los hashes del origen están como comentario en
+  `.claude/SHA256SUMS`.
 - **Excluido del origen:** `plugin.json`, `marketplace.json`, `assets/logo.png`,
   `README.md`. Metadatos de empaquetado.
 - **Revisión manual (2026-10-04):** solo Markdown y JSON. Sin scripts, sin
@@ -67,17 +69,16 @@ cuando se ejecute `skillspector scan --no-llm .claude/` desde la máquina local.
   declaran un contrato de solo lectura: no editar, no commitear, no mutar
   estado, no llamar APIs de pago. El orquestador tiene
   `disable-model-invocation: true` (solo lo lanza el usuario). Herramientas de
-  los agentes: `Read, Grep, Glob, Bash, Skill` y, en el de revisión profunda,
-  también `WebFetch`.
-- **Hallazgo aceptado (con nota):** cadena de inyección y salida de datos en el
-  subagente de revisión profunda. Tras su auditoría lee los comentarios del PR
-  con `gh`/`glab`, que son contenido de terceros, y dispone de `WebFetch`. Un
-  comentario malicioso podría instruirle a enviar el contenido del diff a una
-  URL externa. El contrato de solo lectura es una instrucción al modelo, no un
-  control técnico. Se acepta porque el uso previsto es en repos propios y
-  nunca sobre diffs con PHI. Si se quiere cerrar la cadena, basta con quitar
-  `WebFetch` de la línea `tools:` del agente (coste: no podrá consultar
-  documentación externa durante la revisión).
+  los agentes: `Read, Grep, Glob, Bash, Skill`.
+- **Hallazgo resuelto (2026-10-05):** el origen daba `WebFetch` al subagente de
+  revisión profunda, que tras su auditoría lee los comentarios del PR con
+  `gh`/`glab` (contenido de terceros). Un comentario malicioso podría haberle
+  instruido a enviar el contenido del diff a una URL externa. Se quitó
+  `WebFetch` de su línea `tools:`. Coste: no puede consultar documentación
+  externa durante la revisión. Queda la lectura de comentarios de PR como
+  entrada no confiable, sin canal de salida más allá de `Bash`, que el propio
+  agente declara de solo lectura; por eso se mantiene la regla de usarlo solo
+  en repos propios y nunca sobre diffs con PHI.
 - **Uso previsto:** revisión de ramas en los repos de código (MS, Dental,
   Q-Engine). En este repo de perfil tiene poco que revisar. Para usarlo allí,
   copiar la carpeta `.claude/` o instalarlo a nivel de usuario. Nunca lanzarlo

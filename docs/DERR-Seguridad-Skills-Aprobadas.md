@@ -20,7 +20,7 @@ le pasa (texto, diff, archivos) entra en el contexto del modelo.
 | `thermos` | [theocarranza/thermos-claude](https://github.com/theocarranza/thermos-claude) | 2026-10-05 | pendiente | **Provisional** |
 
 - **SkillSpector:** `pendiente`, o `<puntuación máxima> <su veredicto> (<fecha>)`
-  entre los informes de la sección (ver "Escanear").
+  entre los informes de esa fila en `docs/skillspector/` (ver "Escanear").
 - **Estado:** `Provisional` (sin SkillSpector; uso limitado al "Uso previsto"),
   `Aprobada` (SkillSpector conforme a la guía §3.4), `Rechazada` (solo la
   fila, sin sección), `Retirada` (estuvo instalada; se conserva la fila).
@@ -69,11 +69,11 @@ le pasa (texto, diff, archivos) entra en el contexto del modelo.
     profunda `WebFetch`) y reciben el diff, que en un PR ajeno es contenido no
     confiable. Se quitaron; las herramientas de lectura bastan para revisar.
     Coste: el cuerpo del agente de revisión profunda (sin más cambios que (1))
-    y la rúbrica que carga siguen hablando de `gh`/`glab` y de ejecutar tests;
-    esas partes quedan inoperantes y nada garantiza que lo avise.
+    sigue hablando de `gh`/`glab` y de ejecutar tests, y la rúbrica que carga,
+    de `gh`/`glab`; esas partes quedan inoperantes y nada garantiza que lo avise.
   - *Aceptado (2026-10-05):* el riesgo vive en el orquestador, que es la sesión
-    principal de Claude Code con todas sus herramientas (`Bash`, `WebFetch`,
-    `Write`, servidores MCP) y red. Una inyección en un diff ajeno puede sesgar
+    principal de Claude Code con todas sus herramientas y red. Una inyección
+    en un diff ajeno puede sesgar
     el veredicto, hacer que un subagente copie en su informe cualquier archivo
     del disco (sus herramientas de lectura no se limitan al repo) y pedir al
     orquestador que actúe. El control real son los avisos de permisos del
@@ -87,9 +87,10 @@ le pasa (texto, diff, archivos) entra en el contexto del modelo.
   operador: lanzarlo solo en el modo de permisos por defecto (ni omitidos ni
   aceptación automática de ediciones); ninguna herramienta con red (`Bash`,
   `WebFetch`, `WebSearch`, MCP) en listas de permitidos ni en hooks que
-  aprueben solos, del repo ni de usuario; no responder "no volver a preguntar"
-  durante una ejecución; en PRs de terceros, leer el diff a mano antes, o no
-  lanzarlo; su veredicto no sustituye la revisión humana.
+  aprueben solos, del repo ni de usuario; antes de lanzarlo en otro repo,
+  comprobar en sus settings el modo por defecto y las listas; no responder "no
+  volver a preguntar" durante una ejecución; en PRs de terceros, leer el diff a
+  mano antes, o no lanzarlo; su veredicto no sustituye la revisión humana.
 
 ---
 
@@ -105,13 +106,13 @@ le pasa (texto, diff, archivos) entra en el contexto del modelo.
    origen: `git show HEAD:<archivo> | sha256sum`, con `<archivo>` relativo a la
    raíz del clon; copiar solo el hash.
 3. Escanear el clon (ver "Escanear"). Si la guía (§3.4) no permite instalar:
-   borrar el clon, conservar el informe y añadir una fila `Rechazada` cuya
-   columna SkillSpector tome el valor de ese informe. Fin.
+   borrar el clon y añadir una fila `Rechazada`. Fin.
 4. Copiar tal cual a `.claude/skills/` (una carpeta por skill) y, si trae
    agentes, a `.claude/agents/`. Lo escaneado y lo instalado son los mismos
    bytes.
 5. Desde dentro de `.claude/`: añadir a `SHA256SUMS` un marcador
-   `# --- <nombre> @ <owner/repo> <commit> (<fecha>) [<subruta>]`, debajo la
+   `# --- <nombre> @ <owner/repo> <commit> (<fecha>) [<subruta>]` (`<subruta>`:
+   carpeta del origen de la que se copió, si no es la raíz), debajo la
    salida de `sha256sum <archivos>`, y por cada archivo modificado una línea de
    comentario `(origen)` con el hash del paso 2. Comprobar (comando en la
    cabecera de `SHA256SUMS`).
@@ -126,8 +127,9 @@ le pasa (texto, diff, archivos) entra en el contexto del modelo.
 ### Escanear
 
 SkillSpector trata un directorio como una sola skill: un informe por carpeta
-que se vaya a instalar, desde la raíz del repo. `<carpeta>` es el último
-componente de `<ruta>`.
+que se vaya a instalar. Ejecutar desde la raíz de **este** repo, con `<ruta>`
+en absoluto hacia la carpeta del clon, para que el informe quede aquí y no en
+el clon. `<carpeta>` es el último componente de `<ruta>`.
 
 ```bash
 skillspector scan <ruta> --no-llm --format markdown \

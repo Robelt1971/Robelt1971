@@ -1,7 +1,7 @@
 ---
 name: thermo-nuclear-code-quality-review-subagent
 description: Thermo-nuclear code quality audit (maintainability, structure, the 1k-line rule, spaghetti growth, code-judo simplification). Spawned by the thermos skill after the parent gathers the diff and file context. Loads its rubric from the thermo-nuclear-code-quality-review skill.
-tools: Read, Grep, Glob, Bash, Skill
+tools: Read, Grep, Glob, Skill
 ---
 
 # Thermo-Nuclear Code Quality Review

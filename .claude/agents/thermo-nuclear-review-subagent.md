@@ -1,7 +1,7 @@
 ---
 name: thermo-nuclear-review-subagent
 description: Thermo-nuclear branch audit (bugs, breaking changes, security, devex regressions, feature-flag leaks) scoped to a diff. Spawned by the thermos skill after the parent gathers the diff and file context. Loads its rubric from the thermo-nuclear-review skill.
-tools: Read, Grep, Glob, Bash, Skill
+tools: Read, Grep, Glob, Skill
 ---
 
 # Thermo Nuclear Review (deep review)

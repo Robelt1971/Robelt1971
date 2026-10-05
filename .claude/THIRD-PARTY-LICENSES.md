@@ -1,8 +1,7 @@
 # Licencias de terceros — contenido vendorizado en `.claude/`
 
-Texto legal de las licencias de los archivos vendorizados en esta carpeta. Los
-encabezados `##` son las mismas claves que los marcadores de `SHA256SUMS`, que
-dice qué archivos cubre cada una.
+Texto legal de las licencias del contenido vendorizado en esta carpeta.
+Claves: las de los marcadores de `SHA256SUMS`.
 
 ---
 

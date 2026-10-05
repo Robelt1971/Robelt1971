@@ -13,6 +13,9 @@
 - **Regla:** ninguna skill, plugin o servidor MCP de origen externo se instala en
   un entorno DERR sin pasar antes por **NVIDIA SkillSpector** y obtener un
   veredicto `SAFE` (o `CAUTION` revisado a mano y justificado).
+- **Excepción vigente:** `no-ai-slop` y Thermos se instalaron el 2026-10-04 con
+  revisión manual, antes de tener SkillSpector en la máquina local. Constan como
+  `Provisional` en el registro hasta que se escaneen (§6).
 - **Por qué:** el estudio de NVIDIA sobre 31 132 skills públicas encontró que el
   26,1 % tenía vulnerabilidades y el 5,2 % mostraba intención maliciosa
   probable. Una skill maliciosa se ejecuta con los permisos del desarrollador:
@@ -101,7 +104,7 @@ skillspector scan ./mi-skill.zip
 ### 3.2 Modo DERR por defecto: estático, sin LLM
 
 ```bash
-skillspector scan ./mi-skill/ --no-llm --format markdown --output informe-skill.md
+skillspector scan ./mi-skill/ --no-llm --format markdown --output <informe>.md
 ```
 
 - `--no-llm` evita enviar el contenido de la skill a ningún proveedor de LLM.
@@ -137,13 +140,12 @@ de credencial (modelos por defecto a fecha de 2026-10-04; pueden cambiar):
 
 | Veredicto | Acción DERR |
 |---|---|
-| `SAFE` | Instalar. Guardar el informe en `docs/skillspector/<carpeta>-<fecha>.md`. |
+| `SAFE` | Instalar. Guardar el informe (ruta: registro, paso 2). |
 | `CAUTION` | Leer los hallazgos uno a uno. Las skills con mucha documentación generan falsos positivos. Instalar solo si cada hallazgo está explicado y anotado. |
 | `DO NOT INSTALL` | No instalar. Sin excepciones. Buscar alternativa. |
 
-Toda skill aprobada se anota en `DERR-Seguridad-Skills-Aprobadas.md`, que es
-el único registro de estado por skill. El procedimiento de alta está en su
-sección "Cómo añadir la próxima".
+Toda skill se anota en `DERR-Seguridad-Skills-Aprobadas.md`, que incluye el
+procedimiento de alta.
 
 ---
 
@@ -230,6 +232,9 @@ conversacional y aceptando que corre un fork.
       como guardián (§4).
 - [x] Crear el registro de la §3.4: `DERR-Seguridad-Skills-Aprobadas.md`
       (2026-10-04).
+- [ ] Escanear retroactivamente las carpetas ya instaladas de `no-ai-slop` y
+      Thermos (registro, paso 2, sobre `.claude/skills/*/` y `.claude/agents/`)
+      y rellenar la columna SkillSpector. Cierra la excepción vigente de §0.
 - [ ] Añadir a este doc cualquier falso positivo recurrente y cómo se resolvió.
 
 ---

@@ -75,23 +75,24 @@ le pasa (texto, diff, archivos) entra en el contexto del modelo.
     principal de Claude Code con todas sus herramientas y red. Una inyección en
     un diff ajeno puede sesgar el veredicto, hacer que un subagente copie en su
     informe cualquier archivo del disco (sus herramientas de lectura no se
-    limitan al repo) y pedir al orquestador que actúe. El control real son los avisos de permisos del
-    orquestador en las herramientas que actúan (`Bash`, `WebFetch`,
-    `Write`/`Edit`, MCP); las de lectura no avisan. Se acepta porque es el
-    mismo tipo de riesgo que abrir ese diff en cualquier sesión de Claude Code,
-    automatizado.
+    limitan al repo) y pedir al orquestador que actúe. El control real son
+    los avisos de permisos del orquestador en las herramientas que actúan
+    (`Bash`, `WebFetch`, `Write`/`Edit`, MCP); las de lectura no avisan. Se
+    acepta porque es el mismo tipo de riesgo que abrir ese diff en cualquier
+    sesión de Claude Code, automatizado.
 - **Uso previsto:** revisión de ramas en los repos de código propios (MS, Dental,
   Q-Engine); en este repo de perfil tiene poco que revisar. Para usarlo allí,
   copiar la carpeta `.claude/` o instalarlo a nivel de usuario. Reglas del
   operador:
   - lanzarlo solo en el modo de permisos por defecto (ni omitidos ni
     aceptación automática de ediciones);
-  - ninguna herramienta con red (`Bash`, `WebFetch`, `WebSearch`, MCP) en
-    listas de permitidos ni en hooks que aprueben solos, del repo, de usuario
-    ni de plugins;
+  - ninguna herramienta con red (`Bash`, `WebFetch`, `WebSearch`, MCP) ni de
+    escritura (`Write`, `Edit`) en listas de permitidos del repo o de usuario,
+    ni en hooks que aprueben solos, del repo, de usuario o de plugins;
   - antes de lanzarlo en otro repo, comprobar en sus settings (incluido
-    `settings.local.json`) el modo por defecto y las listas, y que sus skills
-    no ejecuten comandos al cargarse;
+    `settings.local.json`) el modo por defecto y las listas; que sus agentes no
+    tengan el mismo nombre que los de Thermos con más herramientas; y, en cada
+    `SKILL.md` suyo, que no haya comandos de shell que se ejecuten al cargarse;
   - no responder "no volver a preguntar" durante una ejecución;
   - en PRs de terceros, leer el diff a mano antes, o no lanzarlo;
   - su veredicto no sustituye la revisión humana.
@@ -116,7 +117,8 @@ le pasa (texto, diff, archivos) entra en el contexto del modelo.
    bytes.
 5. Desde dentro de `.claude/`: añadir a `SHA256SUMS` un marcador
    `# --- <nombre> @ <owner/repo> <commit> (<fecha>) <subruta>` (`<subruta>`:
-   carpeta del origen de la que se copió; se omite si es la raíz), debajo la
+   carpeta del origen de la que se copió, con barra final; se omite si es la
+   raíz), debajo la
    salida de `sha256sum <archivos>`, y por cada archivo modificado una línea de
    comentario `(origen)` con el hash del paso 2. Comprobar (comando en la
    cabecera de `SHA256SUMS`).
@@ -132,8 +134,8 @@ le pasa (texto, diff, archivos) entra en el contexto del modelo.
 
 SkillSpector trata un directorio como una sola skill: un informe por carpeta
 que se vaya a instalar. Ejecutar desde la raíz de **este** repo, con `<ruta>`
-en absoluto hacia la carpeta del clon, para que el informe quede aquí y no en
-el clon, sin barra final. `<carpeta>` es el último componente de `<ruta>`.
+en absoluto y sin barra final hacia la carpeta del clon, para que el informe
+quede aquí y no en el clon. `<carpeta>` es el último componente de `<ruta>`.
 
 ```bash
 skillspector scan <ruta> --no-llm --format markdown \

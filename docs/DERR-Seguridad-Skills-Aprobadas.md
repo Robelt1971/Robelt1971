@@ -90,9 +90,10 @@ le pasa (texto, diff, archivos) entra en el contexto del modelo.
     escritura (`Write`, `Edit`) en listas de permitidos del repo o de usuario,
     ni en hooks que aprueben solos, del repo, de usuario o de plugins;
   - antes de lanzarlo en otro repo, comprobar en sus settings (incluido
-    `settings.local.json`) el modo por defecto y las listas; que sus agentes no
-    tengan el mismo nombre que los de Thermos con más herramientas; y, en cada
-    `SKILL.md` suyo, que no haya comandos de shell que se ejecuten al cargarse;
+    `settings.local.json`) el modo por defecto, las listas y los hooks; que no
+    tenga agentes ni skills con el mismo nombre que los de Thermos y más
+    herramientas; y, en cada `SKILL.md` suyo, que no haya comandos de shell que
+    se ejecuten al cargarse ni `allowed-tools` con herramientas que actúan;
   - no responder "no volver a preguntar" durante una ejecución;
   - en PRs de terceros, leer el diff a mano antes, o no lanzarlo;
   - su veredicto no sustituye la revisión humana.
@@ -118,10 +119,9 @@ le pasa (texto, diff, archivos) entra en el contexto del modelo.
 5. Desde dentro de `.claude/`: añadir a `SHA256SUMS` un marcador
    `# --- <nombre> @ <owner/repo> <commit> (<fecha>) <subruta>` (`<subruta>`:
    carpeta del origen de la que se copió, con barra final; se omite si es la
-   raíz), debajo la
-   salida de `sha256sum <archivos>`, y por cada archivo modificado una línea de
-   comentario `(origen)` con el hash del paso 2. Comprobar (comando en la
-   cabecera de `SHA256SUMS`).
+   raíz), debajo la salida de `sha256sum <archivos>`, y por cada archivo
+   modificado una línea de comentario `(origen)` con el hash del paso 2.
+   Comprobar (comando en la cabecera de `SHA256SUMS`).
 6. Pegar el texto de la licencia en `THIRD-PARTY-LICENSES.md` bajo `## <nombre>`.
 7. Añadir aquí una fila al resumen y una sección `## <nombre>` con estas
    viñetas, en este orden y con esta propiedad: *qué hace* (función y uso);

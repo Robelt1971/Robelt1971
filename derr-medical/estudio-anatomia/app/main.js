@@ -123,10 +123,20 @@ function mostrarFicha(node) {
   const grupo = entry.group.filter((g, i) => !(i === 0 && g.toLowerCase() === s.en.toLowerCase()));
   ruta.textContent = [s[ui.idiomaUI.value === 'en' ? 'en' : 'es'], ...grupo].join(' › '); f.appendChild(ruta);
   const dl = document.createElement('dl');
-  const filas = [['espanol', 'es'], ['ingles', 'en'], ['latin', 'la'], ['frances', 'fr'], ['portugues', 'pt']];
+  const filas = [['espanol', 'es'], ['ingles', 'en'], ['latin', 'la'], ['neerlandes', 'nl'], ['papiamento', 'pap'], ['frances', 'fr'], ['portugues', 'pt']];
+  const marcaFuente = (l) => {
+    const f = l === 'nl' ? entry.nl_fuente : l === 'pap' ? entry.pap_fuente : null;
+    if (!f) return null;
+    const et = document.createElement('span'); et.className = 'etiqueta';
+    et.textContent = f === 'wikipedia-nl' ? t('fuente_wiki_nl') : '⚠ ' + t('sin_revisar');
+    et.title = et.textContent; return et;
+  };
+  if (langNombres === 'nl' || langNombres === 'pap') { const et = marcaFuente(langNombres); if (et) h.appendChild(et); }
   for (const [k, l] of filas) {
     if (l === langNombres || !entry[l]) continue;
-    const dt = document.createElement('dt'); dt.textContent = t(k); const dd = document.createElement('dd'); dd.textContent = entry[l]; dl.append(dt, dd);
+    const dt = document.createElement('dt'); dt.textContent = t(k); const dd = document.createElement('dd'); dd.textContent = entry[l];
+    const et = marcaFuente(l); if (et) dd.appendChild(et);
+    dl.append(dt, dd);
   }
   f.appendChild(dl);
   const def = definicion(entry);

@@ -47,6 +47,14 @@ Torres Villar (español), Ana Teresa Bigio (portugués) y colaboradores.
   `scripts/exportar_zanatomy.py` y comprimido con `scripts/comprimir.sh`.
 - Texto de la licencia: <https://creativecommons.org/licenses/by-sa/4.0/legalcode.es>
 
+### Nombres en neerlandés y papiamento (`data/nombres-nl-pap.json`)
+
+Tabla creada por DERR Group (2026-10-05), no incluida en Z-Anatomy. Parte de
+los nombres neerlandeses procede de los títulos de la Wikipedia en neerlandés
+(CC BY-SA 4.0; marcados `wikipedia-nl`); el resto fue generado automáticamente
+y está pendiente de revisión clínica. DERR publica la tabla bajo **CC BY-SA
+4.0** para poder contribuirla a Z-Anatomy, que acepta traducciones.
+
 ## 2. Bibliotecas vendorizadas en `vendor/`: MIT
 
 | Archivo | Proyecto | Versión | Licencia |

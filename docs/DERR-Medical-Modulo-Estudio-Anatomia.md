@@ -2,8 +2,9 @@
 
 > Spec e historial de decisión del primer módulo de DERR Medical. **Sin PHI:**
 > el módulo es material de estudio; no toca KIA/GNC ni `DERR-Protected-Data`.
-> Fecha: 2026-10-05 · **Estado: v0.1 FUNCIONAL** — visor + tres modos de
-> estudio, 8 sistemas, 3 172 estructuras; verificado en Chromium headless.
+> Fecha: 2026-10-05 · **Estado: v0.2 FUNCIONAL** — visor + tres modos de
+> estudio, 8 sistemas, 3 172 estructuras, nombres en 7 idiomas (nl y pap
+> pendientes de revisión clínica); verificado en Chromium headless.
 > Código en `derr-medical/estudio-anatomia/`.
 
 ---
@@ -47,13 +48,14 @@ reconocimiento y localización y seguimiento del propio progreso.
 - Modo **Identificar** (estructura resaltada → elegir nombre entre 4).
 - Modo **Localizar** (nombre → clic en el modelo, 3 intentos).
 - Progreso por estructura en el navegador, con repaso priorizado de fallos.
-- Interfaz en español, inglés y neerlandés; nombres en es/en/la/fr/pt.
+- Interfaz en español, inglés y neerlandés; nombres en es/en/la/nl/pap/fr/pt.
 - Pipeline reproducible desde el `.blend` original.
 
 **Fuera de alcance (explícito):**
 - Cuentas de usuario, sincronización o cualquier dato personal. El progreso vive
   en `localStorage` y se puede borrar desde la interfaz.
-- Papiamento: Z-Anatomy no trae esa traducción; queda como tarea propia.
+- Validación lingüística: los nombres en neerlandés y papiamento son tabla
+  propia y no están revisados por personal clínico (ver §6).
 - Inserciones musculares, biomecánica (armature) y cortes transversales del
   atlas original.
 - Edición de modelos. DERR no modifica la geometría; solo la recolorea en el
@@ -142,9 +144,16 @@ activos (~3,6 M de triángulos) en portátiles sin GPU dedicada.
    (Lissie Cowley, CC BY-NC) dentro de Z-Anatomy son no comerciales. Antes de
    cualquier uso comercial de DERR Medical: identificar esos objetos en el
    `.blend` y excluirlos en el export o sustituirlos.
-2. **Papiamento y neerlandés en nombres:** hoy solo la interfaz. Plan: tabla
-   propia `data/nombres-pap-nl.json` indexada por nombre inglés, revisada por
-   personal clínico, y contribuir la traducción a Z-Anatomy (compartir igual).
+2. **Papiamento y neerlandés en nombres: HECHO (v0.2, 2026-10-05), pendiente
+   de revisión clínica.** Tabla `data/nombres-nl-pap.json` (1 819 nombres)
+   indexada por nombre inglés, con fuente por entrada: 332 neerlandeses
+   verificados contra el título del artículo de la Wikipedia en neerlandés
+   (solo cuando el artículo trata exactamente esa estructura; los artículos
+   genéricos como "middenhandsbeen" para "tercer metacarpiano" se descartaron),
+   1 487 neerlandeses y los 1 819 papiamentos generados por modelo de lenguaje
+   con ortografía etimológica de Aruba. La ficha marca cada nombre con su
+   fuente. Falta: revisión por personal clínico con
+   `data/revision-nombres-nl-pap.csv` y envío de la tabla a Z-Anatomy.
 3. **Unidades didácticas:** listas curadas de estructuras (p. ej. "Hueso
    temporal", "Plexo braquial") para que el alcance de los ejercicios no sea
    solo por sistema.

@@ -5,12 +5,17 @@ export async function cargarManifiesto(base) {
   const r = await fetch(`${base}data/estructuras.json`);
   if (!r.ok) throw new Error(`No se pudo cargar data/estructuras.json (${r.status})`);
   const m = await r.json();
+  // Tabla propia de DERR con neerlandés y papiamento (Z-Anatomy no los trae), indexada por nombre inglés.
+  const rn = await fetch(`${base}data/nombres-nl-pap.json`).catch(() => null);
+  const extra = rn && rn.ok ? await rn.json() : {};
   // Índices
   m.porNodo = new Map();
   m.lista = [];
   for (const s of m.systems) {
     for (const e of s.structures) {
       e.sistema = s.key;
+      const x = extra[e.en];
+      if (x) { e.nl = x.nl; e.pap = x.pap; e.nl_fuente = x.nl_fuente; e.pap_fuente = x.pap_fuente; }
       m.porNodo.set(e.node, e);
       m.lista.push(e);
     }
@@ -61,4 +66,4 @@ export function buscar(m, consulta, lang = 'es', max = 30) {
   out.sort((a, b) => a[0] - b[0] || a[1].en.length - b[1].en.length || a[1].en.localeCompare(b[1].en));
   return out.slice(0, max).map((x) => x[1]);
 }
-function campos0(e) { return [e.es, e.en, e.la, e.fr, e.pt].filter(Boolean); }
+function campos0(e) { return [e.es, e.en, e.la, e.fr, e.pt, e.nl, e.pap].filter(Boolean); }

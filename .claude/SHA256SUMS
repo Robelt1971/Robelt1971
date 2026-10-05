@@ -1,20 +1,20 @@
-# Hashes de los archivos vendorizados en .claude/. Verificar con:
-#   cd .claude && sha256sum -c SHA256SUMS
-# Al actualizar una skill: repetir la revisión (docs/DERR-Seguridad-Skills-Aprobadas.md),
-# regenerar las lineas afectadas con `sha256sum <archivos>` y actualizar los comentarios.
+# Hashes de los archivos vendorizados en .claude/. Dueno unico de la lista de
+# archivos y del commit de origen. Verificar desde esta carpeta:
+#   sha256sum -c SHA256SUMS        (GNU coreutils)
+#   shasum -a 256 -c SHA256SUMS    (macOS sin coreutils; ignora los avisos por lineas #)
+# Para anadir o actualizar: ejecutar `sha256sum <archivos>` DESDE ESTA CARPETA y
+# pegar las lineas bajo su marcador. Si un archivo se edita respecto al origen,
+# anadir su hash de origen en una linea de comentario "(origen)".
+# Revision y hallazgos: docs/DERR-Seguridad-Skills-Aprobadas.md
 #
-# --- no-ai-slop · origen petergyang/no-ai-slop @ 000650b (2026-09-01) · identicos al origen
+# --- no-ai-slop @ petergyang/no-ai-slop 000650b (2026-09-01)
 992b365f51a2f62cf4c1c5ed22049a9ee551dfea677550c1a72b371c0ceadd62  skills/no-ai-slop/SKILL.md
 8ad8d83ed1abe7fc054ad74966bfca64fc182bc71f59d701b24b962c39d11ad7  skills/no-ai-slop/eval.md
 #
-# --- Thermos · origen theocarranza/thermos-claude @ ffe74b3 (2026-09-16), plugins/thermos/
-# Las tres skills son identicas al origen.
+# --- thermos @ theocarranza/thermos-claude ffe74b3 (2026-09-16), plugins/thermos/
 6e96b6b799ebc0db90fde3843601009d35453f8e8a19f6f4a5dca294c7360e51  skills/thermos/SKILL.md
 f1b16c7db62e2af3cbed1c7fe13595706bd61da4a98f9ab6aa072d9700c6e31d  skills/thermo-nuclear-review/SKILL.md
 3fe9fb20c10a3aeffc059c4c9e0624e2cc5972b02811ded56334daedec4186b2  skills/thermo-nuclear-code-quality-review/SKILL.md
-# Los dos agentes difieren del origen: en ambos, la llamada a la rubrica (linea 13)
-# pierde el prefijo `thermos:` del plugin; en thermo-nuclear-review-subagent.md ademas
-# se quito WebFetch de la linea `tools:` (linea 4). Hashes del origen, para comparar:
 #   4e01f720db949e055e89595618319eceb217bb19567130a124b4474e982ef286  agents/thermo-nuclear-review-subagent.md (origen)
 #   caaac518253947711a137333f123d65b79481d7bca49761f5c62ed7ae15cd004  agents/thermo-nuclear-code-quality-review-subagent.md (origen)
 e3a0dec9f3a4958aa35b4492bd04e3569223ba38b4e7b01774a646b3ba34ed95  agents/thermo-nuclear-review-subagent.md

@@ -4,7 +4,7 @@
 > Claude Code (y en Codex CLI / Gemini CLI si se usan). Complementa las
 > "Buenas prácticas de seguridad" de `DERR-Apify-MCP-Server-Setup.md`.
 > Fecha: 2026-10-04 · Responsable: Ernesto (Albert Rodríguez Robelt)
-> Estado: **ACTIVA**. Instalación de la herramienta y estado de cada skill: §6.
+> Estado: **ACTIVA**. Estado de cada skill instalada: `DERR-Seguridad-Skills-Aprobadas.md`.
 
 ---
 
@@ -57,8 +57,7 @@ puro).
 
 ## 2. Instalación
 
-Requisitos: Python **3.12 o superior** y `uv`. Con Python 3.10 u 3.11 el
-`uv tool install` falla de forma poco clara.
+Requisitos: Python **3.12 o superior** y `uv`.
 
 ```bash
 # Solo CLI (recomendado para DERR)
@@ -138,7 +137,7 @@ de credencial (modelos por defecto a fecha de 2026-10-04; pueden cambiar):
 
 | Veredicto | Acción DERR |
 |---|---|
-| `SAFE` | Instalar. Guardar el informe junto a la nota de decisión. |
+| `SAFE` | Instalar. Guardar el informe en `docs/skillspector/<carpeta>-<fecha>.md`. |
 | `CAUTION` | Leer los hallazgos uno a uno. Las skills con mucha documentación generan falsos positivos. Instalar solo si cada hallazgo está explicado y anotado. |
 | `DO NOT INSTALL` | No instalar. Sin excepciones. Buscar alternativa. |
 
@@ -232,9 +231,6 @@ conversacional y aceptando que corre un fork.
 - [x] Crear el registro de la §3.4: `DERR-Seguridad-Skills-Aprobadas.md`
       (2026-10-04).
 - [ ] Añadir a este doc cualquier falso positivo recurrente y cómo se resolvió.
-
-El estado de cada skill instalada (revisión, escaneo, hallazgos) vive solo en
-`DERR-Seguridad-Skills-Aprobadas.md`; los hashes, en `.claude/SHA256SUMS`.
 
 ---
 

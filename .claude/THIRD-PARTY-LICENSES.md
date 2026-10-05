@@ -1,17 +1,12 @@
 # Licencias de terceros — contenido vendorizado en `.claude/`
 
-Los archivos listados abajo se copiaron de sus repositorios de origen y se
-distribuyen aquí bajo sus licencias originales (MIT en ambos casos). El commit
-de origen y los hashes de cada archivo están en `SHA256SUMS`, en esta misma
-carpeta. El registro de revisión está en
-`docs/DERR-Seguridad-Skills-Aprobadas.md`.
+Texto legal de las licencias de los archivos vendorizados en esta carpeta, una
+sección por repositorio de origen. Qué archivos cubre cada sección, y su
+commit de origen: `SHA256SUMS` (misma carpeta, mismo nombre de sección).
 
 ---
 
 ## no-ai-slop
-
-- Origen: https://github.com/petergyang/no-ai-slop
-- Archivos: `skills/no-ai-slop/SKILL.md`, `skills/no-ai-slop/eval.md`
 
 ```
 MIT License
@@ -39,14 +34,7 @@ SOFTWARE.
 
 ---
 
-## Thermos (plugin Thermos de Cursor, adaptación para Claude Code de Théo Carranza)
-
-- Origen: https://github.com/theocarranza/thermos-claude (rúbricas originales:
-  https://github.com/cursor/plugins)
-- Archivos: `skills/thermos/SKILL.md`, `skills/thermo-nuclear-review/SKILL.md`,
-  `skills/thermo-nuclear-code-quality-review/SKILL.md`,
-  `agents/thermo-nuclear-review-subagent.md`,
-  `agents/thermo-nuclear-code-quality-review-subagent.md`
+## thermos (plugin Thermos de Cursor; adaptación para Claude Code de Théo Carranza)
 
 ```
 MIT License

@@ -1,0 +1,9 @@
+{
+  "_comentario": "Estructuras del atlas Z-Anatomy que NO se exportan porque su modelo de origen tiene licencia no comercial (ver LICENSES.md). Clave: nombre en inglés sin sufijo de lado; se excluyen ambos lados.",
+  "excluir": [
+    {"en": "Vestibule",    "origen": "Anatomy of the Inner Ear, University of Dundee School of Medicine", "licencia": "CC BY-NC-SA 4.0", "coleccion": "Nervous system & Sense organs > Ear > Internal ear"},
+    {"en": "Cochlea",      "origen": "Anatomy of the Inner Ear, University of Dundee School of Medicine", "licencia": "CC BY-NC-SA 4.0", "coleccion": "Nervous system & Sense organs > Ear > Internal ear"},
+    {"en": "Kidney",       "origen": "Kidney, Lissie Cowley", "licencia": "CC BY-NC 4.0", "coleccion": "Visceral systems > Urinary system"},
+    {"en": "Renal pelvis", "origen": "Kidney, Lissie Cowley (la pelvis renal forma parte del mismo modelo: misma procedencia de edición que Kidney.l/.r)", "licencia": "CC BY-NC 4.0", "coleccion": "Visceral systems > Urinary system"}
+  ]
+}

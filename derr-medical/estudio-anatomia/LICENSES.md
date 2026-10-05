@@ -35,9 +35,19 @@ Z-Anatomy incorpora además modelos de terceros adaptados: "Brainder" y "White
 matter" (University of Washington); "Cranial Nerves and Foramina" (University
 of Dundee, CAHID, CC BY 4.0); "Anatomy of the Inner Ear" (University of Dundee
 School of Medicine, CC BY-NC-SA 4.0); "Kidney" (Lissie Cowley, CC BY-NC 4.0).
-Las dos últimas son **no comerciales**: si DERR Medical se comercializa, hay que
-excluir o sustituir el oído interno y el riñón antes de distribuir. Esto está
-anotado en la spec como tarea pendiente.
+
+**Los dos modelos no comerciales están excluidos de este módulo** (desde el
+2026-10-05). El export omite, en ambos lados, las estructuras listadas en
+`scripts/exclusiones.json`: `Vestibule` y `Cochlea` (únicas mallas de la
+colección "Internal ear" del atlas) y `Kidney` y `Renal pelvis` (la pelvis
+renal comparte procedencia de edición con los riñones y forma parte del mismo
+modelo de origen). Uréteres, vejiga, uretra y los vasos renales son curvas y
+mallas propias del atlas y se conservan. El manifiesto `data/estructuras.json`
+lista los objetos omitidos en la clave `excluded`. Nota: el `.blend` no lleva
+metadatos de procedencia por objeto; la identificación se hizo por la
+estructura de colecciones del atlas y las atribuciones de su README. Si
+Z-Anatomy sustituye esos modelos por otros CC BY-SA, basta con vaciar la lista
+y regenerar.
 
 Traducciones de las estructuras (es/fr/pt/la) aportadas en Z-Anatomy por Carlos
 Torres Villar (español), Ana Teresa Bigio (portugués) y colaboradores.

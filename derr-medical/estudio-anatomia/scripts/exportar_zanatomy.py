@@ -1,10 +1,16 @@
 """Exporta los sistemas de Z-Anatomy a GLB + manifiesto de estructuras (data/estructuras.json, data/definiciones.json).
-Uso: python3 exportar_zanatomy.py <Startup.blend> <carpeta_salida>
+Uso: python3 exportar_zanatomy.py <Startup.blend> <carpeta_salida> [clave_sistema ...]
+     (sin claves exporta los 8 sistemas; con claves, solo esos, p. ej. "nervioso visceral")
+Excluye las estructuras listadas en exclusiones.json (modelos de origen no comerciales).
 Requiere: pip install bpy==4.5.14 (Blender como módulo de Python; Python 3.11).
 Después: ./comprimir.sh <carpeta_salida> (gltfpack) copia los GLB a ../modelos y los JSON a ../data.
 """
 import bpy, re, json, os, sys, time, collections
-blend, out = sys.argv[-2], sys.argv[-1]
+args = [a for a in sys.argv[1:] if not a.startswith('-')]
+if 'exportar_zanatomy.py' in args[0]: args = args[1:]
+blend, out, solo = args[0], args[1], set(args[2:])
+EXCL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'exclusiones.json')
+EXCLUIR = {e['en'] for e in json.load(open(EXCL_PATH, encoding='utf-8'))['excluir']} if os.path.exists(EXCL_PATH) else set()
 os.makedirs(os.path.join(out, 'glb'), exist_ok=True)
 bpy.ops.wm.open_mainfile(filepath=blend, load_ui=False)
 sc = bpy.context.scene
@@ -64,9 +70,14 @@ def group_chain(o):
 manifest = {'generated': time.strftime('%Y-%m-%d'), 'source': 'Z-Anatomy (CC BY-SA 4.0), derived from BodyParts3D (CC BY-SA 2.1 JP)', 'systems': []}
 defs_used = {}
 top_lcs = {lc.name: lc for lc in vl.layer_collection.children}
+excluidas = []
 for col_name, key, es, en in SYSTEMS:
+    if solo and key not in solo: continue
     col = sc.collection.children[col_name]
     objs = [o for o in col.all_objects if o.type in ('MESH', 'CURVE') and not HELPER.search(o.name) and '?' not in o.name]
+    nc = [o for o in objs if clean(o.name)[0] in EXCLUIR]
+    excluidas += [o.name for o in nc]
+    objs = [o for o in objs if o not in nc]
     # make only this system visible, unhide everything inside, select
     # Deselect EVERYTHING explicitly: the DESELECT operator skips objects hidden in the view layer,
     # so the previous system's selection would leak into this export.
@@ -101,6 +112,18 @@ for col_name, key, es, en in SYSTEMS:
     size = os.path.getsize(path)
     print(f'## {key}: {len(structures)} structures, {len(objs)} objects, {size//1024} KB, {round(time.time()-t,1)} s', flush=True)
     manifest['systems'].append({'key': key, 'es': es, 'en': en, 'file': f'{key}.glb', 'count': len(structures), 'structures': structures})
+manifest['excluded'] = sorted(excluidas)
+print('## excluded (non-commercial source models):', sorted(excluidas))
+if solo:
+    # Export parcial: fusionar con el manifiesto existente para no perder los demás sistemas.
+    prev_m = os.path.join(out, 'estructuras.json'); prev_d = os.path.join(out, 'definiciones.json')
+    if os.path.exists(prev_m):
+        prev = json.load(open(prev_m, encoding='utf-8'))
+        nuevos = {s['key']: s for s in manifest['systems']}
+        manifest['systems'] = [nuevos.get(s['key'], s) for s in prev['systems']]
+        manifest['excluded'] = sorted(set(prev.get('excluded', [])) | set(excluidas))
+    if os.path.exists(prev_d):
+        d = json.load(open(prev_d, encoding='utf-8')); d.update(defs_used); defs_used = d
 json.dump(manifest, open(os.path.join(out, 'estructuras.json'), 'w'), ensure_ascii=False, separators=(',', ':'))
 json.dump(defs_used, open(os.path.join(out, 'definiciones.json'), 'w'), ensure_ascii=False, separators=(',', ':'))
 print('## done; definitions used:', len(defs_used))

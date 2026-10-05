@@ -1,0 +1,73 @@
+# Licencias de terceros — contenido vendorizado en `.claude/`
+
+Los archivos listados abajo se copiaron de sus repositorios de origen y se
+distribuyen aquí bajo sus licencias originales (MIT en ambos casos). El commit
+de origen y los hashes de cada archivo están en `SHA256SUMS`, en esta misma
+carpeta. El registro de revisión está en
+`docs/DERR-Seguridad-Skills-Aprobadas.md`.
+
+---
+
+## no-ai-slop
+
+- Origen: https://github.com/petergyang/no-ai-slop
+- Archivos: `skills/no-ai-slop/SKILL.md`, `skills/no-ai-slop/eval.md`
+
+```
+MIT License
+
+Copyright (c) 2026 Peter Yang
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+---
+
+## Thermos (plugin Thermos de Cursor, adaptación para Claude Code de Théo Carranza)
+
+- Origen: https://github.com/theocarranza/thermos-claude (rúbricas originales:
+  https://github.com/cursor/plugins)
+- Archivos: `skills/thermos/SKILL.md`, `skills/thermo-nuclear-review/SKILL.md`,
+  `skills/thermo-nuclear-code-quality-review/SKILL.md`,
+  `agents/thermo-nuclear-review-subagent.md`,
+  `agents/thermo-nuclear-code-quality-review-subagent.md`
+
+```
+MIT License
+
+Copyright (c) 2026 Cursor
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```

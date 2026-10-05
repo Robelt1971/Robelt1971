@@ -4,7 +4,7 @@
 > Claude Code (y en Codex CLI / Gemini CLI si se usan). Complementa las
 > "Buenas prácticas de seguridad" de `DERR-Apify-MCP-Server-Setup.md`.
 > Fecha: 2026-10-04 · Responsable: Ernesto (Albert Rodríguez Robelt)
-> Estado: **ACTIVA** (regla) · Herramienta: **no instalada todavía** (ver §6)
+> Estado: **ACTIVA**. Instalación de la herramienta y estado de cada skill: §6.
 
 ---
 
@@ -36,9 +36,9 @@
   2. **Semántica con LLM** (opcional): evalúa la *intención* del código y de
      las instrucciones. Envía el contenido de los archivos al proveedor
      configurado.
-- 64 reglas en 16 categorías: inyección de prompts, exfiltración de datos,
-  escalada de privilegios, riesgo de cadena de suministro, ejecución de código
-  peligroso, persistencia, ofuscación, etc.
+- 71 patrones en 17 categorías (a fecha de 2026-10-04): inyección de prompts,
+  exfiltración de datos, escalada de privilegios, riesgo de cadena de suministro,
+  ejecución de código peligroso, persistencia, ofuscación, etc.
 - **Nunca ejecuta** la skill que analiza.
 - Devuelve una **puntuación de riesgo 0–100** con veredicto:
 
@@ -57,7 +57,8 @@ puro).
 
 ## 2. Instalación
 
-Requisitos: Python 3 y `uv` (o `pipx`).
+Requisitos: Python **3.12 o superior** y `uv`. Con Python 3.10 u 3.11 el
+`uv tool install` falla de forma poco clara.
 
 ```bash
 # Solo CLI (recomendado para DERR)
@@ -117,7 +118,7 @@ skillspector scan ./mi-skill/ --no-llm --format markdown --output informe-skill.
 
 Para skills de propósito general (p. ej. utilidades de scraping, formato de
 documentos) puedes añadir la capa semántica. Proveedores soportados y variable
-de credencial:
+de credencial (modelos por defecto a fecha de 2026-10-04; pueden cambiar):
 
 | Proveedor | Variable | Modelo por defecto |
 |---|---|---|
@@ -127,7 +128,7 @@ de credencial:
 | `nv_build` | `NVIDIA_INFERENCE_KEY` | glm-5.2 |
 | `ollama` | (ninguna, local) | llama3.1:8b |
 | `azure_openai` | `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_ENDPOINT` | gpt-4o |
-| `openai_compatible` | `SKILLSPECTOR_COMPAT_API_KEY`, `SKILLSPECTOR_COMPAT_BASE_URL` | varía |
+| `openai_compatible` | `SKILLSPECTOR_COMPAT_API_KEY`, `SKILLSPECTOR_COMPAT_BASE_URL` | llama-3.1-70b-versatile |
 
 > **Preferencia DERR:** `ollama` (modelo local, nada sale de la máquina). Si se
 > usa un proveedor en la nube, la skill escaneada debe estar libre de cualquier
@@ -141,9 +142,9 @@ de credencial:
 | `CAUTION` | Leer los hallazgos uno a uno. Las skills con mucha documentación generan falsos positivos. Instalar solo si cada hallazgo está explicado y anotado. |
 | `DO NOT INSTALL` | No instalar. Sin excepciones. Buscar alternativa. |
 
-Registro mínimo por skill aprobada (puede ir en un `docs/skills-aprobadas.md`
-futuro o en la nota de decisión del proyecto): nombre, origen (URL + commit),
-fecha, veredicto, puntuación, quién revisó, hallazgos aceptados y por qué.
+Toda skill aprobada se anota en `DERR-Seguridad-Skills-Aprobadas.md`, que es
+el único registro de estado por skill. El procedimiento de alta está en su
+sección "Cómo añadir la próxima".
 
 ---
 
@@ -178,8 +179,11 @@ python3 <plugin-dir>/scripts/approve.py "<carpeta-de-la-skill>" \
   --verdict APPROVE --note "qué se revisó y por qué se aprueba"
 ```
 
-`--verdict` es obligatorio: `APPROVE`, `CAUTION` o `REJECT`. `--skip-scan`
-omite el re-escaneo (no usar en DERR).
+`--verdict` es obligatorio: `APPROVE`, `CAUTION` o `REJECT`. **Ojo:** en el
+gate, `CAUTION` es una marca, no un bloqueo: la skill sigue pudiendo ejecutarse.
+Si la política DERR exige revisión antes de usarla, registra `REJECT` hasta
+terminarla y luego `APPROVE`. `--skip-scan` omite el re-escaneo (no usar en
+DERR).
 
 **Limitaciones declaradas por el autor**
 - Las skills integradas de Claude Code y las sincronizadas desde claude.ai
@@ -225,16 +229,12 @@ conversacional y aceptando que corre un fork.
       con `skillspector --version`.
 - [ ] Escanear `skillspector-gate` con SkillSpector y, si da `SAFE`, instalarlo
       como guardián (§4).
-- [x] Crear `docs/skills-aprobadas.md` con el registro de la §3.4. Hecho el
-      2026-10-04 con las dos primeras skills (`no-ai-slop` y Thermos),
-      aprobadas por revisión manual; su escaneo con SkillSpector sigue pendiente
-      del paso anterior.
+- [x] Crear el registro de la §3.4: `DERR-Seguridad-Skills-Aprobadas.md`
+      (2026-10-04).
 - [ ] Añadir a este doc cualquier falso positivo recurrente y cómo se resolvió.
 
-Las skills externas instaladas en este repo están listadas, con hash y
-revisión, en `docs/skills-aprobadas.md`. Se vendorizan en `.claude/skills/` y
-`.claude/agents/` en lugar de instalarse desde un marketplace, para que lo que
-se ejecuta sea exactamente lo que se revisó.
+El estado de cada skill instalada (revisión, escaneo, hallazgos) vive solo en
+`DERR-Seguridad-Skills-Aprobadas.md`; los hashes, en `.claude/SHA256SUMS`.
 
 ---
 

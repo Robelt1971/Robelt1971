@@ -1,0 +1,20 @@
+# Hashes de los archivos vendorizados en .claude/. Verificar con:
+#   cd .claude && sha256sum -c SHA256SUMS
+# Al actualizar una skill: repetir la revisión (docs/DERR-Seguridad-Skills-Aprobadas.md),
+# regenerar las lineas afectadas con `sha256sum <archivos>` y actualizar los comentarios.
+#
+# --- no-ai-slop · origen petergyang/no-ai-slop @ 000650b (2026-09-01) · identicos al origen
+992b365f51a2f62cf4c1c5ed22049a9ee551dfea677550c1a72b371c0ceadd62  skills/no-ai-slop/SKILL.md
+8ad8d83ed1abe7fc054ad74966bfca64fc182bc71f59d701b24b962c39d11ad7  skills/no-ai-slop/eval.md
+#
+# --- Thermos · origen theocarranza/thermos-claude @ ffe74b3 (2026-09-16), plugins/thermos/
+# Las tres skills son identicas al origen.
+6e96b6b799ebc0db90fde3843601009d35453f8e8a19f6f4a5dca294c7360e51  skills/thermos/SKILL.md
+f1b16c7db62e2af3cbed1c7fe13595706bd61da4a98f9ab6aa072d9700c6e31d  skills/thermo-nuclear-review/SKILL.md
+3fe9fb20c10a3aeffc059c4c9e0624e2cc5972b02811ded56334daedec4186b2  skills/thermo-nuclear-code-quality-review/SKILL.md
+# Los dos agentes difieren del origen en una sola linea (la 13): la llamada a la
+# rubrica pierde el prefijo `thermos:` del plugin. Hashes del origen, para comparar:
+#   4e01f720db949e055e89595618319eceb217bb19567130a124b4474e982ef286  agents/thermo-nuclear-review-subagent.md (origen)
+#   caaac518253947711a137333f123d65b79481d7bca49761f5c62ed7ae15cd004  agents/thermo-nuclear-code-quality-review-subagent.md (origen)
+b91c5ee9a202a9b55fb58d1366e49c02b62926e46fa9183621c06aae2cb5d121  agents/thermo-nuclear-review-subagent.md
+1a858e270422dc9c98704674b62f3c7bc0c2ae6d3b96de866ccae109c2845868  agents/thermo-nuclear-code-quality-review-subagent.md

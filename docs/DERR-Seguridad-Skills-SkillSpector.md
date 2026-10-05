@@ -230,9 +230,9 @@ conversacional y aceptando que corre un fork.
       como guardián (§4).
 - [x] Crear el registro de la §3.4: `DERR-Seguridad-Skills-Aprobadas.md`
       (2026-10-04).
-- [ ] Escanear las filas `Provisional` del registro (su apartado "Escanear",
-      sobre lo instalado) y rellenar su columna SkillSpector. Cierra la
-      excepción vigente de §0.
+- [ ] Escanear las filas `Provisional` del registro (su apartado "Escanear";
+      esta única vez, `<ruta>` es cada carpeta ya instalada en `.claude/`) y
+      rellenar su columna SkillSpector. Cierra la excepción vigente de §0.
 - [ ] Añadir a este doc cualquier falso positivo recurrente y cómo se resolvió.
 
 ---

@@ -1,8 +1,8 @@
 # Licencias de terceros — contenido vendorizado en `.claude/`
 
-Texto legal de las licencias de los archivos vendorizados en esta carpeta, una
-sección por repositorio de origen. Qué archivos cubre cada sección, y su
-commit de origen: `SHA256SUMS` (misma carpeta, mismo nombre de sección).
+Texto legal de las licencias de los archivos vendorizados en esta carpeta. Los
+encabezados `##` son las mismas claves que los marcadores de `SHA256SUMS`, que
+dice qué archivos cubre cada una.
 
 ---
 
@@ -34,7 +34,10 @@ SOFTWARE.
 
 ---
 
-## thermos (plugin Thermos de Cursor; adaptación para Claude Code de Théo Carranza)
+## thermos
+
+Plugin Thermos de Cursor (titular del copyright); adaptación para Claude Code
+de Théo Carranza.
 
 ```
 MIT License

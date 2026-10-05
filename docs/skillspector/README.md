@@ -1,4 +1,4 @@
 # Informes de SkillSpector
 
-Un archivo por carpeta escaneada: `<carpeta>-<AAAA-MM-DD>.md`. Generados con el
-comando de `DERR-Seguridad-Skills-Aprobadas.md`.
+Un informe por carpeta escaneada. Nombre y comando: `../DERR-Seguridad-Skills-Aprobadas.md`,
+"Cómo añadir la próxima", paso 2.

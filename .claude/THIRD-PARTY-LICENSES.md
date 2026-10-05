@@ -1,6 +1,5 @@
 # Licencias de terceros — contenido vendorizado en `.claude/`
 
-Texto legal de las licencias del contenido vendorizado en esta carpeta.
 Claves: las de los marcadores de `SHA256SUMS`.
 
 ---

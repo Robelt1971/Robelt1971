@@ -4,7 +4,7 @@
 > Claude Code (y en Codex CLI / Gemini CLI si se usan). Complementa las
 > "Buenas prácticas de seguridad" de `DERR-Apify-MCP-Server-Setup.md`.
 > Fecha: 2026-10-04 · Responsable: Ernesto (Albert Rodríguez Robelt)
-> Estado: **ACTIVA**. Estado de cada skill instalada: `DERR-Seguridad-Skills-Aprobadas.md`.
+> Estado: **ACTIVA**
 
 ---
 
@@ -103,7 +103,7 @@ skillspector scan ./mi-skill.zip
 
 ### 3.2 Modo DERR por defecto: estático, sin LLM
 
-El comando exacto está en el registro, "Cómo añadir la próxima", paso 6.
+El comando exacto está en el registro, apartado "Escanear".
 
 - `--no-llm` evita enviar el contenido de la skill a ningún proveedor de LLM.
   Es el modo **obligatorio** si la skill pudiera contener rutas, nombres o
@@ -230,8 +230,9 @@ conversacional y aceptando que corre un fork.
       como guardián (§4).
 - [x] Crear el registro de la §3.4: `DERR-Seguridad-Skills-Aprobadas.md`
       (2026-10-04).
-- [ ] Escanear las filas `Provisional` del registro (su paso 6) y rellenar su
-      columna SkillSpector. Cierra la excepción vigente de §0.
+- [ ] Escanear las filas `Provisional` del registro (su apartado "Escanear",
+      sobre lo instalado) y rellenar su columna SkillSpector. Cierra la
+      excepción vigente de §0.
 - [ ] Añadir a este doc cualquier falso positivo recurrente y cómo se resolvió.
 
 ---

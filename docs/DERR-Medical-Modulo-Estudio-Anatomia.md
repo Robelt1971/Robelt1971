@@ -2,9 +2,10 @@
 
 > Spec e historial de decisión del primer módulo de DERR Medical. **Sin PHI:**
 > el módulo es material de estudio; no toca KIA/GNC ni `DERR-Protected-Data`.
-> Fecha: 2026-10-05 · **Estado: v0.2 FUNCIONAL** — visor + tres modos de
-> estudio, 8 sistemas, 3 172 estructuras, nombres en 7 idiomas (nl y pap
-> pendientes de revisión clínica); verificado en Chromium headless.
+> Fecha: 2026-10-05 · **Estado: v0.3 FUNCIONAL** — visor + tres modos de
+> estudio, 8 sistemas, 3 164 estructuras (sin los modelos de origen no
+> comercial), nombres en 7 idiomas (nl y pap pendientes de revisión clínica);
+> verificado en Chromium headless.
 > Código en `derr-medical/estudio-anatomia/`.
 
 ---
@@ -110,16 +111,18 @@ Decisiones técnicas:
 | Muscular | 683 | 6,2 MB |
 | Cardiovascular | 673 | 10,3 MB |
 | Órganos linfoides | 163 | 0,5 MB |
-| Nervioso y órganos de los sentidos | 588 | 6,1 MB |
-| Visceral | 119 | 2,9 MB |
+| Nervioso y órganos de los sentidos | 584 | 6,1 MB |
+| Visceral | 115 | 2,9 MB |
 | Regiones del cuerpo | 256 | 0,7 MB |
-| **Total** | **3 172** | **29 MB** |
+| **Total** | **3 164** | **29 MB** |
 
 - 1 821 nombres únicos (sin lado); 1 760 con traducción es/fr/pt/la; 1 374 con
   definición.
 - Se excluyen del export: etiquetas 3D (FONT), grupos `.g`/`.j`, inserciones
-  (`.i`, `.ol/.or/.el/.er`), objetos con `?` en el nombre, y la "Bonus
-  collection" (duplicados por región).
+  (`.i`, `.ol/.or/.el/.er`), objetos con `?` en el nombre, la "Bonus
+  collection" (duplicados por región) y las 8 estructuras de origen no
+  comercial de `scripts/exclusiones.json` (vestíbulo, cóclea, riñón y pelvis
+  renal, ambos lados).
 - Las estructuras entre paréntesis en el atlas son variantes anatómicas; se
   exportan, se marcan como `optional` y **no entran en los ejercicios**.
 
@@ -140,16 +143,20 @@ activos (~3,6 M de triángulos) en portátiles sin GPU dedicada.
 
 ## 6. Pendientes y siguientes pasos
 
-1. **Licencia NC y UW:** el oído interno (Univ. de Dundee, CC BY-NC-SA) y el
-   riñón (Lissie Cowley, CC BY-NC) son no comerciales, y los 103 objetos
-   cerebrales de la UW ("Brainder", "White matter") no declaran licencia.
-   Objetos identificados (2026-10-06): `Cochlea`, `Vestibule` en
-   `nervioso.glb`; `Kidney`, `Renal pelvis` en `visceral.glb`; los de la UW
-   por material `Brain`, `Brain-Inner`, `White matter`. `LICENSES.md` ya los
-   declara por archivo. Antes de cualquier uso comercial o redistribución:
-   excluirlos en `exportar_zanatomy.py` o sustituirlos, y aclarar la licencia
-   UW con Z-Anatomy. Decisión pendiente también sobre la licencia del código
-   de la app (hoy sin asignar).
+1. **Licencia NC: HECHO (v0.3, 2026-10-05).** El oído interno (Univ. de
+   Dundee, CC BY-NC-SA) y el riñón (Lissie Cowley, CC BY-NC) dentro de
+   Z-Anatomy son no comerciales. Se identificaron en el `.blend` (colección
+   "Internal ear": `Vestibule` y `Cochlea`; colección "Urinary system":
+   `Kidney` y `Renal pelvis`) y el export los omite mediante
+   `scripts/exclusiones.json`; el manifiesto registra los 8 objetos omitidos.
+   Queda como hueco didáctico: el visor no muestra oído interno ni riñones.
+   Opción futura: sustituirlos por mallas CC BY-SA de BodyParts3D (que sí
+   incluye riñón y laberinto óseo) con el mismo pipeline.
+   **Pendiente:** los 103 objetos cerebrales de la UW ("Brainder", "White
+   matter"; material `Brain`, `Brain-Inner`, `White matter`) no declaran
+   licencia en el atlas: aclararla con Z-Anatomy antes de redistribuir
+   `nervioso.glb`. Pendiente también elegir licencia para el código de la app
+   (hoy sin asignar; `LICENSES.md` lo deja escrito).
 2. **Papiamento y neerlandés en nombres: HECHO (v0.2, 2026-10-05), pendiente
    de revisión clínica.** Tabla `data/nombres-nl-pap.json` (1 819 nombres)
    indexada por nombre inglés, con fuente por entrada: 332 neerlandeses

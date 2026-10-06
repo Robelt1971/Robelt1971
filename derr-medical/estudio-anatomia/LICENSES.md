@@ -1,7 +1,7 @@
 # Licencias del módulo de estudio de anatomía
 
 Este módulo mezcla contenido con varios regímenes. Léelo antes de redistribuir
-cualquier parte: dos de los ocho modelos contienen material no comercial.
+cualquier parte.
 
 ## 1. Modelos 3D y datos anatómicos: CC BY-SA 4.0, con excepciones por archivo
 
@@ -12,25 +12,24 @@ originales y a **compartir igual**: todo derivado de los modelos o de los datos
 (los GLB comprimidos, `estructuras.json`, las definiciones) se distribuye bajo
 CC BY-SA 4.0 y no se puede cerrar.
 
-Z-Anatomy incorpora además modelos de terceros con otras licencias, y esas
-piezas están dentro de nuestros GLB. Por eso la declaración es **por archivo**:
+Z-Anatomy incorpora además modelos de terceros con otras licencias. Los dos no
+comerciales están **excluidos** del módulo (abajo); los de la Universidad de
+Washington siguen dentro. Por eso la declaración es **por archivo**:
 
 | Archivo | Licencia efectiva | Motivo |
 |---|---|---|
-| `modelos/esqueletico.glb`, `articulaciones.glb`, `muscular.glb`, `cardiovascular.glb`, `linfoide.glb`, `regiones.glb` | CC BY-SA 4.0 | Solo contenido Z-Anatomy / BodyParts3D. |
-| `modelos/nervioso.glb` | **No apto para uso comercial** mientras contenga el oído interno | Incluye "Anatomy of the Inner Ear" (University of Dundee School of Medicine, **CC BY-NC-SA 4.0**): estructuras `Cochlea` y `Vestibule` (grupo *Internal ear*). Incluye también los 103 objetos de corteza, sustancia blanca y tractos de "Brainder" y "White matter" (University of Washington), **sin licencia declarada** en el atlas de origen: su redistribución está pendiente de aclarar con Z-Anatomy. |
-| `modelos/visceral.glb` | **No apto para uso comercial** mientras contenga el riñón | Incluye "Kidney" (Lissie Cowley, **CC BY-NC 4.0**): estructuras `Kidney` y `Renal pelvis`. |
+| `modelos/esqueletico.glb`, `articulaciones.glb`, `muscular.glb`, `cardiovascular.glb`, `linfoide.glb`, `visceral.glb`, `regiones.glb` | CC BY-SA 4.0 | Solo contenido Z-Anatomy / BodyParts3D. El riñón no comercial está excluido de `visceral.glb`. |
+| `modelos/nervioso.glb` | CC BY-SA 4.0, **con 103 objetos de licencia sin declarar** | El oído interno no comercial está excluido. Siguen dentro los 103 objetos de corteza, sustancia blanca y tractos de "Brainder" y "White matter" (University of Washington; material `Brain`, `Brain-Inner`, `White matter`), para los que el atlas no declara licencia: su redistribución fuera de DERR está pendiente de aclarar con Z-Anatomy. |
 | `data/estructuras.json`, `data/definiciones.json` | CC BY-SA 4.0 | Derivados de Z-Anatomy. Las definiciones son texto de Wikipedia en inglés (CC BY-SA 3.0 o 4.0 según la fecha de extracción por Z-Anatomy), salvo una (`Apical axillary nodes`) tomada del visor TA2 de Open Anatomy; la ficha indica la fuente de cada una por su dominio. Se eliminó una definición copiada de Radiopaedia (CC BY-NC-SA, incompatible). |
 | `data/nombres-nl-pap.json`, `data/revision-nombres-nl-pap.csv` | CC BY-SA 4.0 | Tabla propia de DERR (ver abajo). |
 
 Consecuencias prácticas:
 
 - Uso interno de estudio en DERR: permitido con todos los archivos.
-- Cualquier uso comercial o redistribución fuera de DERR: antes hay que excluir
-  `Cochlea`, `Vestibule`, `Kidney` y `Renal pelvis` en el export (o sustituir
-  esos modelos) y resolver la licencia de los objetos de la UW. Está anotado en
-  la spec (§6.1) como tarea pendiente, y hasta entonces **no se debe afirmar
-  que `nervioso.glb` ni `visceral.glb` son CC BY-SA 4.0 en bloque**.
+- Redistribución fuera de DERR: siete de los ocho GLB son CC BY-SA 4.0 sin
+  reservas. Para `nervioso.glb` hay que resolver antes la licencia de los
+  objetos de la UW (spec §6.1), o excluirlos con el mismo mecanismo que el
+  oído interno.
 
 ### Código de la aplicación (`app/`, `index.html`, `scripts/`)
 
@@ -58,6 +57,19 @@ atlas: "Brainder" y "White matter" (University of Washington; sin licencia
 declarada); "Cranial Nerves and Foramina" (University of Dundee, CAHID, CC BY
 4.0); "Anatomy of the Inner Ear" (University of Dundee School of Medicine, CC
 BY-NC-SA 4.0); "Kidney" (Lissie Cowley, CC BY-NC 4.0).
+
+**Los dos modelos no comerciales están excluidos de este módulo** (desde el
+2026-10-05). El export omite, en ambos lados, las estructuras listadas en
+`scripts/exclusiones.json`: `Vestibule` y `Cochlea` (únicas mallas de la
+colección "Internal ear" del atlas) y `Kidney` y `Renal pelvis` (la pelvis
+renal comparte procedencia de edición con los riñones y forma parte del mismo
+modelo de origen). Uréteres, vejiga, uretra y los vasos renales son curvas y
+mallas propias del atlas y se conservan. El manifiesto `data/estructuras.json`
+lista los objetos omitidos en la clave `excluded`. Nota: el `.blend` no lleva
+metadatos de procedencia por objeto; la identificación se hizo por la
+estructura de colecciones del atlas y las atribuciones de su README. Si
+Z-Anatomy sustituye esos modelos por otros CC BY-SA, basta con vaciar la lista
+y regenerar.
 
 Traducciones de las estructuras (es/fr/pt/la) aportadas en Z-Anatomy por Carlos
 Torres Villar (español), Ana Teresa Bigio (portugués) y colaboradores.

@@ -1,7 +1,7 @@
 // Arranque del módulo: datos, visor, capas, buscador, ficha y modos de estudio.
 import { Visor } from './visor.js';
 import { Estudio } from './estudio.js';
-import { cargarManifiesto, cargarDefiniciones, definicion, nombre, nombreCompleto, buscar, sistemaDe } from './datos.js';
+import { cargarManifiesto, cargarDefiniciones, definicion, nombre, nombreCompleto, fuenteNombre, buscar, sistemaDe } from './datos.js';
 import { t, setIdioma, aplicar } from './i18n.js';
 
 const BASE = './';
@@ -24,7 +24,7 @@ async function iniciar() {
   setIdioma(pref('derr-anatomia-ui', navigator.language.startsWith('en') ? 'en' : navigator.language.startsWith('nl') ? 'nl' : 'es'));
   langNombres = pref('derr-anatomia-nombres', 'es');
   ui.idiomaUI.value = (await import('./i18n.js')).idioma(); ui.idiomaNombres.value = langNombres;
-  aplicar();
+  aplicar(); marcarIdiomasPendientes();
 
   manifiesto = await cargarManifiesto(BASE);
   cargarDefiniciones(BASE);
@@ -37,7 +37,7 @@ async function iniciar() {
   pintarProgreso();
 
   // Eventos de interfaz
-  ui.idiomaUI.onchange = () => { setIdioma(ui.idiomaUI.value); setPref('derr-anatomia-ui', ui.idiomaUI.value); aplicar(); construirCapas(); refrescarFicha(); estudio.setLang(langNombres); pintarProgreso(); };
+  ui.idiomaUI.onchange = () => { setIdioma(ui.idiomaUI.value); setPref('derr-anatomia-ui', ui.idiomaUI.value); aplicar(); marcarIdiomasPendientes(); construirCapas(); refrescarFicha(); estudio.setLang(langNombres); pintarProgreso(); };
   ui.idiomaNombres.onchange = () => { langNombres = ui.idiomaNombres.value; setPref('derr-anatomia-nombres', langNombres); refrescarFicha(); estudio.setLang(langNombres); alBuscar(); };
   ui.buscador.oninput = alBuscar;
   $('#btn-mostrar-todo').onclick = () => { visor.mostrarTodo(); };
@@ -91,8 +91,20 @@ async function cargarSistema(key) {
     console.error(err); ui.cargaTexto.textContent = `Error: ${err.message || err}`;
     await new Promise((r) => setTimeout(r, 2500));
   } finally { ui.carga.hidden = true; }
-  const cb = ui.capas.querySelector(`input[data-key="${key}"]`); if (cb) cb.checked = true;
+  const cb = ui.capas.querySelector(`input[data-key="${key}"]`); if (cb) cb.checked = visor.tieneSistema(key); // si falló la carga, la casilla no queda marcada
 }
+
+// Los nombres en neerlandés y papiamento son tabla propia pendiente de revisión clínica: se avisa en el propio selector.
+const IDIOMAS_PENDIENTES = ['nl', 'pap'];
+function marcarIdiomasPendientes() {
+  for (const op of ui.idiomaNombres.options) {
+    const pendiente = IDIOMAS_PENDIENTES.includes(op.value);
+    op.textContent = op.textContent.replace(/ ⚠$/, '') + (pendiente ? ' ⚠' : '');
+    op.title = pendiente ? t('sin_revisar') : '';
+  }
+}
+// Sufijo de aviso para un nombre generado automáticamente en el idioma mostrado.
+function marcaIA(e) { return fuenteNombre(e, langNombres) === 'ia' ? ' ⚠' : ''; }
 
 // ---------- Selección, tooltip, ficha ----------
 function alSeleccionar(node) {
@@ -104,7 +116,7 @@ function alPasar(node, e) {
   if (!node) { ui.tooltip.hidden = true; return; }
   if (estudio.modo !== 'explorar' && !estudio.resuelto) { ui.tooltip.hidden = true; return; } // no dar pistas
   const entry = manifiesto.porNodo.get(node); if (!entry) return;
-  ui.tooltip.textContent = nombreCompleto(entry, langNombres, t);
+  ui.tooltip.textContent = nombreCompleto(entry, langNombres, t) + marcaIA(entry);
   const r = $('.escena').getBoundingClientRect();
   ui.tooltip.style.left = `${e.clientX - r.left}px`; ui.tooltip.style.top = `${e.clientY - r.top}px`; ui.tooltip.hidden = false;
 }
@@ -125,7 +137,7 @@ function mostrarFicha(node) {
   const dl = document.createElement('dl');
   const filas = [['espanol', 'es'], ['ingles', 'en'], ['latin', 'la'], ['neerlandes', 'nl'], ['papiamento', 'pap'], ['frances', 'fr'], ['portugues', 'pt']];
   const marcaFuente = (l) => {
-    const f = l === 'nl' ? entry.nl_fuente : l === 'pap' ? entry.pap_fuente : null;
+    const f = fuenteNombre(entry, l);
     if (!f) return null;
     const et = document.createElement('span'); et.className = 'etiqueta';
     et.textContent = f === 'wikipedia-nl' ? t('fuente_wiki_nl') : '⚠ ' + t('sin_revisar');
@@ -169,7 +181,7 @@ function alBuscar() {
   if (q.trim().length >= 2 && !res.length) { const li = document.createElement('li'); li.className = 'sub'; li.textContent = t('sin_resultados'); ui.resultados.appendChild(li); return; }
   for (const e of res) {
     const li = document.createElement('li');
-    li.textContent = nombreCompleto(e, langNombres, t);
+    li.textContent = nombreCompleto(e, langNombres, t) + marcaIA(e);
     const sub = document.createElement('span'); sub.className = 'sub';
     const s = sistemaDe(manifiesto, e.sistema);
     sub.textContent = [s.es, e.la && e.la !== nombre(e, langNombres) ? e.la : null].filter(Boolean).join(' · ');

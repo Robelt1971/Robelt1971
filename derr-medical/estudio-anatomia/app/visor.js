@@ -79,6 +79,7 @@ export class Visor {
     this.loader.setMeshoptDecoder(MeshoptDecoder);
 
     this.sistemas = new Map();   // key -> { grupo: THREE.Group, estructuras: Map(node -> {partes:[Mesh], entry}), visible }
+    this._cargas = new Map();    // key -> Promise de una carga en curso (evita cargar dos veces el mismo sistema)
     this.partes = [];            // todas las mallas (para raycast)
     this.seleccionado = null;    // node
     this.resaltado = null;       // node (modo estudio)
@@ -109,7 +110,7 @@ export class Visor {
       const dx = e.clientX - down.x, dy = e.clientY - down.y;
       const esClic = Math.hypot(dx, dy) < 5 && performance.now() - down.t < 500;
       down = null;
-      if (!esClic) return;
+      if (!esClic || e.detail > 1) return; // el segundo clic de un doble clic no cuenta como selección
       const node = this._pick(e);
       this.onSelect && this.onSelect(node, e);
     });
@@ -139,8 +140,15 @@ export class Visor {
   _visibleEnJerarquia(o) { for (let p = o; p; p = p.parent) if (!p.visible) return false; return true; }
 
   // Carga un sistema; `estructuras` es la lista del manifiesto para ese sistema.
-  async cargarSistema(key, url, estructuras, onProgress) {
-    if (this.sistemas.has(key)) return this.sistemas.get(key);
+  // Si ya está cargado devuelve el existente; si está cargándose, devuelve esa misma promesa.
+  cargarSistema(key, url, estructuras, onProgress) {
+    if (this.sistemas.has(key)) return Promise.resolve(this.sistemas.get(key));
+    if (this._cargas.has(key)) return this._cargas.get(key);
+    const p = this._cargarSistema(key, url, estructuras, onProgress).finally(() => this._cargas.delete(key));
+    this._cargas.set(key, p);
+    return p;
+  }
+  async _cargarSistema(key, url, estructuras, onProgress) {
     const gltf = await new Promise((res, rej) => this.loader.load(url, res, (ev) => onProgress && onProgress(ev), rej));
     const grupo = gltf.scene; grupo.name = key;
     const porNodo = new Map(estructuras.map((e) => [e.node, e]));

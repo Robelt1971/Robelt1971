@@ -6,6 +6,8 @@ Requiere: pip install bpy==4.5.14 (Blender como módulo de Python; Python 3.11).
 Después: ./comprimir.sh <carpeta_salida> (gltfpack) copia los GLB a ../modelos y los JSON a ../data.
 """
 import bpy, re, json, os, sys, time, collections
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from verificar_datos import nodos_glb  # nodos del GLB con geometría real
 args = [a for a in sys.argv[1:] if not a.startswith('-')]
 if 'exportar_zanatomy.py' in args[0]: args = args[1:]
 blend, out, solo = args[0], args[1], set(args[2:])
@@ -70,7 +72,7 @@ def group_chain(o):
 manifest = {'generated': time.strftime('%Y-%m-%d'), 'source': 'Z-Anatomy (CC BY-SA 4.0), derived from BodyParts3D (CC BY-SA 2.1 JP)', 'systems': []}
 defs_used = {}
 top_lcs = {lc.name: lc for lc in vl.layer_collection.children}
-excluidas = []
+excluidas = []; sin_geometria = []
 for col_name, key, es, en in SYSTEMS:
     if solo and key not in solo: continue
     col = sc.collection.children[col_name]
@@ -110,10 +112,18 @@ for col_name, key, es, en in SYSTEMS:
         export_animations=False, export_skins=False, export_morph=False, export_cameras=False, export_lights=False,
         export_yup=True, export_extras=False, export_hierarchy_flatten_objs=True)
     size = os.path.getsize(path)
+    # Curvas auxiliares (ejes, meridianos) salen como nodos vacíos: no se pueden seleccionar, así que no son estructuras.
+    con_geom = nodos_glb(path)
+    vacias = [e['node'] for e in structures if e['node'] not in con_geom]
+    if vacias:
+        print('  !! sin geometría en el GLB, omitidas del manifiesto:', vacias)
+        structures = [e for e in structures if e['node'] in con_geom]; sin_geometria += vacias
     print(f'## {key}: {len(structures)} structures, {len(objs)} objects, {size//1024} KB, {round(time.time()-t,1)} s', flush=True)
     manifest['systems'].append({'key': key, 'es': es, 'en': en, 'file': f'{key}.glb', 'count': len(structures), 'structures': structures})
 manifest['excluded'] = sorted(excluidas)
+manifest['sin_geometria'] = sorted(sin_geometria)
 print('## excluded (non-commercial source models):', sorted(excluidas))
+print('## sin geometría (omitidas):', sorted(sin_geometria))
 if solo:
     # Export parcial: fusionar con el manifiesto existente para no perder los demás sistemas.
     prev_m = os.path.join(out, 'estructuras.json'); prev_d = os.path.join(out, 'definiciones.json')
@@ -122,6 +132,7 @@ if solo:
         nuevos = {s['key']: s for s in manifest['systems']}
         manifest['systems'] = [nuevos.get(s['key'], s) for s in prev['systems']]
         manifest['excluded'] = sorted(set(prev.get('excluded', [])) | set(excluidas))
+        manifest['sin_geometria'] = sorted(set(prev.get('sin_geometria', [])) | set(sin_geometria))
     if os.path.exists(prev_d):
         d = json.load(open(prev_d, encoding='utf-8')); d.update(defs_used); defs_used = d
 json.dump(manifest, open(os.path.join(out, 'estructuras.json'), 'w'), ensure_ascii=False, separators=(',', ':'))

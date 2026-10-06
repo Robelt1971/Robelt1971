@@ -3,8 +3,8 @@
 > Spec e historial de decisión del primer módulo de DERR Medical. **Sin PHI:**
 > el módulo es material de estudio; no toca KIA/GNC ni `DERR-Protected-Data`.
 > Fecha: 2026-10-05 · **Estado: v0.3 FUNCIONAL** — visor + tres modos de
-> estudio, 8 sistemas, 3 164 estructuras (sin los modelos de origen no
-> comercial), nombres en 7 idiomas (nl y pap pendientes de revisión clínica);
+> estudio, 8 sistemas, 3 158 estructuras (sin los modelos de origen no
+> comercial ni las curvas auxiliares sin geometría), nombres en 7 idiomas (nl y pap pendientes de revisión clínica);
 > verificado en Chromium headless.
 > Código en `derr-medical/estudio-anatomia/`.
 
@@ -111,10 +111,10 @@ Decisiones técnicas:
 | Muscular | 683 | 6,2 MB |
 | Cardiovascular | 673 | 10,3 MB |
 | Órganos linfoides | 163 | 0,5 MB |
-| Nervioso y órganos de los sentidos | 584 | 6,1 MB |
+| Nervioso y órganos de los sentidos | 578 | 6,1 MB |
 | Visceral | 115 | 2,9 MB |
 | Regiones del cuerpo | 256 | 0,7 MB |
-| **Total** | **3 164** | **29 MB** |
+| **Total** | **3 158** | **29 MB** |
 
 - 1 821 nombres únicos (sin lado); 1 760 con traducción es/fr/pt/la; 1 374 con
   definición.
@@ -122,7 +122,11 @@ Decisiones técnicas:
   (`.i`, `.ol/.or/.el/.er`), objetos con `?` en el nombre, la "Bonus
   collection" (duplicados por región) y las 8 estructuras de origen no
   comercial de `scripts/exclusiones.json` (vestíbulo, cóclea, riñón y pelvis
-  renal, ambos lados).
+  renal, ambos lados). Se omiten también del manifiesto los objetos que salen
+  del export como nodos sin malla (6 curvas auxiliares del ojo: ejes,
+  meridianos, ecuador, cuerpo ciliar): el visor no puede seleccionarlos y en
+  los ejercicios serían preguntas sin respuesta posible. El manifiesto los
+  lista en `sin_geometria`; `scripts/verificar_datos.py` lo comprueba.
 - Las estructuras entre paréntesis en el atlas son variantes anatómicas; se
   exportan, se marcan como `optional` y **no entran en los ejercicios**.
 

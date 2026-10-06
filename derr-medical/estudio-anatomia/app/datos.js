@@ -14,8 +14,8 @@ export async function cargarManifiesto(base) {
   for (const s of m.systems) {
     for (const e of s.structures) {
       e.sistema = s.key;
-      const x = extra[e.en];
-      if (x) { e.nl = x.nl; e.pap = x.pap; e.nl_fuente = x.nl_fuente; e.pap_fuente = x.pap_fuente; }
+      // La tabla trae <idioma> y <idioma>_fuente; se copian tal cual para no fijar aquí qué idiomas existen.
+      if (extra[e.en]) Object.assign(e, extra[e.en]);
       m.porNodo.set(e.node, e);
       m.lista.push(e);
     }
@@ -36,6 +36,8 @@ export function definicion(e) { return defs && e.def ? defs[e.def] : null; }
 export function nombre(e, lang) {
   return e[lang] || e.en;
 }
+// Procedencia del nombre en un idioma ('wikipedia-nl', 'ia', 'revisado'…) o null si el dato viene del atlas.
+export function fuenteNombre(e, lang) { return e[`${lang}_fuente`] || null; }
 // Nombre con lado: "Húmero (derecho)".
 export function nombreCompleto(e, lang, t) {
   const n = nombre(e, lang);

@@ -21,12 +21,12 @@ python3 -m http.server 8080
 | Carpeta | Contenido |
 |---|---|
 | `index.html`, `app/` | La aplicación: visor (`visor.js`), datos (`datos.js`), modos de estudio y progreso (`estudio.js`), textos es/en/nl (`i18n.js`). |
-| `modelos/` | 8 sistemas en GLB comprimido (meshopt), 29 MB en total: esquelético, articulaciones, muscular, cardiovascular, linfoide, nervioso y órganos de los sentidos, visceral, regiones. 3 164 estructuras (sin los 8 objetos de origen no comercial). |
+| `modelos/` | 8 sistemas en GLB comprimido (meshopt), 29 MB en total: esquelético, articulaciones, muscular, cardiovascular, linfoide, nervioso y órganos de los sentidos, visceral, regiones. 3 158 estructuras (sin los 8 objetos de origen no comercial ni 6 curvas auxiliares del ojo sin geometría). |
 | `data/estructuras.json` | Manifiesto: por estructura, nombre en inglés, español, latín (Terminologia Anatomica), francés y portugués; lado; grupo anatómico; materiales; clave de definición. Los nombres en neerlandés y papiamento se cargan aparte (abajo). |
 | `data/definiciones.json` | 1 373 resúmenes en inglés (Wikipedia, CC BY-SA; una de Open Anatomy) con enlace a la fuente, que la ficha muestra por dominio. |
-| `data/nombres-nl-pap.json` | Tabla propia de DERR: nombre en neerlandés y papiamento (Aruba) para los 1 819 nombres únicos, con la fuente de cada uno (`wikipedia-nl` verificada o `ia` generada, pendiente de revisión). |
+| `data/nombres-nl-pap.json` | Tabla propia de DERR: nombre en neerlandés y papiamento (Aruba) por nombre inglés, con la fuente de cada uno: `wikipedia-nl` (título coincidente en la Wikipedia en neerlandés) o `ia` (generado por modelo de lenguaje). **Toda la tabla está pendiente de revisión clínica**; la interfaz lo avisa en el selector de idioma, el buscador, el tooltip, la ficha y los ejercicios. |
 | `data/revision-nombres-nl-pap.csv` | Hoja de revisión clínica (separador `;`): abre en Excel, marca `ok_nl`/`ok_pap` y escribe la corrección. |
-| `scripts/` | Pipeline reproducible desde el `.blend` original (ver abajo), con `exclusiones.json` para las estructuras que no se exportan. |
+| `scripts/` | Pipeline reproducible desde el `.blend` original (ver abajo), con `exclusiones.json` para las estructuras que no se exportan y `verificar_datos.py` para comprobar la coherencia manifiesto ↔ GLB ↔ tabla nl/pap. |
 | `LICENSES.md` | Obligaciones CC BY-SA y atribuciones. Léelo antes de redistribuir. |
 
 ## Modos
@@ -75,8 +75,9 @@ definición del propio archivo.
 - Faltan traducciones en ~60 estructuras y definición en ~450; el visor cae al
   inglés o indica que no hay definición.
 - **Neerlandés y papiamento son traducciones propias de DERR, no de Z-Anatomy.**
-  332 nombres neerlandeses vienen del título del artículo correspondiente en la
-  Wikipedia en neerlandés (etiqueta "Wikipedia (nl)" en la ficha); el resto del
+  332 nombres neerlandeses coinciden con el título del artículo correspondiente
+  en la Wikipedia en neerlandés (etiqueta "Wikipedia (nl)" en la ficha; no es
+  una revisión clínica); el resto del
   neerlandés y todo el papiamento se generaron con un modelo de lenguaje
   siguiendo la ortografía etimológica de Aruba y llevan la etiqueta "pendiente
   de revisión clínica". Revisar con `data/revision-nombres-nl-pap.csv` antes de

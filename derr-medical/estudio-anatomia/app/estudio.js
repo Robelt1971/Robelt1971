@@ -127,6 +127,10 @@ export class Estudio {
     const preg = document.createElement('p'); preg.className = 'pregunta';
     preg.textContent = this.modo === 'identificar' ? t('pregunta_identificar') : t('pregunta_localizar', { nombre: this._nombre(this.actual) });
     el.appendChild(preg);
+    if (this.langNombres === 'nl' || this.langNombres === 'pap') {
+      // Los nombres en estos idiomas son tabla propia pendiente de revisión: la respuesta "correcta" puede estar mal.
+      const av = document.createElement('p'); av.className = 'aviso'; av.textContent = '⚠ ' + t('sin_revisar'); el.appendChild(av);
+    }
 
     if (this.modo === 'identificar') {
       const ops = document.createElement('div'); ops.className = 'opciones';

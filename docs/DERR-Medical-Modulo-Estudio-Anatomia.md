@@ -140,10 +140,16 @@ activos (~3,6 M de triángulos) en portátiles sin GPU dedicada.
 
 ## 6. Pendientes y siguientes pasos
 
-1. **Licencia NC:** el oído interno (Univ. de Dundee, CC BY-NC-SA) y el riñón
-   (Lissie Cowley, CC BY-NC) dentro de Z-Anatomy son no comerciales. Antes de
-   cualquier uso comercial de DERR Medical: identificar esos objetos en el
-   `.blend` y excluirlos en el export o sustituirlos.
+1. **Licencia NC y UW:** el oído interno (Univ. de Dundee, CC BY-NC-SA) y el
+   riñón (Lissie Cowley, CC BY-NC) son no comerciales, y los 103 objetos
+   cerebrales de la UW ("Brainder", "White matter") no declaran licencia.
+   Objetos identificados (2026-10-06): `Cochlea`, `Vestibule` en
+   `nervioso.glb`; `Kidney`, `Renal pelvis` en `visceral.glb`; los de la UW
+   por material `Brain`, `Brain-Inner`, `White matter`. `LICENSES.md` ya los
+   declara por archivo. Antes de cualquier uso comercial o redistribución:
+   excluirlos en `exportar_zanatomy.py` o sustituirlos, y aclarar la licencia
+   UW con Z-Anatomy. Decisión pendiente también sobre la licencia del código
+   de la app (hoy sin asignar).
 2. **Papiamento y neerlandés en nombres: HECHO (v0.2, 2026-10-05), pendiente
    de revisión clínica.** Tabla `data/nombres-nl-pap.json` (1 819 nombres)
    indexada por nombre inglés, con fuente por entrada: 332 neerlandeses

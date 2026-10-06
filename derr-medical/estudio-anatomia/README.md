@@ -23,7 +23,7 @@ python3 -m http.server 8080
 | `index.html`, `app/` | La aplicación: visor (`visor.js`), datos (`datos.js`), modos de estudio y progreso (`estudio.js`), textos es/en/nl (`i18n.js`). |
 | `modelos/` | 8 sistemas en GLB comprimido (meshopt), 29 MB en total: esquelético, articulaciones, muscular, cardiovascular, linfoide, nervioso y órganos de los sentidos, visceral, regiones. 3 172 estructuras. |
 | `data/estructuras.json` | Manifiesto: por estructura, nombre en inglés, español, latín (Terminologia Anatomica), francés y portugués; lado; grupo anatómico; materiales; clave de definición. Los nombres en neerlandés y papiamento se cargan aparte (abajo). |
-| `data/definiciones.json` | 1 374 resúmenes en inglés (Wikipedia, CC BY-SA 3.0) con enlace al artículo. |
+| `data/definiciones.json` | 1 373 resúmenes en inglés (Wikipedia, CC BY-SA; una de Open Anatomy) con enlace a la fuente, que la ficha muestra por dominio. |
 | `data/nombres-nl-pap.json` | Tabla propia de DERR: nombre en neerlandés y papiamento (Aruba) para los 1 819 nombres únicos, con la fuente de cada uno (`wikipedia-nl` verificada o `ia` generada, pendiente de revisión). |
 | `data/revision-nombres-nl-pap.csv` | Hoja de revisión clínica (separador `;`): abre en Excel, marca `ok_nl`/`ok_pap` y escribe la corrección. |
 | `scripts/` | Pipeline reproducible desde el `.blend` original (ver abajo). |
@@ -83,5 +83,6 @@ definición del propio archivo.
   usarlos en docencia formal.
 - Las inserciones musculares (origen/inserción) y la capa de biomecánica del
   atlas no están incluidas todavía.
-- Dos modelos de origen son no comerciales (oído interno, riñón); ver
-  `LICENSES.md`.
+- `nervioso.glb` y `visceral.glb` contienen material de terceros no comercial
+  (oído interno, riñón) y objetos de la UW sin licencia declarada: no son
+  CC BY-SA en bloque. Detalle por archivo en `LICENSES.md`.

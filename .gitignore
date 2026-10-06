@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.pyc
+
+# Node (las pruebas de humo usan Playwright instalado aparte; no se vendoriza)
+node_modules/
+
+# Sistema operativo y editores
+.DS_Store
+Thumbs.db
+*.swp

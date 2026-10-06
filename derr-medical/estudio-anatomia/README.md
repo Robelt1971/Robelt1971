@@ -24,11 +24,12 @@ python3 -m http.server 8080
 | `modelos/` | Un GLB comprimido (meshopt) por sistema: esquelético, articulaciones, muscular, cardiovascular, linfoide, nervioso y órganos de los sentidos, visceral, regiones. Las cifras (estructuras por sistema, tamaño) las imprime `scripts/verificar_datos.py` y están en la spec. |
 | `data/estructuras.json` | Manifiesto: cabecera (fecha, origen y commit de Z-Anatomy, objetos excluidos y sin geometría) y, por estructura, nombre en inglés, español, latín (Terminologia Anatomica), francés y portugués; lado; grupo anatómico (sin repetir el sistema); clave de definición. Los nombres en neerlandés y papiamento se cargan aparte (abajo). |
 | `data/definiciones.json` | Resúmenes en inglés (Wikipedia, CC BY-SA; uno de Open Anatomy) con enlace a la fuente, que la ficha muestra por dominio. |
-| `data/nombres-nl-pap.json` | Tabla propia de DERR: nombre en neerlandés y papiamento (Aruba) por nombre inglés, con la fuente de cada uno: `wikipedia-nl` (título coincidente en la Wikipedia en neerlandés) o `ia` (generado por modelo de lenguaje). **Toda la tabla está pendiente de revisión clínica**; la interfaz lo avisa en el selector de idioma, el buscador, el tooltip, la ficha y los ejercicios. |
-| `data/revision-nombres-nl-pap.csv` | Hoja de revisión clínica (separador `;`): abre en Excel, marca `ok_nl`/`ok_pap` o escribe la corrección, y vuelca el resultado con `scripts/aplicar_revision.py`, que pone la fuente en `revisado`. |
-| `scripts/` | Pipeline reproducible desde el `.blend` original (ver abajo): `exportar_zanatomy.py`, `comprimir.sh`, `exclusiones.json` (estructuras que no se exportan), `verificar_datos.py` (coherencia manifiesto ↔ GLB ↔ tabla nl/pap) y `aplicar_revision.py` (CSV de revisión → JSON). |
+| `data/nombres-nl-pap.json` | Tabla propia de DERR: nombre en neerlandés y papiamento (Aruba) por nombre inglés, con la fuente de cada uno: `wikipedia-nl` (título coincidente en la Wikipedia en neerlandés), `ia` (generado por modelo de lenguaje) o `revisado` (revisión clínica). **Un nombre `ia` no se muestra nunca**: en su lugar la app enseña el latín (Terminologia Anatomica) y lo dice en la ficha y en los ejercicios; el selector de idioma marca nl y pap con ⚠ mientras quede algo sin revisar. |
+| `data/revision-nombres-nl-pap.csv` | Hoja maestra de revisión clínica (separador `;`). Se trabaja por oleadas: `scripts/oleada_revision.py --sistemas esqueletico muscular --salida oleada-1.csv` saca la hoja de esos sistemas; el revisor marca `ok_nl`/`ok_pap` o escribe la corrección en Excel, y `scripts/aplicar_revision.py --csv oleada-1.csv` vuelca el resultado al JSON con fuente `revisado`. |
+| `scripts/` | Pipeline reproducible desde el `.blend` original (ver abajo): `exportar_zanatomy.py`, `comprimir.sh`, `exclusiones.json` (estructuras y definiciones que no se exportan), `listar_uw.py` (mantiene la lista de objetos de la UW), `verificar_datos.py` (coherencia manifiesto ↔ GLB ↔ tabla nl/pap), `oleada_revision.py` y `aplicar_revision.py` (hoja de revisión ↔ JSON), `migrar_repo.sh` (traslado a un repositorio propio). |
 | `tests/humo.mjs` | Prueba de humo en Chromium sin cabeza (abajo). |
-| `LICENSES.md` | Obligaciones CC BY-SA y atribuciones. Léelo antes de redistribuir. |
+| `LICENSE` | Licencia MIT del código de la app. |
+| `LICENSES.md` | Licencia por archivo: qué es MIT, qué es CC BY-SA y las atribuciones obligatorias. Léelo antes de redistribuir. |
 
 ## Modos
 
@@ -90,18 +91,19 @@ definición del propio archivo.
 - Faltan traducciones en algunas estructuras y definición en otras; el visor
   cae al inglés o indica que no hay definición. `verificar_datos.py` dice cuántas.
 - **Neerlandés y papiamento son traducciones propias de DERR, no de Z-Anatomy.**
-  332 nombres neerlandeses coinciden con el título del artículo correspondiente
-  en la Wikipedia en neerlandés (etiqueta "Wikipedia (nl)" en la ficha; no es
-  una revisión clínica); el resto del
-  neerlandés y todo el papiamento se generaron con un modelo de lenguaje
-  siguiendo la ortografía etimológica de Aruba y llevan la etiqueta "pendiente
-  de revisión clínica". Revisar con `data/revision-nombres-nl-pap.csv` antes de
-  usarlos en docencia formal.
+  Parte del neerlandés coincide con el título del artículo correspondiente en
+  la Wikipedia en neerlandés (etiqueta "Wikipedia (nl)" en la ficha; no es una
+  revisión clínica) y se muestra. El resto del neerlandés y todo el papiamento
+  se generaron con un modelo de lenguaje con la ortografía etimológica de
+  Aruba y **no se muestran** hasta que un revisor clínico los apruebe: la app
+  enseña el latín en su lugar y lo indica. Cuántos quedan por sistema:
+  `python3 scripts/oleada_revision.py --listar`. Primera oleada propuesta:
+  esquelético y muscular, que es lo que más se usa en los ejercicios.
 - Las inserciones musculares (origen/inserción) y la capa de biomecánica del
   atlas no están incluidas todavía.
 - El oído interno (vestíbulo y cóclea) y los riñones con su pelvis renal no
-  están incluidos: sus modelos de origen son no comerciales. Lista en
-  `scripts/exclusiones.json`; detalle en `LICENSES.md`.
-- `nervioso.glb` contiene además 103 objetos cerebrales de la Universidad de
-  Washington ("Brainder", "White matter") sin licencia declarada en el atlas;
-  por eso no es CC BY-SA en bloque. Detalle por archivo en `LICENSES.md`.
+  están incluidos: sus modelos de origen son no comerciales. Tampoco la
+  corteza cerebral parcelada, la sustancia blanca y los tractos ("Brainder" y
+  "White matter", Universidad de Washington): el atlas no declara su licencia.
+  Lista en `scripts/exclusiones.json`; detalle y consulta pendiente en
+  `LICENSES.md` y `docs/consulta-licencia-UW.md`.

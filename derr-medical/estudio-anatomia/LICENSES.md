@@ -13,32 +13,30 @@ originales y a **compartir igual**: todo derivado de los modelos o de los datos
 CC BY-SA 4.0 y no se puede cerrar.
 
 Z-Anatomy incorpora además modelos de terceros con otras licencias. Los dos no
-comerciales están **excluidos** del módulo (abajo); los de la Universidad de
-Washington siguen dentro. Por eso la declaración es **por archivo**:
+comerciales y los dos sin licencia declarada (Universidad de Washington) están
+**excluidos** del módulo (abajo). La declaración se mantiene **por archivo**:
 
 | Archivo | Licencia efectiva | Motivo |
 |---|---|---|
 | `modelos/esqueletico.glb`, `articulaciones.glb`, `muscular.glb`, `cardiovascular.glb`, `linfoide.glb`, `visceral.glb`, `regiones.glb` | CC BY-SA 4.0 | Solo contenido Z-Anatomy / BodyParts3D. El riñón no comercial está excluido de `visceral.glb`. |
-| `modelos/nervioso.glb` | CC BY-SA 4.0, **con 103 objetos de licencia sin declarar** | El oído interno no comercial está excluido. Siguen dentro los 103 objetos de corteza, sustancia blanca y tractos de "Brainder" y "White matter" (University of Washington; material `Brain`, `Brain-Inner`, `White matter`), para los que el atlas no declara licencia: su redistribución fuera de DERR está pendiente de aclarar con Z-Anatomy. |
-| `data/estructuras.json`, `data/definiciones.json` | CC BY-SA 4.0 | Derivados de Z-Anatomy. Las definiciones son texto de Wikipedia en inglés (CC BY-SA 3.0 o 4.0 según la fecha de extracción por Z-Anatomy), salvo una (`Apical axillary nodes`) tomada del visor TA2 de Open Anatomy; la ficha indica la fuente de cada una por su dominio. Se eliminó una definición copiada de Radiopaedia (CC BY-NC-SA, incompatible). |
+| `modelos/nervioso.glb` | CC BY-SA 4.0 | El oído interno no comercial y los 103 objetos (174 con lado) de "Brainder" y "White matter" (University of Washington, sin licencia declarada) están excluidos desde el 2026-10-06. Hasta esa fecha el archivo los contenía; las versiones anteriores del repositorio no deben redistribuirse. |
+| `data/estructuras.json`, `data/definiciones.json` | CC BY-SA 4.0 | Derivados de Z-Anatomy. Las definiciones son texto de Wikipedia en inglés (CC BY-SA 3.0 o 4.0 según la fecha de extracción por Z-Anatomy), salvo una (`Apical axillary nodes`) tomada del visor TA2 de Open Anatomy; la ficha indica la fuente de cada una por su dominio. La definición de `Intermediate bronchus`, copiada de Radiopaedia (CC BY-NC-SA, incompatible), se omite en el export (clave `definiciones` de `scripts/exclusiones.json`). |
 | `data/nombres-nl-pap.json`, `data/revision-nombres-nl-pap.csv` | CC BY-SA 4.0 | Tabla propia de DERR (ver abajo). |
 
 Consecuencias prácticas:
 
 - Uso interno de estudio en DERR: permitido con todos los archivos.
-- Redistribución fuera de DERR: siete de los ocho GLB son CC BY-SA 4.0 sin
-  reservas. Para `nervioso.glb` hay que resolver antes la licencia de los
-  objetos de la UW (spec §6.1), o excluirlos con el mismo mecanismo que el
-  oído interno.
+- Redistribución fuera de DERR: los ocho GLB y los datos son CC BY-SA 4.0 sin
+  reservas, con la atribución de abajo.
 
-### Código de la aplicación (`app/`, `index.html`, `scripts/`)
+### Código de la aplicación (`app/`, `index.html`, `scripts/`, `tests/`): MIT
 
-Es obra propia de DERR Group y **no tiene licencia asignada todavía**: en un
-repositorio público sin archivo de licencia rigen todos los derechos reservados.
-No reutilizar fuera de DERR hasta que se elija una licencia (recomendación:
-MIT, compatible con mantener los modelos y datos bajo CC BY-SA). Si el visor se
-integra en otra aplicación de DERR, hay que mantener la atribución visible y
-publicar bajo CC BY-SA 4.0 cualquier modificación de los modelos o datos.
+Obra de DERR Group, publicada bajo la licencia MIT (archivo `LICENSE`, desde el
+2026-10-06). La licencia del código no alcanza a `modelos/` ni a `data/`, que
+siguen bajo CC BY-SA 4.0: quien reutilice el visor con estos modelos o datos
+mantiene la atribución visible y publica bajo CC BY-SA 4.0 cualquier
+modificación de los modelos o de los datos. Las bibliotecas de `vendor/` tienen
+su propia licencia (sección 2).
 
 ### Atribución requerida (texto que debe acompañar a los modelos)
 
@@ -70,6 +68,22 @@ metadatos de procedencia por objeto; la identificación se hizo por la
 estructura de colecciones del atlas y las atribuciones de su README. Si
 Z-Anatomy sustituye esos modelos por otros CC BY-SA, basta con vaciar la lista
 y regenerar.
+
+**Los dos modelos de la Universidad de Washington ("Brainder", "White matter")
+están excluidos desde el 2026-10-06.** El atlas los atribuye pero no declara
+su licencia, y lo que no se puede licenciar no se redistribuye. Son los 103
+nombres (174 objetos con lado) de corteza cerebral (giros y surcos con
+nomenclatura del atlas de Destrieux), sustancia blanca, comisuras y tractos
+listados en `scripts/exclusiones.json` con origen "Brainder / White matter".
+Se identificaron por el material del objeto (`Brain`, `Brain-Inner`, `White
+matter`), único rastro de procedencia que deja el `.blend`
+(`scripts/listar_uw.py` reproduce la lista); el criterio es deliberadamente
+conservador y puede arrastrar algún objeto propio del atlas que comparta
+material (puente, bulbo raquídeo, hipotálamo, astas de la médula). Mientras
+no se aclare, el visor no muestra la corteza parcelada ni los tractos. La
+consulta a Z-Anatomy está redactada en `docs/consulta-licencia-UW.md`; si
+responden con una licencia compatible, basta con retirar esas entradas de la
+lista y regenerar.
 
 Traducciones de las estructuras (es/fr/pt/la) aportadas en Z-Anatomy por Carlos
 Torres Villar (español), Ana Teresa Bigio (portugués) y colaboradores.

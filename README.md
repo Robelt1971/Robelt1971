@@ -17,4 +17,4 @@
 
 | Módulo | Estado | Dónde |
 |---|---|---|
-| Estudio de anatomía 3D (base [Z-Anatomy](https://github.com/Z-Anatomy/The-blend), CC BY-SA 4.0; código MIT) | v0.4 funcional | [`derr-medical/estudio-anatomia/`](derr-medical/estudio-anatomia/) · spec en [`docs/DERR-Medical-Modulo-Estudio-Anatomia.md`](docs/DERR-Medical-Modulo-Estudio-Anatomia.md) |
+| Estudio de anatomía 3D (base [Z-Anatomy](https://github.com/Z-Anatomy/The-blend), CC BY-SA 4.0; código MIT) | v0.4 funcional | Repositorio propio desde el 2026-10-06: [`Robelt1971/DERR-Medical-Anatomia`](https://github.com/Robelt1971/DERR-Medical-Anatomia) (código, modelos, datos y spec en `docs/`) |

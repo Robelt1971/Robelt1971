@@ -3,6 +3,7 @@ Uso: python3 exportar_zanatomy.py <Startup.blend> <carpeta_salida> [clave_sistem
      (sin claves exporta los 8 sistemas; con claves, solo esos, p. ej. "nervioso visceral")
 Excluye las estructuras listadas en exclusiones.json (modelos de origen no comerciales).
 Requiere: pip install bpy==4.5.14 (Blender como módulo de Python; Python 3.11).
+Variable ZANATOMY_COMMIT: commit corto de Z-Anatomy/The-blend del que sale el .blend; queda en el manifiesto.
 Después: ./comprimir.sh <carpeta_salida> (gltfpack) copia los GLB a ../modelos y los JSON a ../data.
 """
 import bpy, re, json, os, sys, time, collections
@@ -61,15 +62,19 @@ for t in bpy.data.texts:
     if len(summary) > 900: summary = summary[:897].rsplit(' ', 1)[0] + '…'
     if summary: DEFS[t.name.strip()] = {'summary': summary, 'url': url}
 
-def group_chain(o):
+def _norm(x): return re.sub(r'\bthe\b', '', x.lower()).replace('&', 'and').split()
+def group_chain(o, system_en):
+    """Ruta de grupos anatómicos de abajo arriba, sin el nodo raíz del sistema (ya lo da la clave `key`)."""
     chain = []; p = o.parent
     while p is not None and len(chain) < 6:
         n, _ = clean(p.name)
         if re.search(r'\.(g|j)$', n): n = n[:-2]
         chain.append(n); p = p.parent
+    if chain and _norm(chain[-1]) == _norm(system_en): chain.pop()
     return chain
 
-manifest = {'generated': time.strftime('%Y-%m-%d'), 'source': 'Z-Anatomy (CC BY-SA 4.0), derived from BodyParts3D (CC BY-SA 2.1 JP)', 'systems': []}
+manifest = {'generated': time.strftime('%Y-%m-%d'), 'source': 'Z-Anatomy (CC BY-SA 4.0), derived from BodyParts3D (CC BY-SA 2.1 JP)',
+            'source_commit': os.environ.get('ZANATOMY_COMMIT', 'desconocido'), 'systems': []}
 defs_used = {}
 top_lcs = {lc.name: lc for lc in vl.layer_collection.children}
 excluidas = []; sin_geometria = []
@@ -98,8 +103,7 @@ for col_name, key, es, en in SYSTEMS:
         d = DEFS.get(b) or DEFS.get(name)
         entry = {'node': o.name, 'en': name, 'side': side,
                  'optional': name.startswith('('),
-                 'group': group_chain(o)[::-1],
-                 'materials': [m.name for m in getattr(o.data, 'materials', []) if m][:2]}
+                 'group': group_chain(o, en)[::-1]}
         for k, v in LANG.items():
             if tr.get(k): entry[v] = tr[k]
         if d:

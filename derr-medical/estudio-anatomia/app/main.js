@@ -1,12 +1,13 @@
-// Arranque del módulo: datos, visor, capas, buscador, ficha y modos de estudio.
-import { Visor } from './visor.js';
+// Arranque del módulo: cableado entre datos, visor, estudio e interfaz. La política de cada
+// modo vive en estudio.js; el estado de idioma, en i18n.js; la visibilidad 3D, en visor.js.
+import { Visor, colorSistema } from './visor.js';
 import { Estudio } from './estudio.js';
 import { cargarManifiesto, cargarDefiniciones, definicion, nombre, nombreCompleto, fuenteNombre, buscar, sistemaDe } from './datos.js';
-import { t, setIdioma, aplicar } from './i18n.js';
+import { t, aplicar, cargarPreferencias, idioma, setIdioma, idiomaNombres, setIdiomaNombres, nombreSistema } from './i18n.js';
 
 const BASE = './';
-const COLORES_SISTEMA = { esqueletico: '#e9dfc8', articulaciones: '#cdd7df', muscular: '#a23b3b', cardiovascular: '#c0392b', linfoide: '#6fbf73', nervioso: '#f2d16b', visceral: '#d99a8c', regiones: '#cfb9a0' };
 const SISTEMAS_INICIALES = ['esqueletico'];
+const IDIOMAS_PENDIENTES = ['nl', 'pap']; // tabla propia de DERR, pendiente de revisión clínica
 
 const $ = (s) => document.querySelector(s);
 const ui = {
@@ -14,33 +15,28 @@ const ui = {
   tooltip: $('#tooltip'), carga: $('#carga'), cargaProgreso: $('#carga-progreso'), cargaTexto: $('#carga-texto'),
   idiomaUI: $('#idioma-ui'), idiomaNombres: $('#idioma-nombres'), progreso: $('#progreso-resumen'),
 };
-let langNombres = 'es';
 let manifiesto, visor, estudio;
 
-function pref(clave, defecto) { try { return localStorage.getItem(clave) || defecto; } catch { return defecto; } }
-function setPref(clave, v) { try { localStorage.setItem(clave, v); } catch { /* sin almacenamiento */ } }
-
 async function iniciar() {
-  setIdioma(pref('derr-anatomia-ui', navigator.language.startsWith('en') ? 'en' : navigator.language.startsWith('nl') ? 'nl' : 'es'));
-  langNombres = pref('derr-anatomia-nombres', 'es');
-  ui.idiomaUI.value = (await import('./i18n.js')).idioma(); ui.idiomaNombres.value = langNombres;
-  aplicar(); marcarIdiomasPendientes();
+  cargarPreferencias();
+  ui.idiomaUI.value = idioma(); ui.idiomaNombres.value = idiomaNombres();
+  pintarTextos();
 
   manifiesto = await cargarManifiesto(BASE);
   cargarDefiniciones(BASE);
   visor = new Visor($('#lienzo'), { onSelect: alSeleccionar, onHover: alPasar });
-  estudio = new Estudio({ visor, manifiesto, contenedor: ui.estudio, langNombres, onFicha: mostrarFicha });
+  estudio = new Estudio({ visor, manifiesto, contenedor: ui.estudio, onFicha: mostrarFicha, onRespuesta: pintarProgreso });
 
   construirCapas();
-  window.__derr = { visor, manifiesto, estudio }; // acceso para depuración y pruebas automatizadas
+  window.__derr = { visor, manifiesto, estudio }; // acceso para depuración y pruebas automatizadas (tests/humo.mjs)
   for (const key of SISTEMAS_INICIALES) await cargarSistema(key);
   pintarProgreso();
 
   // Eventos de interfaz
-  ui.idiomaUI.onchange = () => { setIdioma(ui.idiomaUI.value); setPref('derr-anatomia-ui', ui.idiomaUI.value); aplicar(); marcarIdiomasPendientes(); construirCapas(); refrescarFicha(); estudio.setLang(langNombres); pintarProgreso(); };
-  ui.idiomaNombres.onchange = () => { langNombres = ui.idiomaNombres.value; setPref('derr-anatomia-nombres', langNombres); refrescarFicha(); estudio.setLang(langNombres); alBuscar(); };
+  ui.idiomaUI.onchange = () => { setIdioma(ui.idiomaUI.value); pintarTextos(); construirCapas(); refrescarFicha(); estudio.refrescar(); pintarProgreso(); };
+  ui.idiomaNombres.onchange = () => { setIdiomaNombres(ui.idiomaNombres.value); refrescarFicha(); estudio.refrescar(); alBuscar(); };
   ui.buscador.oninput = alBuscar;
-  $('#btn-mostrar-todo').onclick = () => { visor.mostrarTodo(); };
+  $('#btn-mostrar-todo').onclick = () => visor.mostrarTodo();
   $('#btn-reset-vista').onclick = () => visor.resetVista();
   $('#btn-borrar-progreso').onclick = () => { if (confirm(t('borrar_confirmar'))) { estudio.progreso.borrar(); pintarProgreso(); } };
   document.querySelectorAll('.modo').forEach((b) => b.onclick = () => cambiarModo(b.dataset.modo));
@@ -49,22 +45,34 @@ async function iniciar() {
     if (e.key === 'h' && visor.seleccionado) visor.ocultar(visor.seleccionado);
     if (e.key === 'a' && visor.seleccionado) visor.aislar(visor.seleccionado);
     if (e.key === 'r') visor.resetVista();
-    if (e.key === 'Escape') { visor.mostrarTodo(); }
+    if (e.key === 'Escape') visor.mostrarTodo();
   });
 }
+
+// ---------- Textos ----------
+function pintarTextos() {
+  aplicar();
+  // Los nombres en neerlandés y papiamento son tabla propia pendiente de revisión clínica: se avisa en el propio selector.
+  for (const op of ui.idiomaNombres.options) {
+    const pendiente = IDIOMAS_PENDIENTES.includes(op.value);
+    op.textContent = op.textContent.replace(/ ⚠$/, '') + (pendiente ? ' ⚠' : '');
+    op.title = pendiente ? t('sin_revisar') : '';
+  }
+}
+// Sufijo de aviso para un nombre generado automáticamente en el idioma mostrado.
+function marcaIA(e) { return fuenteNombre(e) === 'ia' ? ' ⚠' : ''; }
 
 // ---------- Capas (sistemas) ----------
 function construirCapas() {
   ui.capas.innerHTML = '';
-  const lang = ui.idiomaUI.value === 'en' ? 'en' : 'es';
   for (const s of manifiesto.systems) {
     const li = document.createElement('li');
     const label = document.createElement('label');
     const cb = document.createElement('input'); cb.type = 'checkbox'; cb.dataset.key = s.key;
     cb.checked = visor && visor.tieneSistema(s.key) && visor.sistemasVisibles().includes(s.key);
     cb.onchange = () => alternarSistema(s.key, cb.checked);
-    const muestra = document.createElement('span'); muestra.className = 'muestra'; muestra.style.background = COLORES_SISTEMA[s.key] || '#999';
-    const txt = document.createElement('span'); txt.textContent = s[lang] || s.es;
+    const muestra = document.createElement('span'); muestra.className = 'muestra'; muestra.style.background = colorSistema(s.key);
+    const txt = document.createElement('span'); txt.textContent = nombreSistema(s.key);
     const n = document.createElement('span'); n.className = 'n'; n.textContent = `(${s.count})`;
     label.append(cb, muestra, txt, n);
     const solo = document.createElement('button'); solo.className = 'sec solo'; solo.textContent = t('solo');
@@ -72,17 +80,17 @@ function construirCapas() {
     li.append(label, solo); ui.capas.appendChild(li);
   }
 }
+// Activa (cargando si hace falta) o desactiva un sistema; deja la casilla acorde al estado real.
 async function alternarSistema(key, activo) {
-  const cb = ui.capas.querySelector(`input[data-key="${key}"]`);
-  if (activo && !visor.tieneSistema(key)) { await cargarSistema(key); }
+  if (activo && !visor.tieneSistema(key)) await cargarSistema(key);
   visor.setVisibleSistema(key, activo);
-  if (cb) cb.checked = activo;
+  const cb = ui.capas.querySelector(`input[data-key="${key}"]`); if (cb) cb.checked = activo && visor.tieneSistema(key);
   if (!activo && visor.seleccionado && manifiesto.porNodo.get(visor.seleccionado)?.sistema === key) { visor.seleccionar(null); mostrarFicha(null); }
 }
 async function cargarSistema(key) {
   const s = sistemaDe(manifiesto, key);
   ui.carga.hidden = false; ui.cargaProgreso.style.width = '0%';
-  ui.cargaTexto.textContent = t('cargando_sistema', { nombre: s[ui.idiomaUI.value === 'en' ? 'en' : 'es'] });
+  ui.cargaTexto.textContent = t('cargando_sistema', { nombre: nombreSistema(key) });
   try {
     await visor.cargarSistema(key, `${BASE}modelos/${s.file}`, s.structures, (ev) => {
       if (ev.lengthComputable) ui.cargaProgreso.style.width = `${Math.round((ev.loaded / ev.total) * 100)}%`;
@@ -91,32 +99,17 @@ async function cargarSistema(key) {
     console.error(err); ui.cargaTexto.textContent = `Error: ${err.message || err}`;
     await new Promise((r) => setTimeout(r, 2500));
   } finally { ui.carga.hidden = true; }
-  const cb = ui.capas.querySelector(`input[data-key="${key}"]`); if (cb) cb.checked = visor.tieneSistema(key); // si falló la carga, la casilla no queda marcada
 }
-
-// Los nombres en neerlandés y papiamento son tabla propia pendiente de revisión clínica: se avisa en el propio selector.
-const IDIOMAS_PENDIENTES = ['nl', 'pap'];
-function marcarIdiomasPendientes() {
-  for (const op of ui.idiomaNombres.options) {
-    const pendiente = IDIOMAS_PENDIENTES.includes(op.value);
-    op.textContent = op.textContent.replace(/ ⚠$/, '') + (pendiente ? ' ⚠' : '');
-    op.title = pendiente ? t('sin_revisar') : '';
-  }
-}
-// Sufijo de aviso para un nombre generado automáticamente en el idioma mostrado.
-function marcaIA(e) { return fuenteNombre(e, langNombres) === 'ia' ? ' ⚠' : ''; }
 
 // ---------- Selección, tooltip, ficha ----------
 function alSeleccionar(node) {
-  if (estudio.modo === 'localizar') { estudio.clicEnModelo(node); return; }
-  if (estudio.modo === 'identificar') return; // en Identificar se responde con los botones
+  if (estudio.alClic(node)) return; // el modo de estudio decidió qué hacer con el clic
   visor.seleccionar(node); mostrarFicha(node);
 }
 function alPasar(node, e) {
-  if (!node) { ui.tooltip.hidden = true; return; }
-  if (estudio.modo !== 'explorar' && !estudio.resuelto) { ui.tooltip.hidden = true; return; } // no dar pistas
+  if (!node || !estudio.permiteTooltip()) { ui.tooltip.hidden = true; return; }
   const entry = manifiesto.porNodo.get(node); if (!entry) return;
-  ui.tooltip.textContent = nombreCompleto(entry, langNombres, t) + marcaIA(entry);
+  ui.tooltip.textContent = nombreCompleto(entry) + marcaIA(entry);
   const r = $('.escena').getBoundingClientRect();
   ui.tooltip.style.left = `${e.clientX - r.left}px`; ui.tooltip.style.top = `${e.clientY - r.top}px`; ui.tooltip.hidden = false;
 }
@@ -126,26 +119,23 @@ function mostrarFicha(node) {
   nodoFicha = node; const f = ui.ficha; f.innerHTML = '';
   const entry = node && manifiesto.porNodo.get(node);
   if (!entry) { const p = document.createElement('p'); p.className = 'vacio'; p.textContent = t('ficha_vacia'); f.appendChild(p); return; }
-  const s = sistemaDe(manifiesto, entry.sistema);
-  const h = document.createElement('h3'); h.textContent = nombreCompleto(entry, langNombres, t);
+  const lang = idiomaNombres();
+  const h = document.createElement('h3'); h.textContent = nombreCompleto(entry);
   if (entry.optional) { const et = document.createElement('span'); et.className = 'etiqueta'; et.textContent = t('opcional'); h.appendChild(et); }
   f.appendChild(h);
   const ruta = document.createElement('div'); ruta.className = 'ruta';
-  // El primer eslabón del grupo repite el nombre del sistema en el atlas; se omite.
-  const grupo = entry.group.filter((g, i) => !(i === 0 && g.toLowerCase() === s.en.toLowerCase()));
-  ruta.textContent = [s[ui.idiomaUI.value === 'en' ? 'en' : 'es'], ...grupo].join(' › '); f.appendChild(ruta);
+  ruta.textContent = [nombreSistema(entry.sistema), ...entry.group].join(' › '); f.appendChild(ruta);
   const dl = document.createElement('dl');
   const filas = [['espanol', 'es'], ['ingles', 'en'], ['latin', 'la'], ['neerlandes', 'nl'], ['papiamento', 'pap'], ['frances', 'fr'], ['portugues', 'pt']];
   const marcaFuente = (l) => {
-    const f = fuenteNombre(entry, l);
-    if (!f) return null;
+    const fu = fuenteNombre(entry, l); if (!fu) return null;
     const et = document.createElement('span'); et.className = 'etiqueta';
-    et.textContent = f === 'wikipedia-nl' ? t('fuente_wiki_nl') : '⚠ ' + t('sin_revisar');
+    et.textContent = fu === 'wikipedia-nl' ? t('fuente_wiki_nl') : fu === 'revisado' ? t('fuente_revisado') : '⚠ ' + t('sin_revisar');
     et.title = et.textContent; return et;
   };
-  if (langNombres === 'nl' || langNombres === 'pap') { const et = marcaFuente(langNombres); if (et) h.appendChild(et); }
+  const etActual = marcaFuente(lang); if (etActual) h.appendChild(etActual);
   for (const [k, l] of filas) {
-    if (l === langNombres || !entry[l]) continue;
+    if (l === lang || !entry[l]) continue;
     const dt = document.createElement('dt'); dt.textContent = t(k); const dd = document.createElement('dd'); dd.textContent = entry[l];
     const et = marcaFuente(l); if (et) dd.appendChild(et);
     dl.append(dt, dd);
@@ -177,19 +167,17 @@ function mostrarFicha(node) {
 // ---------- Buscador ----------
 function alBuscar() {
   const q = ui.buscador.value; ui.resultados.innerHTML = '';
-  const res = buscar(manifiesto, q, langNombres, 40);
+  const res = buscar(manifiesto, q, 40);
   if (q.trim().length >= 2 && !res.length) { const li = document.createElement('li'); li.className = 'sub'; li.textContent = t('sin_resultados'); ui.resultados.appendChild(li); return; }
   for (const e of res) {
     const li = document.createElement('li');
-    li.textContent = nombreCompleto(e, langNombres, t) + marcaIA(e);
+    li.textContent = nombreCompleto(e) + marcaIA(e);
     const sub = document.createElement('span'); sub.className = 'sub';
-    const s = sistemaDe(manifiesto, e.sistema);
-    sub.textContent = [s.es, e.la && e.la !== nombre(e, langNombres) ? e.la : null].filter(Boolean).join(' · ');
+    sub.textContent = [nombreSistema(e.sistema), e.la && e.la !== nombre(e) ? e.la : null].filter(Boolean).join(' · ');
     li.appendChild(sub);
     li.onclick = async () => {
-      if (!visor.tieneSistema(e.sistema)) await alternarSistema(e.sistema, true);
-      else if (!visor.sistemasVisibles().includes(e.sistema)) alternarSistema(e.sistema, true);
-      visor.ocultos.delete(e.node); visor.aislado = null; visor._aplicarVisibilidad();
+      await alternarSistema(e.sistema, true);
+      visor.revelar(e.node);
       visor.seleccionar(e.node); visor.enfocar(e.node); mostrarFicha(e.node);
     };
     ui.resultados.appendChild(li);
@@ -198,18 +186,14 @@ function alBuscar() {
 
 // ---------- Modos y progreso ----------
 function cambiarModo(modo) {
-  document.querySelectorAll('.modo').forEach((b) => b.classList.toggle('activo', b.dataset.modo === modo));
+  document.querySelectorAll('.modo').forEach((b) => { const activo = b.dataset.modo === modo; b.classList.toggle('activo', activo); b.setAttribute('aria-selected', String(activo)); });
   visor.seleccionar(null); mostrarFicha(null);
   estudio.setModo(modo);
   pintarProgreso();
 }
 function pintarProgreso() {
   const r = estudio.progreso.resumen();
-  ui.progreso.innerHTML = '';
   ui.progreso.textContent = r.n ? t('progreso_resumen', r) : t('progreso_vacio');
 }
-// Refresca el resumen cada vez que se registra una respuesta.
-const _registrar = Estudio.prototype._cerrar;
-Estudio.prototype._cerrar = function (ok) { _registrar.call(this, ok); pintarProgreso(); };
 
 iniciar().catch((err) => { console.error(err); const p = document.createElement('p'); p.className = 'vacio'; p.textContent = `Error al iniciar: ${err.message || err}`; ui.ficha.replaceChildren(p); });

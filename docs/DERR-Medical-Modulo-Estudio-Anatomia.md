@@ -152,6 +152,11 @@ activos (~3,6 M de triángulos) en portátiles sin GPU dedicada.
    Queda como hueco didáctico: el visor no muestra oído interno ni riñones.
    Opción futura: sustituirlos por mallas CC BY-SA de BodyParts3D (que sí
    incluye riñón y laberinto óseo) con el mismo pipeline.
+   **Pendiente:** los 103 objetos cerebrales de la UW ("Brainder", "White
+   matter"; material `Brain`, `Brain-Inner`, `White matter`) no declaran
+   licencia en el atlas: aclararla con Z-Anatomy antes de redistribuir
+   `nervioso.glb`. Pendiente también elegir licencia para el código de la app
+   (hoy sin asignar; `LICENSES.md` lo deja escrito).
 2. **Papiamento y neerlandés en nombres: HECHO (v0.2, 2026-10-05), pendiente
    de revisión clínica.** Tabla `data/nombres-nl-pap.json` (1 819 nombres)
    indexada por nombre inglés, con fuente por entrada: 332 neerlandeses

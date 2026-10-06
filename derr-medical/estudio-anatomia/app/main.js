@@ -144,7 +144,13 @@ function mostrarFicha(node) {
   const dp = document.createElement('p'); dp.className = 'def';
   if (def) {
     dp.textContent = def.summary + ' ';
-    if (def.url) { const a = document.createElement('a'); a.href = def.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = t('fuente_wiki'); dp.appendChild(a); }
+    if (def.url) {
+      // La etiqueta de fuente y licencia depende del dominio real; no todas las definiciones son de Wikipedia.
+      let host = ''; try { host = new URL(def.url).hostname; } catch { host = ''; }
+      const a = document.createElement('a'); a.href = def.url; a.target = '_blank'; a.rel = 'noopener';
+      a.textContent = host === 'en.wikipedia.org' ? t('fuente_wiki') : t('fuente_otra', { host });
+      dp.appendChild(a);
+    }
   } else dp.textContent = t('sin_definicion');
   f.appendChild(dp);
   const acc = document.createElement('div'); acc.className = 'fila-botones';

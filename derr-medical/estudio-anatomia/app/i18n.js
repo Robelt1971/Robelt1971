@@ -10,7 +10,7 @@ export const TEXTOS = {
     ficha_vacia: 'Selecciona una estructura en el modelo o búscala por nombre.',
     cargando: 'Cargando', lado_l: 'izquierdo', lado_r: 'derecho', opcional: 'variante',
     sistema: 'Sistema', latin: 'Latín (TA)', ingles: 'Inglés', frances: 'Francés', portugues: 'Portugués', espanol: 'Español', neerlandes: 'Neerlandés', papiamento: 'Papiamento',
-    sin_revisar: 'traducción automática, pendiente de revisión clínica', fuente_wiki_nl: 'Wikipedia (nl), pendiente de revisión clínica',
+    sin_revisar: 'traducción automática, pendiente de revisión clínica', fuente_wiki_nl: 'Wikipedia (nl), pendiente de revisión clínica', fuente_revisado: 'revisado clínicamente',
     definicion: 'Definición', fuente_wiki: 'Fuente: Wikipedia (en), CC BY-SA', fuente_otra: 'Fuente: {host}', sin_definicion: 'Sin definición disponible en los datos de origen.',
     ocultar: 'Ocultar', aislar: 'Aislar', enfocar: 'Enfocar',
     progreso: 'Progreso', borrar_progreso: 'Borrar progreso local', progreso_resumen: '{n} estructuras practicadas · {ok} aciertos · {mal} fallos',
@@ -35,7 +35,7 @@ export const TEXTOS = {
     ficha_vacia: 'Select a structure in the model or search it by name.',
     cargando: 'Loading', lado_l: 'left', lado_r: 'right', opcional: 'variant',
     sistema: 'System', latin: 'Latin (TA)', ingles: 'English', frances: 'French', portugues: 'Portuguese', espanol: 'Spanish', neerlandes: 'Dutch', papiamento: 'Papiamento',
-    sin_revisar: 'machine translation, pending clinical review', fuente_wiki_nl: 'Wikipedia (nl), pending clinical review',
+    sin_revisar: 'machine translation, pending clinical review', fuente_wiki_nl: 'Wikipedia (nl), pending clinical review', fuente_revisado: 'clinically reviewed',
     definicion: 'Definition', fuente_wiki: 'Source: Wikipedia (en), CC BY-SA', fuente_otra: 'Source: {host}', sin_definicion: 'No definition available in the source data.',
     ocultar: 'Hide', aislar: 'Isolate', enfocar: 'Focus',
     progreso: 'Progress', borrar_progreso: 'Clear local progress', progreso_resumen: '{n} structures practised · {ok} correct · {mal} wrong',
@@ -60,7 +60,7 @@ export const TEXTOS = {
     ficha_vacia: 'Selecteer een structuur in het model of zoek op naam.',
     cargando: 'Laden', lado_l: 'links', lado_r: 'rechts', opcional: 'variant',
     sistema: 'Stelsel', latin: 'Latijn (TA)', ingles: 'Engels', frances: 'Frans', portugues: 'Portugees', espanol: 'Spaans', neerlandes: 'Nederlands', papiamento: 'Papiaments',
-    sin_revisar: 'automatische vertaling, klinische controle nog niet gedaan', fuente_wiki_nl: 'Wikipedia (nl), klinische controle nog niet gedaan',
+    sin_revisar: 'automatische vertaling, klinische controle nog niet gedaan', fuente_wiki_nl: 'Wikipedia (nl), klinische controle nog niet gedaan', fuente_revisado: 'klinisch gecontroleerd',
     definicion: 'Definitie', fuente_wiki: 'Bron: Wikipedia (en), CC BY-SA', fuente_otra: 'Bron: {host}', sin_definicion: 'Geen definitie beschikbaar in de brongegevens.',
     ocultar: 'Verbergen', aislar: 'Isoleren', enfocar: 'Focus',
     progreso: 'Voortgang', borrar_progreso: 'Lokale voortgang wissen', progreso_resumen: '{n} structuren geoefend · {ok} goed · {mal} fout',
@@ -77,19 +77,38 @@ export const TEXTOS = {
   },
 };
 
+// Nombres de los sistemas en la interfaz. Son etiquetas de interfaz, no nomenclatura anatómica:
+// por eso viven aquí (en los tres idiomas de la interfaz) y no en el manifiesto.
+const SISTEMAS = {
+  es: { esqueletico: 'Sistema esquelético', articulaciones: 'Articulaciones', muscular: 'Sistema muscular', cardiovascular: 'Sistema cardiovascular', linfoide: 'Órganos linfoides', nervioso: 'Sistema nervioso y órganos de los sentidos', visceral: 'Sistemas viscerales', regiones: 'Regiones del cuerpo' },
+  en: { esqueletico: 'Skeletal system', articulaciones: 'Joints', muscular: 'Muscular system', cardiovascular: 'Cardiovascular system', linfoide: 'Lymphoid organs', nervioso: 'Nervous system & sense organs', visceral: 'Visceral systems', regiones: 'Regions of the human body' },
+  nl: { esqueletico: 'Skelet', articulaciones: 'Gewrichten', muscular: 'Spierstelsel', cardiovascular: 'Hart- en vaatstelsel', linfoide: 'Lymfoïde organen', nervioso: 'Zenuwstelsel en zintuigen', visceral: 'Inwendige organen', regiones: "Lichaamsregio's" },
+};
+
+// Idiomas elegidos (interfaz y nombres anatómicos) y su persistencia. Único dueño de este estado.
+const PREF_UI = 'derr-anatomia-ui', PREF_NOMBRES = 'derr-anatomia-nombres';
+function pref(clave, defecto) { try { return localStorage.getItem(clave) || defecto; } catch { return defecto; } }
+function setPref(clave, v) { try { localStorage.setItem(clave, v); } catch { /* sin almacenamiento */ } }
 let actual = 'es';
-export function setIdioma(code) { actual = TEXTOS[code] ? code : 'es'; }
+let nombres = 'es';
+export function setIdioma(code) { actual = TEXTOS[code] ? code : 'es'; setPref(PREF_UI, actual); }
 export function idioma() { return actual; }
+export function setIdiomaNombres(code) { nombres = code; setPref(PREF_NOMBRES, code); }
+export function idiomaNombres() { return nombres; }
+// Lee las preferencias guardadas; sin ellas, la interfaz sigue al navegador y los nombres salen en español.
+export function cargarPreferencias() {
+  const nav = navigator.language || 'es';
+  const defecto = nav.startsWith('en') ? 'en' : nav.startsWith('nl') ? 'nl' : 'es';
+  actual = TEXTOS[pref(PREF_UI, defecto)] ? pref(PREF_UI, defecto) : 'es';
+  nombres = pref(PREF_NOMBRES, 'es');
+}
 export function t(clave, vars = {}) {
   const s = (TEXTOS[actual] && TEXTOS[actual][clave]) ?? TEXTOS.es[clave] ?? clave;
   return s.replace(/\{(\w+)\}/g, (_, k) => (vars[k] ?? ''));
 }
+export function nombreSistema(key) { return (SISTEMAS[actual] && SISTEMAS[actual][key]) || SISTEMAS.es[key] || key; }
 // Aplica los textos a los elementos marcados con data-i18n / data-i18n-ph.
 export function aplicar(root = document) {
-  root.querySelectorAll('[data-i18n]').forEach((el) => {
-    const k = el.dataset.i18n;
-    if (k.endsWith('_html')) return; // el HTML de los créditos no se traduce (atribución legal fija)
-    el.textContent = t(k);
-  });
+  root.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = t(el.dataset.i18n); });
   root.querySelectorAll('[data-i18n-ph]').forEach((el) => { el.placeholder = t(el.dataset.i18nPh); });
 }

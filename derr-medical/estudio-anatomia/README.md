@@ -21,12 +21,13 @@ python3 -m http.server 8080
 | Carpeta | Contenido |
 |---|---|
 | `index.html`, `app/` | La aplicación: visor (`visor.js`), datos (`datos.js`), modos de estudio y progreso (`estudio.js`), textos es/en/nl (`i18n.js`). |
-| `modelos/` | 8 sistemas en GLB comprimido (meshopt), 29 MB en total: esquelético, articulaciones, muscular, cardiovascular, linfoide, nervioso y órganos de los sentidos, visceral, regiones. 3 158 estructuras (sin los 8 objetos de origen no comercial ni 6 curvas auxiliares del ojo sin geometría). |
-| `data/estructuras.json` | Manifiesto: por estructura, nombre en inglés, español, latín (Terminologia Anatomica), francés y portugués; lado; grupo anatómico; materiales; clave de definición. Los nombres en neerlandés y papiamento se cargan aparte (abajo). |
-| `data/definiciones.json` | 1 373 resúmenes en inglés (Wikipedia, CC BY-SA; una de Open Anatomy) con enlace a la fuente, que la ficha muestra por dominio. |
+| `modelos/` | Un GLB comprimido (meshopt) por sistema: esquelético, articulaciones, muscular, cardiovascular, linfoide, nervioso y órganos de los sentidos, visceral, regiones. Las cifras (estructuras por sistema, tamaño) las imprime `scripts/verificar_datos.py` y están en la spec. |
+| `data/estructuras.json` | Manifiesto: cabecera (fecha, origen y commit de Z-Anatomy, objetos excluidos y sin geometría) y, por estructura, nombre en inglés, español, latín (Terminologia Anatomica), francés y portugués; lado; grupo anatómico (sin repetir el sistema); clave de definición. Los nombres en neerlandés y papiamento se cargan aparte (abajo). |
+| `data/definiciones.json` | Resúmenes en inglés (Wikipedia, CC BY-SA; uno de Open Anatomy) con enlace a la fuente, que la ficha muestra por dominio. |
 | `data/nombres-nl-pap.json` | Tabla propia de DERR: nombre en neerlandés y papiamento (Aruba) por nombre inglés, con la fuente de cada uno: `wikipedia-nl` (título coincidente en la Wikipedia en neerlandés) o `ia` (generado por modelo de lenguaje). **Toda la tabla está pendiente de revisión clínica**; la interfaz lo avisa en el selector de idioma, el buscador, el tooltip, la ficha y los ejercicios. |
-| `data/revision-nombres-nl-pap.csv` | Hoja de revisión clínica (separador `;`): abre en Excel, marca `ok_nl`/`ok_pap` y escribe la corrección. |
-| `scripts/` | Pipeline reproducible desde el `.blend` original (ver abajo), con `exclusiones.json` para las estructuras que no se exportan y `verificar_datos.py` para comprobar la coherencia manifiesto ↔ GLB ↔ tabla nl/pap. |
+| `data/revision-nombres-nl-pap.csv` | Hoja de revisión clínica (separador `;`): abre en Excel, marca `ok_nl`/`ok_pap` o escribe la corrección, y vuelca el resultado con `scripts/aplicar_revision.py`, que pone la fuente en `revisado`. |
+| `scripts/` | Pipeline reproducible desde el `.blend` original (ver abajo): `exportar_zanatomy.py`, `comprimir.sh`, `exclusiones.json` (estructuras que no se exportan), `verificar_datos.py` (coherencia manifiesto ↔ GLB ↔ tabla nl/pap) y `aplicar_revision.py` (CSV de revisión → JSON). |
+| `tests/humo.mjs` | Prueba de humo en Chromium sin cabeza (abajo). |
 | `LICENSES.md` | Obligaciones CC BY-SA y atribuciones. Léelo antes de redistribuir. |
 
 ## Modos
@@ -59,6 +60,20 @@ python3 scripts/exportar_zanatomy.py /tmp/za/Z-Anatomy/Startup.blend /tmp/za-out
 
 # 3. Comprimir y copiar al módulo
 scripts/comprimir.sh /tmp/za-out
+
+# 4. Comprobar la coherencia de los datos
+python3 scripts/verificar_datos.py
+```
+
+Anotar el commit del atlas: `ZANATOMY_COMMIT=<commit corto> python3 scripts/exportar_zanatomy.py …`
+lo deja en la cabecera del manifiesto (`source_commit`).
+
+## Probar
+
+```bash
+cd derr-medical/estudio-anatomia
+python3 -m http.server 8080 &
+node tests/humo.mjs http://127.0.0.1:8080/    # requiere Playwright con Chromium
 ```
 
 El export tarda unos dos minutos y necesita ~6 GB de RAM. Qué hace: por cada
@@ -72,8 +87,8 @@ definición del propio archivo.
 
 - Las curvas de vasos y nervios se exportan como tubos (bevel de Blender), por
   eso `cardiovascular.glb` es el más pesado (10 MB).
-- Faltan traducciones en ~60 estructuras y definición en ~450; el visor cae al
-  inglés o indica que no hay definición.
+- Faltan traducciones en algunas estructuras y definición en otras; el visor
+  cae al inglés o indica que no hay definición. `verificar_datos.py` dice cuántas.
 - **Neerlandés y papiamento son traducciones propias de DERR, no de Z-Anatomy.**
   332 nombres neerlandeses coinciden con el título del artículo correspondiente
   en la Wikipedia en neerlandés (etiqueta "Wikipedia (nl)" en la ficha; no es

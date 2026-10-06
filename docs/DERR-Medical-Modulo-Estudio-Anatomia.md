@@ -5,8 +5,8 @@
 > Fecha: 2026-10-05 · **Estado: v0.3 FUNCIONAL** — visor + tres modos de
 > estudio, 8 sistemas, 3 158 estructuras (sin los modelos de origen no
 > comercial ni las curvas auxiliares sin geometría), nombres en 7 idiomas (nl y pap pendientes de revisión clínica);
-> verificado en Chromium headless.
-> Código en `derr-medical/estudio-anatomia/`.
+> verificado con `tests/humo.mjs` en Chromium headless.
+> Código en `derr-medical/estudio-anatomia/`. · Responsable: Ernesto (Albert Rodríguez Robelt)
 
 ---
 
@@ -43,7 +43,7 @@ base pero sin traducciones ni organización por sistemas), Open Anatomy Project
 anatomía en 3D en español, inglés y latín (TA), con ejercicios de
 reconocimiento y localización y seguimiento del propio progreso.
 
-**En alcance (v0.1):**
+**En alcance (v0.3):**
 - Visor 3D por sistemas con selección, búsqueda multilingüe, ficha (nombres,
   grupo anatómico, definición), aislar/ocultar/enfocar.
 - Modo **Identificar** (estructura resaltada → elegir nombre entre 4).
@@ -99,6 +99,19 @@ Decisiones técnicas:
 - **Compresión meshopt con posiciones en coma flotante:** la cuantización de
   14 bits daba hasta 24 % de error en estructuras milimétricas (huesecillos,
   vasos finos); `-vpf` lo evita a cambio de ~7 MB más.
+- **Dónde viven los binarios (decisión 2026-10-06):** los ~30 MB de GLB van
+  como blobs normales en este repositorio de perfil, sin Git LFS, porque es la
+  primera versión y el módulo es estático. Cada regeneración completa añade
+  otros ~30 MB al historial de forma permanente, así que **antes de la segunda
+  regeneración** hay que elegir entre Git LFS, un repositorio propio para
+  DERR Medical, o alojar los GLB fuera (p. ej. como *release assets*) y
+  apuntar `BASE` en `main.js` a esa URL. La spec no decide aún cuál.
+- **Separación de responsabilidades en la app:** `i18n.js` es el único dueño
+  del idioma de interfaz y del de nombres (y de su persistencia) y de las
+  etiquetas de sistema; `estudio.js` tiene toda la política de los modos en
+  una tabla (`MODOS`) y avisa por callbacks; `visor.js` es el único que toca
+  visibilidad y selección 3D; `main.js` solo cablea. Añadir un modo o un
+  idioma de interfaz es una entrada nueva en una tabla, no ramas repartidas.
 
 ---
 
@@ -116,8 +129,9 @@ Decisiones técnicas:
 | Regiones del cuerpo | 256 | 0,7 MB |
 | **Total** | **3 158** | **29 MB** |
 
-- 1 821 nombres únicos (sin lado); 1 760 con traducción es/fr/pt/la; 1 374 con
-  definición.
+- Nombres únicos (sin lado), traducciones y definiciones: las cifras actuales
+  las imprime `scripts/verificar_datos.py`; la tabla de arriba es la de la
+  exportación indicada y se actualiza con cada regeneración.
 - Se excluyen del export: etiquetas 3D (FONT), grupos `.g`/`.j`, inserciones
   (`.i`, `.ol/.or/.el/.er`), objetos con `?` en el nombre, la "Bonus
   collection" (duplicados por región) y las 8 estructuras de origen no
@@ -132,13 +146,16 @@ Decisiones técnicas:
 
 ---
 
-## 5. Verificación realizada
+## 5. Verificación
 
-Prueba automatizada en Chromium headless (Playwright, WebGL por SwiftShader):
-carga del esqueleto, selección por clic con ficha rellena, búsqueda "húmero" y
-selección desde resultados, modo Identificar con 4 opciones y registro de
-progreso, modo Localizar resuelto, carga del sistema cardiovascular, cambio de
-idioma de la interfaz. Sin errores de consola. Capturas revisadas manualmente.
+`derr-medical/estudio-anatomia/tests/humo.mjs` (Playwright, Chromium headless
+con WebGL por SwiftShader) comprueba en cada cambio: carga sin errores ni
+peticiones externas; los 8 GLB se decodifican y cada sistema mapea tantas
+estructuras como declara el manifiesto; dos cargas simultáneas del mismo
+sistema comparten una promesa; el selector avisa de los idiomas pendientes;
+Identificar ofrece 4 opciones y avisa con nombres en papiamento; el buscador
+marca los nombres generados. `scripts/verificar_datos.py` comprueba la
+coherencia de los datos sin navegador. Cómo ejecutarlos: README del módulo.
 
 Pendiente de probar en hardware real: rendimiento con todos los sistemas
 activos (~3,6 M de triángulos) en portátiles sin GPU dedicada.

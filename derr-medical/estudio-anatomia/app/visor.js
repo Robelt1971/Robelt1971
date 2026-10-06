@@ -40,6 +40,9 @@ const PALETA = [
   [/^(Black)/i, 0x202020],
 ];
 const COLOR_DEFECTO = 0xb8a89a;
+// Color representativo de cada sistema para la lista de capas (misma familia que la paleta de materiales).
+const COLOR_SISTEMA = { esqueletico: '#e9dfc8', articulaciones: '#cdd7df', muscular: '#a23b3b', cardiovascular: '#c0392b', linfoide: '#6fbf73', nervioso: '#f2d16b', visceral: '#d99a8c', regiones: '#cfb9a0' };
+export function colorSistema(key) { return COLOR_SISTEMA[key] || '#999'; }
 const SELECCION = new THREE.Color(0x3fa7d6);
 const RESALTE = new THREE.Color(0xf2c14e);
 
@@ -88,6 +91,7 @@ export class Visor {
     this.raycaster = new THREE.Raycaster();
     this.puntero = new THREE.Vector2();
     this._hoverNode = null;
+    this._visibles = [];         // mallas visibles, recalculadas al cambiar visibilidad (evita filtrar miles por hover)
 
     this._bindEventos();
     this._redimensionar();
@@ -133,8 +137,7 @@ export class Visor {
     const r = this.canvas.getBoundingClientRect();
     this.puntero.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
     this.raycaster.setFromCamera(this.puntero, this.camera);
-    const visibles = this.partes.filter((m) => m.visible && m.parent && m.parent.visible !== false && this._visibleEnJerarquia(m));
-    const hits = this.raycaster.intersectObjects(visibles, false);
+    const hits = this.raycaster.intersectObjects(this._visibles, false);
     return hits.length ? hits[0].object.userData.node : null;
   }
   _visibleEnJerarquia(o) { for (let p = o; p; p = p.parent) if (!p.visible) return false; return true; }
@@ -203,6 +206,7 @@ export class Visor {
         for (const p of info.partes) p.visible = vis;
       }
     }
+    this._visibles = this.partes.filter((m) => m.visible && this._visibleEnJerarquia(m));
   }
   estaVisible(node) {
     const info = this._info(node); if (!info) return false;
@@ -211,6 +215,8 @@ export class Visor {
 
   ocultar(node) { this.ocultos.add(node); if (this.seleccionado === node) this.seleccionar(null); this._aplicarVisibilidad(); }
   aislar(node) { this.aislado = node; this._aplicarVisibilidad(); this.enfocar(node); }
+  // Deshace un ocultar/aislar que tape a esta estructura (p. ej. al elegirla desde el buscador).
+  revelar(node) { this.ocultos.delete(node); if (this.aislado !== null && this.aislado !== node) this.aislado = null; this._aplicarVisibilidad(); }
   mostrarTodo() { this.ocultos.clear(); this.aislado = null; this._aplicarVisibilidad(); }
 
   _pintar(node, color) {

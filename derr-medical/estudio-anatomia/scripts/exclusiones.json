@@ -1,9 +1,653 @@
 {
-  "_comentario": "Estructuras del atlas Z-Anatomy que NO se exportan porque su modelo de origen tiene licencia no comercial (ver LICENSES.md). Clave: nombre en inglés sin sufijo de lado; se excluyen ambos lados.",
-  "excluir": [
-    {"en": "Vestibule",    "origen": "Anatomy of the Inner Ear, University of Dundee School of Medicine", "licencia": "CC BY-NC-SA 4.0", "coleccion": "Nervous system & Sense organs > Ear > Internal ear"},
-    {"en": "Cochlea",      "origen": "Anatomy of the Inner Ear, University of Dundee School of Medicine", "licencia": "CC BY-NC-SA 4.0", "coleccion": "Nervous system & Sense organs > Ear > Internal ear"},
-    {"en": "Kidney",       "origen": "Kidney, Lissie Cowley", "licencia": "CC BY-NC 4.0", "coleccion": "Visceral systems > Urinary system"},
-    {"en": "Renal pelvis", "origen": "Kidney, Lissie Cowley (la pelvis renal forma parte del mismo modelo: misma procedencia de edición que Kidney.l/.r)", "licencia": "CC BY-NC 4.0", "coleccion": "Visceral systems > Urinary system"}
-  ]
+ "_comentario": "Estructuras del atlas Z-Anatomy que NO se exportan porque su modelo de origen tiene licencia no comercial o no declarada (ver LICENSES.md). Clave: nombre en inglés sin sufijo de lado; se excluyen ambos lados. Las entradas con origen \"Brainder\"/\"White matter\" (University of Washington) se identificaron por el material del objeto en el .blend (Brain, Brain-Inner o White matter), único rastro de procedencia que deja el atlas; la lista se generó con scripts/listar_uw.py y es deliberadamente conservadora.",
+ "excluir": [
+  {
+   "en": "Vestibule",
+   "origen": "Anatomy of the Inner Ear, University of Dundee School of Medicine",
+   "licencia": "CC BY-NC-SA 4.0",
+   "coleccion": "Nervous system & Sense organs > Ear > Internal ear"
+  },
+  {
+   "en": "Cochlea",
+   "origen": "Anatomy of the Inner Ear, University of Dundee School of Medicine",
+   "licencia": "CC BY-NC-SA 4.0",
+   "coleccion": "Nervous system & Sense organs > Ear > Internal ear"
+  },
+  {
+   "en": "Kidney",
+   "origen": "Kidney, Lissie Cowley",
+   "licencia": "CC BY-NC 4.0",
+   "coleccion": "Visceral systems > Urinary system"
+  },
+  {
+   "en": "Renal pelvis",
+   "origen": "Kidney, Lissie Cowley (la pelvis renal forma parte del mismo modelo: misma procedencia de edición que Kidney.l/.r)",
+   "licencia": "CC BY-NC 4.0",
+   "coleccion": "Visceral systems > Urinary system"
+  },
+  {
+   "en": "Angular gyrus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Anterior commissure",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Anterior corticospinal tract",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Anterior fasciculus proprius",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Anterior horn of spinal cord",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Anterior occipital sulcus*",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Anterior spinocerebellar tract",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Anterior spinothalamic tract",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Base of peduncle",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Calcarine sulcus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Central sulcus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Cingulate gyrus (Posteroventral part*)",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Cingulate gyrus and sulcus (Middle anterior part)",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Cingulate gyrus and sulcus (Middle posterior part)",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Cingulate gyrus and sulcus (Posterior dorsal part)",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Cingulate sulcus (Marginal part*)",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Circular sulcus of insula",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Collateral sulcus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Cuneate fasciculus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Cuneus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Fornix",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Gracile fasciculus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Hippocampal commissure",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Hypothalamus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Inferior frontal sulcus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Inferior occipital gyrus and sulcus*",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Inferior temporal gyrus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Inferior temporal sulcus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Insula (Subcentral gyrus and ant. and post. sulci*)",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Intermediolateral nucleus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Intermediomedial nucleus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Interpeduncular fossa",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Intraparietal sulcus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Lat_Fis-ant-Horizont",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Lat_Fis-ant-Vertical",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Lat_Fis-post",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Lateral corticospinal tract",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Lateral fasciculus proprius",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Lateral intermediate substance",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Lateral occipital gyrus (Middle occipital gyrus*)",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Lateral occipitotemporal gyrus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Lateral reticulospinal tract",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Lateral spinothalamic tract",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Lateral vestibulospinal tract",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Lingual gyrus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Lunate sulcus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Medial occipitotemporal gyrus (Parahippocampal*)",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Medial reticulospinal tract",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Medial vestibulospinal tract",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Medulla oblongata",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Middle frontal gyrus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Middle temporal gyrus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Nucleus of accessory nerve",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Nucleus proprius",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Occipital pole",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Occipitotemporal sulcus (Lateral part*)",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Olfactory sulcus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Opercular part of inferior frontal gyrus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Orbital gyri",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Orbital gyri (Frontomarginal gyrus and sulcus*)",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Orbital part of  inferior frontal gyrus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Orbital sulci (H-shaped orbital sulci*)",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Orbital sulci (Lateral Orbital sulcus*)",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Paracentral gyrus and sulcus*",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Paracentral sulcus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Parieto-occipital sulcus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Pons",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Postcentral gyrus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Postcentral sulcus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Posterior commissure",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Posterior fasciculus proprius",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Posterior horn of spinal cord",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Posterior spinocerebellar tract",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Posterior transverse collateral sulcus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Posterolateral tract",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Precentral gyrus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Precentral sulcus (Superior part)*",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Precentral sulcus (inferior part)*",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Precuneus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Rubrospinal tract",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Septum pellucidum",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Spinal reticular process",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Spinotectal tract",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Straight gyrus (Gyrus rectus)",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Stria medullaris thalami",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Subparietal sulcus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Sulcus interm_prim-Jensen",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Superior frontal gyrus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Superior frontal sulcus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Superior occipital gyri",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Superior parietal lobule",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Superior temporal gyrus (Lateral part)",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Superior temporal sulcus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Supramarginal gyrus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Tectospinal tract",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Temporal plane",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Temporal pole",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Transverse frontopolar gyrus and sulcus*",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Transverse occipital sulcus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Transverse temporal gyri",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "Triangular part of inferior frontal gyrus",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: Brain-Inner)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "White matter of spinal cord",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  },
+  {
+   "en": "White matter of telencephalon",
+   "origen": "Brainder / White matter, University of Washington (identificado por material: White matter)",
+   "licencia": "no declarada",
+   "coleccion": "Nervous system & Sense organs"
+  }
+ ],
+ "definiciones": [
+  {
+   "en": "Intermediate bronchus",
+   "motivo": "El texto de la definición en el atlas está copiado de Radiopaedia (CC BY-NC-SA), incompatible con CC BY-SA; la estructura se exporta, la definición no."
+  }
+ ]
 }

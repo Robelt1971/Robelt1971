@@ -1,7 +1,8 @@
 """Exporta los sistemas de Z-Anatomy a GLB + manifiesto de estructuras (data/estructuras.json, data/definiciones.json).
 Uso: python3 exportar_zanatomy.py <Startup.blend> <carpeta_salida> [clave_sistema ...]
      (sin claves exporta los 8 sistemas; con claves, solo esos, p. ej. "nervioso visceral")
-Excluye las estructuras listadas en exclusiones.json (modelos de origen no comerciales).
+Excluye las estructuras listadas en exclusiones.json (modelos de origen no comerciales o sin licencia) y
+las definiciones listadas en su clave "definiciones" (textos de fuentes incompatibles con CC BY-SA).
 Requiere: pip install bpy==4.5.14 (Blender como módulo de Python; Python 3.11).
 Variable ZANATOMY_COMMIT: commit corto de Z-Anatomy/The-blend del que sale el .blend; queda en el manifiesto.
 Después: ./comprimir.sh <carpeta_salida> (gltfpack) copia los GLB a ../modelos y los JSON a ../data.
@@ -13,7 +14,9 @@ args = [a for a in sys.argv[1:] if not a.startswith('-')]
 if 'exportar_zanatomy.py' in args[0]: args = args[1:]
 blend, out, solo = args[0], args[1], set(args[2:])
 EXCL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'exclusiones.json')
-EXCLUIR = {e['en'] for e in json.load(open(EXCL_PATH, encoding='utf-8'))['excluir']} if os.path.exists(EXCL_PATH) else set()
+_EXCL = json.load(open(EXCL_PATH, encoding='utf-8')) if os.path.exists(EXCL_PATH) else {}
+EXCLUIR = {e['en'] for e in _EXCL.get('excluir', [])}
+DEFS_EXCLUIDAS = {e['en'] for e in _EXCL.get('definiciones', [])}
 os.makedirs(os.path.join(out, 'glb'), exist_ok=True)
 bpy.ops.wm.open_mainfile(filepath=blend, load_ui=False)
 sc = bpy.context.scene
@@ -100,7 +103,7 @@ for col_name, key, es, en in SYSTEMS:
         seen.add(o.name)
         b = base(name)
         tr = TR.get(b) or TR.get(name) or {}
-        d = DEFS.get(b) or DEFS.get(name)
+        d = None if b in DEFS_EXCLUIDAS or name in DEFS_EXCLUIDAS else (DEFS.get(b) or DEFS.get(name))
         entry = {'node': o.name, 'en': name, 'side': side,
                  'optional': name.startswith('('),
                  'group': group_chain(o, en)[::-1]}

@@ -1,11 +1,10 @@
 // Modos de estudio: Identificar (ver → nombrar) y Localizar (nombre → señalar), con progreso local.
 // Toda la política de cada modo (qué significa un clic, si se puede mostrar el tooltip, qué se
 // pregunta) vive aquí, en la tabla MODOS; el cableado (main.js) solo pregunta.
-import { t, idiomaNombres, nombreSistema } from './i18n.js';
-import { nombreCompleto, sistemaDe } from './datos.js';
+import { t, idiomaNombres, nombreSistema, nombreIdioma } from './i18n.js';
+import { nombreCompleto, nombreSustituido, sistemaDe } from './datos.js';
 
 const CLAVE_PROGRESO = 'derr-anatomia-progreso-v1';
-const IDIOMAS_PENDIENTES = ['nl', 'pap']; // tabla propia de DERR, pendiente de revisión clínica
 
 export class Progreso {
   constructor() {
@@ -174,9 +173,9 @@ export class Estudio {
     const el = this.ui.ronda; el.innerHTML = '';
     if (!this.actual) { const p = document.createElement('p'); p.textContent = t('sin_estructuras'); el.appendChild(p); return; }
     const preg = document.createElement('p'); preg.className = 'pregunta'; preg.textContent = this._politica.pregunta(this); el.appendChild(preg);
-    if (IDIOMAS_PENDIENTES.includes(idiomaNombres())) {
-      // La respuesta "correcta" sale de una tabla pendiente de revisión: se avisa por ronda, no por opción (marcarlas delataría la respuesta).
-      const av = document.createElement('p'); av.className = 'aviso'; av.textContent = '⚠ ' + t('sin_revisar'); el.appendChild(av);
+    if ([this.actual, ...(this.opciones || [])].some((e) => nombreSustituido(e))) {
+      // Algún nombre de la ronda está sin revisar y sale en latín: se avisa por ronda, no por opción (marcarlas delataría la respuesta).
+      const av = document.createElement('p'); av.className = 'aviso'; av.textContent = '⚠ ' + t('nombre_pendiente', { idioma: nombreIdioma(idiomaNombres()) }); el.appendChild(av);
     }
     if (this.opciones && this.modo === 'identificar') {
       const ops = document.createElement('div'); ops.className = 'opciones';

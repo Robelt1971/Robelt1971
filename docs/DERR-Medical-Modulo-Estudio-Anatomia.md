@@ -2,10 +2,10 @@
 
 > Spec e historial de decisión del primer módulo de DERR Medical. **Sin PHI:**
 > el módulo es material de estudio; no toca KIA/GNC ni `DERR-Protected-Data`.
-> Fecha: 2026-10-05 · **Estado: v0.3 FUNCIONAL** — visor + tres modos de
-> estudio, 8 sistemas, 3 158 estructuras (sin los modelos de origen no
-> comercial ni las curvas auxiliares sin geometría), nombres en 7 idiomas (nl y pap pendientes de revisión clínica);
-> verificado con `tests/humo.mjs` en Chromium headless.
+> Fecha: 2026-10-06 · **Estado: v0.4 FUNCIONAL** — visor + tres modos de
+> estudio, 8 sistemas, 2 984 estructuras (sin los modelos de origen no
+> comercial o sin licencia declarada ni las curvas auxiliares sin geometría), nombres en 7 idiomas (nl y pap: solo se muestran los revisados o de Wikipedia; el resto sale en latín);
+> código MIT, modelos y datos CC BY-SA 4.0; verificado con `tests/humo.mjs` en Chromium headless.
 > Código en `derr-medical/estudio-anatomia/`. · Responsable: Ernesto (Albert Rodríguez Robelt)
 
 ---
@@ -43,7 +43,7 @@ base pero sin traducciones ni organización por sistemas), Open Anatomy Project
 anatomía en 3D en español, inglés y latín (TA), con ejercicios de
 reconocimiento y localización y seguimiento del propio progreso.
 
-**En alcance (v0.3):**
+**En alcance (v0.4):**
 - Visor 3D por sistemas con selección, búsqueda multilingüe, ficha (nombres,
   grupo anatómico, definición), aislar/ocultar/enfocar.
 - Modo **Identificar** (estructura resaltada → elegir nombre entre 4).
@@ -99,13 +99,21 @@ Decisiones técnicas:
 - **Compresión meshopt con posiciones en coma flotante:** la cuantización de
   14 bits daba hasta 24 % de error en estructuras milimétricas (huesecillos,
   vasos finos); `-vpf` lo evita a cambio de ~7 MB más.
-- **Dónde viven los binarios (decisión 2026-10-06):** los ~30 MB de GLB van
-  como blobs normales en este repositorio de perfil, sin Git LFS, porque es la
-  primera versión y el módulo es estático. Cada regeneración completa añade
-  otros ~30 MB al historial de forma permanente, así que **antes de la segunda
-  regeneración** hay que elegir entre Git LFS, un repositorio propio para
-  DERR Medical, o alojar los GLB fuera (p. ej. como *release assets*) y
-  apuntar `BASE` en `main.js` a esa URL. La spec no decide aún cuál.
+- **Dónde viven los binarios (decisión 2026-10-06): repositorio propio, GLB
+  como blobs normales, sin Git LFS.** Se descarta LFS porque GitHub Pages no
+  sirve archivos LFS (entrega los punteros) y su cuota mensual de ancho de
+  banda se agota con pocas descargas; se descarta el alojamiento externo
+  porque rompería la propiedad, verificada en `tests/humo.mjs`, de que la app
+  no hace ninguna petición fuera de su origen. El coste es que cada
+  regeneración añade los GLB regenerados al historial (hoy 27 MB en total, 4 MB
+  en la regeneración del 2026-10-06, que solo tocó `nervioso.glb`): se
+  regenera poco y agrupando cambios, y el pipeline es reproducible byte a byte
+  (`visceral.glb` salió idéntico al regenerarlo), así que un GLB solo cambia
+  cuando cambian su fuente o sus exclusiones. El traslado desde este
+  repositorio de perfil, conservando el historial del módulo, lo hace
+  `scripts/migrar_repo.sh` una vez exista el repositorio destino (requiere
+  crearlo a mano en GitHub: la integración de esta sesión no puede crear
+  repositorios).
 - **Separación de responsabilidades en la app:** `i18n.js` es el único dueño
   del idioma de interfaz y del de nombres (y de su persistencia) y de las
   etiquetas de sistema; `estudio.js` tiene toda la política de los modos en
@@ -115,7 +123,7 @@ Decisiones técnicas:
 
 ---
 
-## 4. Datos (cifras de la exportación del 2026-10-05)
+## 4. Datos (cifras de la exportación del 2026-10-06)
 
 | Sistema | Estructuras | GLB |
 |---|---|---|
@@ -124,19 +132,22 @@ Decisiones técnicas:
 | Muscular | 683 | 6,2 MB |
 | Cardiovascular | 673 | 10,3 MB |
 | Órganos linfoides | 163 | 0,5 MB |
-| Nervioso y órganos de los sentidos | 578 | 6,1 MB |
+| Nervioso y órganos de los sentidos | 404 | 4,0 MB |
 | Visceral | 115 | 2,9 MB |
 | Regiones del cuerpo | 256 | 0,7 MB |
-| **Total** | **3 158** | **29 MB** |
+| **Total** | **2 984** | **27 MB** |
 
 - Nombres únicos (sin lado), traducciones y definiciones: las cifras actuales
   las imprime `scripts/verificar_datos.py`; la tabla de arriba es la de la
   exportación indicada y se actualiza con cada regeneración.
 - Se excluyen del export: etiquetas 3D (FONT), grupos `.g`/`.j`, inserciones
   (`.i`, `.ol/.or/.el/.er`), objetos con `?` en el nombre, la "Bonus
-  collection" (duplicados por región) y las 8 estructuras de origen no
-  comercial de `scripts/exclusiones.json` (vestíbulo, cóclea, riñón y pelvis
-  renal, ambos lados). Se omiten también del manifiesto los objetos que salen
+  collection" (duplicados por región) y las 182 estructuras de
+  `scripts/exclusiones.json`: 8 de origen no comercial (vestíbulo, cóclea,
+  riñón y pelvis renal, ambos lados) y 174 de licencia no declarada (corteza
+  parcelada, sustancia blanca y tractos de la Universidad de Washington). La
+  misma configuración omite la definición de `Intermediate bronchus`
+  (Radiopaedia, CC BY-NC-SA). Se omiten también del manifiesto los objetos que salen
   del export como nodos sin malla (6 curvas auxiliares del ojo: ejes,
   meridianos, ecuador, cuerpo ciliar): el visor no puede seleccionarlos y en
   los ejercicios serían preguntas sin respuesta posible. El manifiesto los
@@ -173,21 +184,31 @@ activos (~3,6 M de triángulos) en portátiles sin GPU dedicada.
    Queda como hueco didáctico: el visor no muestra oído interno ni riñones.
    Opción futura: sustituirlos por mallas CC BY-SA de BodyParts3D (que sí
    incluye riñón y laberinto óseo) con el mismo pipeline.
-   **Pendiente:** los 103 objetos cerebrales de la UW ("Brainder", "White
-   matter"; material `Brain`, `Brain-Inner`, `White matter`) no declaran
-   licencia en el atlas: aclararla con Z-Anatomy antes de redistribuir
-   `nervioso.glb`. Pendiente también elegir licencia para el código de la app
-   (hoy sin asignar; `LICENSES.md` lo deja escrito).
-2. **Papiamento y neerlandés en nombres: HECHO (v0.2, 2026-10-05), pendiente
-   de revisión clínica.** Tabla `data/nombres-nl-pap.json` (1 819 nombres)
-   indexada por nombre inglés, con fuente por entrada: 332 neerlandeses
-   verificados contra el título del artículo de la Wikipedia en neerlandés
-   (solo cuando el artículo trata exactamente esa estructura; los artículos
-   genéricos como "middenhandsbeen" para "tercer metacarpiano" se descartaron),
-   1 487 neerlandeses y los 1 819 papiamentos generados por modelo de lenguaje
-   con ortografía etimológica de Aruba. La ficha marca cada nombre con su
-   fuente. Falta: revisión por personal clínico con
-   `data/revision-nombres-nl-pap.csv` y envío de la tabla a Z-Anatomy.
+   **UW: HECHO (v0.4, 2026-10-06).** Los 103 objetos cerebrales de la UW
+   ("Brainder", "White matter"; material `Brain`, `Brain-Inner`, `White
+   matter`) no declaran licencia en el atlas y se excluyen con el mismo
+   mecanismo (`scripts/listar_uw.py` mantiene la lista). Hueco didáctico:
+   sin corteza parcelada ni tractos. **Pendiente de la respuesta de
+   Z-Anatomy** a la consulta de `docs/consulta-licencia-UW.md` (en el módulo);
+   si la licencia es compatible, se retiran de la lista y se regenera.
+   **Licencia del código: HECHO (v0.4).** MIT, archivo `LICENSE`; modelos y
+   datos siguen bajo CC BY-SA 4.0 (`LICENSES.md`).
+2. **Papiamento y neerlandés en nombres: HECHO (v0.2, 2026-10-05); política
+   de muestra cambiada en v0.4.** Tabla `data/nombres-nl-pap.json` indexada
+   por nombre inglés, con fuente por entrada: neerlandeses verificados contra
+   el título del artículo de la Wikipedia en neerlandés (solo cuando el
+   artículo trata exactamente esa estructura; los artículos genéricos como
+   "middenhandsbeen" para "tercer metacarpiano" se descartaron) y el resto del
+   neerlandés y todo el papiamento generados por modelo de lenguaje con
+   ortografía etimológica de Aruba. **Decisión v0.4:** un nombre generado no
+   se muestra, ni con aviso, porque un estudiante memoriza lo que lee; en su
+   lugar la app enseña el latín y lo dice (`datos.js`, `nombre()`). Los
+   nombres aparecen conforme un revisor clínico los aprueba por oleadas
+   (`scripts/oleada_revision.py` → Excel → `scripts/aplicar_revision.py`);
+   la primera oleada propuesta es esquelético y muscular. Cuántos quedan:
+   `oleada_revision.py --listar`. Falta: la revisión en sí (una persona de
+   DERR con papiamento nativo y formación sanitaria) y el envío de la tabla a
+   Z-Anatomy.
 3. **Unidades didácticas:** listas curadas de estructuras (p. ej. "Hueso
    temporal", "Plexo braquial") para que el alcance de los ejercicios no sea
    solo por sistema.

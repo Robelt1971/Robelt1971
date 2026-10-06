@@ -2,12 +2,11 @@
 // modo vive en estudio.js; el estado de idioma, en i18n.js; la visibilidad 3D, en visor.js.
 import { Visor, colorSistema } from './visor.js';
 import { Estudio } from './estudio.js';
-import { cargarManifiesto, cargarDefiniciones, definicion, nombre, nombreCompleto, fuenteNombre, buscar, sistemaDe } from './datos.js';
-import { t, aplicar, cargarPreferencias, idioma, setIdioma, idiomaNombres, setIdiomaNombres, nombreSistema } from './i18n.js';
+import { cargarManifiesto, cargarDefiniciones, definicion, nombre, nombreCompleto, nombreSustituido, fuenteNombre, buscar, sistemaDe } from './datos.js';
+import { t, aplicar, cargarPreferencias, idioma, setIdioma, idiomaNombres, setIdiomaNombres, nombreSistema, nombreIdioma, IDIOMAS_PENDIENTES } from './i18n.js';
 
 const BASE = './';
 const SISTEMAS_INICIALES = ['esqueletico'];
-const IDIOMAS_PENDIENTES = ['nl', 'pap']; // tabla propia de DERR, pendiente de revisión clínica
 
 const $ = (s) => document.querySelector(s);
 const ui = {
@@ -56,11 +55,9 @@ function pintarTextos() {
   for (const op of ui.idiomaNombres.options) {
     const pendiente = IDIOMAS_PENDIENTES.includes(op.value);
     op.textContent = op.textContent.replace(/ ⚠$/, '') + (pendiente ? ' ⚠' : '');
-    op.title = pendiente ? t('sin_revisar') : '';
+    op.title = pendiente ? t('nombre_pendiente', { idioma: nombreIdioma(op.value) }) : '';
   }
 }
-// Sufijo de aviso para un nombre generado automáticamente en el idioma mostrado.
-function marcaIA(e) { return fuenteNombre(e) === 'ia' ? ' ⚠' : ''; }
 
 // ---------- Capas (sistemas) ----------
 function construirCapas() {
@@ -109,7 +106,7 @@ function alSeleccionar(node) {
 function alPasar(node, e) {
   if (!node || !estudio.permiteTooltip()) { ui.tooltip.hidden = true; return; }
   const entry = manifiesto.porNodo.get(node); if (!entry) return;
-  ui.tooltip.textContent = nombreCompleto(entry) + marcaIA(entry);
+  ui.tooltip.textContent = nombreCompleto(entry);
   const r = $('.escena').getBoundingClientRect();
   ui.tooltip.style.left = `${e.clientX - r.left}px`; ui.tooltip.style.top = `${e.clientY - r.top}px`; ui.tooltip.hidden = false;
 }
@@ -127,15 +124,16 @@ function mostrarFicha(node) {
   ruta.textContent = [nombreSistema(entry.sistema), ...entry.group].join(' › '); f.appendChild(ruta);
   const dl = document.createElement('dl');
   const filas = [['espanol', 'es'], ['ingles', 'en'], ['latin', 'la'], ['neerlandes', 'nl'], ['papiamento', 'pap'], ['frances', 'fr'], ['portugues', 'pt']];
+  // Etiqueta de procedencia de un nombre de la tabla propia; un nombre sin revisar no se muestra (datos.js), se dice que falta.
   const marcaFuente = (l) => {
     const fu = fuenteNombre(entry, l); if (!fu) return null;
     const et = document.createElement('span'); et.className = 'etiqueta';
-    et.textContent = fu === 'wikipedia-nl' ? t('fuente_wiki_nl') : fu === 'revisado' ? t('fuente_revisado') : '⚠ ' + t('sin_revisar');
+    et.textContent = fu === 'wikipedia-nl' ? t('fuente_wiki_nl') : fu === 'revisado' ? t('fuente_revisado') : '⚠ ' + t('nombre_pendiente', { idioma: nombreIdioma(l) });
     et.title = et.textContent; return et;
   };
   const etActual = marcaFuente(lang); if (etActual) h.appendChild(etActual);
   for (const [k, l] of filas) {
-    if (l === lang || !entry[l]) continue;
+    if (l === lang || !entry[l] || nombreSustituido(entry, l)) continue;
     const dt = document.createElement('dt'); dt.textContent = t(k); const dd = document.createElement('dd'); dd.textContent = entry[l];
     const et = marcaFuente(l); if (et) dd.appendChild(et);
     dl.append(dt, dd);
@@ -171,7 +169,7 @@ function alBuscar() {
   if (q.trim().length >= 2 && !res.length) { const li = document.createElement('li'); li.className = 'sub'; li.textContent = t('sin_resultados'); ui.resultados.appendChild(li); return; }
   for (const e of res) {
     const li = document.createElement('li');
-    li.textContent = nombreCompleto(e) + marcaIA(e);
+    li.textContent = nombreCompleto(e);
     const sub = document.createElement('span'); sub.className = 'sub';
     sub.textContent = [nombreSistema(e.sistema), e.la && e.la !== nombre(e) ? e.la : null].filter(Boolean).join(' · ');
     li.appendChild(sub);

@@ -2,8 +2,9 @@
 //   python3 -m http.server 8080 &   node tests/humo.mjs [http://127.0.0.1:8080/]
 // Comprueba: la página carga sin errores ni peticiones externas; los 8 GLB se decodifican y cada
 // sistema mapea tantas estructuras como declara el manifiesto; dos cargas simultáneas del mismo
-// sistema comparten una promesa; el selector avisa de los idiomas pendientes; Identificar muestra el
-// aviso con nombres en papiamento; el buscador marca nombres generados. Sale con 1 si algo falla.
+// sistema comparten una promesa; el selector avisa de los idiomas pendientes; con nombres en papiamento
+// un nombre sin revisar sale en latín (y uno revisado, en papiamento) en buscador y ficha; Identificar
+// avisa cuando la ronda lleva algún nombre sustituido. Sale con 1 si algo falla.
 import { createRequire } from 'node:module';
 const require = createRequire(import.meta.url);
 const { chromium } = require('playwright');
@@ -45,11 +46,21 @@ const pulsarModo = (modo) => page.$eval(`button.modo[data-modo="${modo}"]`, (b) 
 await pulsarModo('identificar');
 await page.waitForTimeout(500);
 ok((await page.$$('#estudio .opciones button')).length === 4, 'Identificar ofrece 4 opciones');
-ok(await page.$('#estudio .aviso') !== null, 'Identificar avisa con nombres en papiamento');
+ok(await page.$('#estudio .aviso') !== null, 'Identificar avisa cuando la ronda lleva nombres sustituidos');
 await pulsarModo('explorar');
-await page.$eval('#buscador', (i) => { i.value = 'femur'; i.dispatchEvent(new Event('input')); }); await page.waitForTimeout(400);
-const primero = await page.$eval('#resultados li', (li) => li.firstChild.textContent);
-ok(primero.endsWith('⚠'), `el buscador marca nombres generados (${primero})`);
+const buscar = async (q) => { await page.$eval('#buscador', (i, v) => { i.value = v; i.dispatchEvent(new Event('input')); }, q); await page.waitForTimeout(400); return page.$eval('#resultados li', (li) => li.firstChild.textContent); };
+// El fémur tiene papiamento generado ('ia'): el buscador y la ficha deben enseñar el latín, sin el nombre generado.
+const femur = await page.evaluate(() => { const e = window.__derr.manifiesto.porNodo.get('Femur.r'); return { la: e.la, pap: e.pap, fuente: e.pap_fuente }; });
+ok(femur.fuente === 'ia' && femur.la, `dato de prueba: Femur.r tiene papiamento generado y latín (${femur.la})`);
+let primero = await buscar('femur');
+ok(primero.startsWith(femur.la) && !primero.includes('⚠'), `un nombre sin revisar sale en latín (${primero})`);
+await page.$eval('#resultados li', (li) => li.click()); await page.waitForTimeout(300);
+const ficha = await page.evaluate(() => ({ titulo: document.querySelector('#ficha h3').firstChild.textContent, etiqueta: document.querySelector('#ficha h3 .etiqueta')?.textContent || '', cuerpo: document.querySelector('#ficha dl').textContent }));
+ok(ficha.titulo.startsWith(femur.la) && ficha.etiqueta.includes('⚠') && !ficha.cuerpo.includes(femur.pap), `la ficha explica la sustitución y no muestra el nombre generado (${ficha.etiqueta})`);
+// Un nombre revisado sí se muestra: se simula la revisión de ese dato en memoria.
+await page.evaluate(() => { window.__derr.manifiesto.porNodo.get('Femur.r').pap_fuente = 'revisado'; });
+primero = await buscar('femur');
+ok(primero.startsWith(femur.pap), `un nombre revisado sale en papiamento (${primero})`);
 ok(externas.length === 0, `sin peticiones externas (${externas.length})`);
 ok(errores.length === 0, `sin errores de JavaScript (${errores.slice(0, 2).join(' | ')})`);
 await browser.close();

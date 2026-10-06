@@ -10,7 +10,7 @@ export const TEXTOS = {
     ficha_vacia: 'Selecciona una estructura en el modelo o búscala por nombre.',
     cargando: 'Cargando', lado_l: 'izquierdo', lado_r: 'derecho', opcional: 'variante',
     sistema: 'Sistema', latin: 'Latín (TA)', ingles: 'Inglés', frances: 'Francés', portugues: 'Portugués', espanol: 'Español', neerlandes: 'Neerlandés', papiamento: 'Papiamento',
-    sin_revisar: 'traducción automática, pendiente de revisión clínica', fuente_wiki_nl: 'Wikipedia (nl), pendiente de revisión clínica', fuente_revisado: 'revisado clínicamente',
+    nombre_pendiente: 'nombre en {idioma} pendiente de revisión clínica; se muestra el latín', fuente_wiki_nl: 'Wikipedia (nl), pendiente de revisión clínica', fuente_revisado: 'revisado clínicamente',
     definicion: 'Definición', fuente_wiki: 'Fuente: Wikipedia (en), CC BY-SA', fuente_otra: 'Fuente: {host}', sin_definicion: 'Sin definición disponible en los datos de origen.',
     ocultar: 'Ocultar', aislar: 'Aislar', enfocar: 'Enfocar',
     progreso: 'Progreso', borrar_progreso: 'Borrar progreso local', progreso_resumen: '{n} estructuras practicadas · {ok} aciertos · {mal} fallos',
@@ -35,7 +35,7 @@ export const TEXTOS = {
     ficha_vacia: 'Select a structure in the model or search it by name.',
     cargando: 'Loading', lado_l: 'left', lado_r: 'right', opcional: 'variant',
     sistema: 'System', latin: 'Latin (TA)', ingles: 'English', frances: 'French', portugues: 'Portuguese', espanol: 'Spanish', neerlandes: 'Dutch', papiamento: 'Papiamento',
-    sin_revisar: 'machine translation, pending clinical review', fuente_wiki_nl: 'Wikipedia (nl), pending clinical review', fuente_revisado: 'clinically reviewed',
+    nombre_pendiente: '{idioma} name pending clinical review; Latin shown instead', fuente_wiki_nl: 'Wikipedia (nl), pending clinical review', fuente_revisado: 'clinically reviewed',
     definicion: 'Definition', fuente_wiki: 'Source: Wikipedia (en), CC BY-SA', fuente_otra: 'Source: {host}', sin_definicion: 'No definition available in the source data.',
     ocultar: 'Hide', aislar: 'Isolate', enfocar: 'Focus',
     progreso: 'Progress', borrar_progreso: 'Clear local progress', progreso_resumen: '{n} structures practised · {ok} correct · {mal} wrong',
@@ -60,7 +60,7 @@ export const TEXTOS = {
     ficha_vacia: 'Selecteer een structuur in het model of zoek op naam.',
     cargando: 'Laden', lado_l: 'links', lado_r: 'rechts', opcional: 'variant',
     sistema: 'Stelsel', latin: 'Latijn (TA)', ingles: 'Engels', frances: 'Frans', portugues: 'Portugees', espanol: 'Spaans', neerlandes: 'Nederlands', papiamento: 'Papiaments',
-    sin_revisar: 'automatische vertaling, klinische controle nog niet gedaan', fuente_wiki_nl: 'Wikipedia (nl), klinische controle nog niet gedaan', fuente_revisado: 'klinisch gecontroleerd',
+    nombre_pendiente: '{idioma} naam wacht op klinische controle; Latijn wordt getoond', fuente_wiki_nl: 'Wikipedia (nl), klinische controle nog niet gedaan', fuente_revisado: 'klinisch gecontroleerd',
     definicion: 'Definitie', fuente_wiki: 'Bron: Wikipedia (en), CC BY-SA', fuente_otra: 'Bron: {host}', sin_definicion: 'Geen definitie beschikbaar in de brongegevens.',
     ocultar: 'Verbergen', aislar: 'Isoleren', enfocar: 'Focus',
     progreso: 'Voortgang', borrar_progreso: 'Lokale voortgang wissen', progreso_resumen: '{n} structuren geoefend · {ok} goed · {mal} fout',
@@ -84,6 +84,13 @@ const SISTEMAS = {
   en: { esqueletico: 'Skeletal system', articulaciones: 'Joints', muscular: 'Muscular system', cardiovascular: 'Cardiovascular system', linfoide: 'Lymphoid organs', nervioso: 'Nervous system & sense organs', visceral: 'Visceral systems', regiones: 'Regions of the human body' },
   nl: { esqueletico: 'Skelet', articulaciones: 'Gewrichten', muscular: 'Spierstelsel', cardiovascular: 'Hart- en vaatstelsel', linfoide: 'Lymfoïde organen', nervioso: 'Zenuwstelsel en zintuigen', visceral: 'Inwendige organen', regiones: "Lichaamsregio's" },
 };
+
+// Idiomas de nombres cuya tabla es propia de DERR y está pendiente de revisión clínica (ver datos.js:
+// un nombre de esa tabla solo se muestra si está revisado o viene de Wikipedia; si no, sale el latín).
+export const IDIOMAS_PENDIENTES = ['nl', 'pap'];
+// Clave de texto con el nombre de cada idioma de nombres, para etiquetas y avisos.
+const NOMBRE_IDIOMA = { es: 'espanol', en: 'ingles', la: 'latin', nl: 'neerlandes', pap: 'papiamento', fr: 'frances', pt: 'portugues' };
+export function nombreIdioma(code) { return t(NOMBRE_IDIOMA[code] || code); }
 
 // Idiomas elegidos (interfaz y nombres anatómicos) y su persistencia. Único dueño de este estado.
 const PREF_UI = 'derr-anatomia-ui', PREF_NOMBRES = 'derr-anatomia-nombres';

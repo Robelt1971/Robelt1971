@@ -32,10 +32,17 @@ export async function cargarDefiniciones(base) {
 }
 export function definicion(e) { return defs && e.def ? defs[e.def] : null; }
 
-// Nombre de la estructura en el idioma de nombres elegido (cae al inglés si no hay traducción).
+// Nombre de la estructura en el idioma de nombres elegido. Cae al inglés si no hay traducción.
+// Un nombre generado automáticamente (fuente 'ia') no se muestra nunca: un estudiante memoriza lo que
+// lee, con aviso o sin él. En su lugar sale el latín (Terminologia Anatomica), que es además la
+// nomenclatura que usa la práctica clínica en neerlandés; sin latín, el inglés.
 export function nombre(e, lang = idiomaNombres()) {
-  return e[lang] || e.en;
+  if (!e[lang]) return e.en;
+  if (fuenteNombre(e, lang) === 'ia') return e.la || e.en;
+  return e[lang];
 }
+// true si lo que muestra nombre() en ese idioma es el sustituto, porque el propio está sin revisar.
+export function nombreSustituido(e, lang = idiomaNombres()) { return !!e[lang] && fuenteNombre(e, lang) === 'ia'; }
 // Procedencia del nombre en un idioma ('wikipedia-nl', 'ia', 'revisado'…) o null si el dato viene del atlas.
 export function fuenteNombre(e, lang = idiomaNombres()) { return e[`${lang}_fuente`] || null; }
 // Nombre con lado: "Húmero (derecho)".
@@ -68,4 +75,7 @@ export function buscar(m, consulta, max = 30) {
   out.sort((a, b) => a[0] - b[0] || a[1].en.length - b[1].en.length || a[1].en.localeCompare(b[1].en));
   return out.slice(0, max).map((x) => x[1]);
 }
-function campos0(e) { return [e.es, e.en, e.la, e.fr, e.pt, e.nl, e.pap].filter(Boolean); }
+// Campos en los que se busca: los del atlas y los de la tabla propia que ya se muestran (no los generados).
+function campos0(e) {
+  return [e.es, e.en, e.la, e.fr, e.pt, ...['nl', 'pap'].map((l) => (fuenteNombre(e, l) === 'ia' ? null : e[l]))].filter(Boolean);
+}

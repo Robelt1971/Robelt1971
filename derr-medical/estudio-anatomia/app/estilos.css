@@ -92,3 +92,4 @@ select { width: auto; }
   .panel-der { border-top: 1px solid var(--borde); }
   .modos { margin-left: 0; }
 }
+.aviso { font-size: 0.8rem; color: #e0b64a; margin: -0.4rem 0 0.6rem; }

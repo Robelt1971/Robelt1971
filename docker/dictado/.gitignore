@@ -1,0 +1,7 @@
+# Modelos (cientos de MB) y audio de prueba: nunca al repositorio.
+models/*
+!models/.gitkeep
+!models/SHA256SUMS
+audio-prueba/*
+!audio-prueba/.gitkeep
+.env

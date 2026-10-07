@@ -5,7 +5,9 @@
 > **100 % local**, dentro del mismo perímetro Docker/localhost que el resto de
 > DERR. Ningún audio ni transcripción sale de la máquina.
 > Fecha: 2026-10-07 · Responsable: Ernesto (Albert Rodríguez Robelt)
-> Estado: **BORRADOR** — pendiente de decidir §5 antes de implementar.
+> Estado: **BORRADOR, con servicio de prueba listo** — el contenedor, los
+> scripts y la página de dictado están en `docker/dictado/` (§10). Falta
+> integrarlo en el cliente DERR y cerrar §5.
 
 ---
 
@@ -97,6 +99,7 @@ El audio se procesa en memoria y **se descarta** al devolver el texto
 - Despliegue como **un contenedor más** en el `docker-compose` de DERR, con
   la imagen oficial `ghcr.io/ggml-org/whisper.cpp` fijada por **digest**, no
   por etiqueta. Volumen de solo lectura con los modelos.
+  Definición lista en `docker/dictado/docker-compose.whisper.yml` (§10).
 - Sin acceso a red externa: `network_mode` interno o regla de firewall en el
   compose. El puerto se publica únicamente en `127.0.0.1`.
 
@@ -161,8 +164,8 @@ El audio se procesa en memoria y **se descarta** al devolver el texto
       un idioma dominante por sesión). Dental después.
 - [ ] **Latencia aceptable** para el clínico: proponer ≤ 1,5× la duración del
       audio en modo por lotes.
-- [ ] **Qué hacer con papiamento** (§8): descartarlo, o probar la
-      transcripción como español/neerlandés y medir cuánto se pierde.
+- [x] **Papiamento:** descartado en v1 (decisión 2026-10-07). Se dicta en
+      español o neerlandés. Se retomará solo si aparece un modelo con soporte.
 
 ---
 
@@ -226,6 +229,24 @@ El audio se procesa en memoria y **se descarta** al devolver el texto
   MIT de OpenAI.
 - **Separación con el ecosistema Apify/Firecrawl:** ninguna relación. El
   dictado vive dentro del core clínico; Apify queda fuera de él.
+
+---
+
+## 10. Artefactos de implementación (`docker/dictado/`)
+
+| Archivo | Cubre |
+|---|---|
+| `docker-compose.whisper.yml` | §2, §3.1, §4: servicio `derr-whisper`, puerto solo `127.0.0.1`, VAD, `--convert`, temporales en RAM, sin capabilities |
+| `descargar-modelos.sh` | §3.2: descarga y SHA-256 de modelo Whisper y VAD (`models/SHA256SUMS`) |
+| `prompts/<modulo>-<idioma>.txt` | §3.3: prompt inicial por módulo e idioma |
+| `public/index.html` | §3.4: página de dictado de prueba e implementación de referencia del botón «Dictar», con estado *sin revisar* y resaltado de números y negaciones (§8) |
+| `probar-dictado.sh` | §7: `estado`, `transcribir`, `benchmark`, `aislamiento` (criterio 1 de §6) |
+| `README.md` | puesta en marcha y pasos pendientes de integración |
+
+**Pendiente para que el dictado exista dentro de DERR:** portar `transcribir()`
+al componente de nota del cliente, registrar la auditoría de §3.4 y añadir el
+servicio al compose principal. El código del cliente DERR no vive en este
+repositorio.
 
 ---
 

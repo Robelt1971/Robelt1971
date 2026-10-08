@@ -24,7 +24,7 @@ reflejar las tres.
 
 | Medida | Qué resuelve | Estado |
 |---|---|---|
-| Cifrado de campos sensibles en la aplicación, con llaves custodiadas por DERR o por la institución, nunca por Railway | Railway solo guarda texto cifrado. Responde al argumento CLOUD Act: el proveedor podría entregar datos, pero ilegibles | parcial: Medical y Dental cifran algunos campos, pero la llave está en Railway; Justice no cifra nada (§1.1) |
+| Cifrado de campos sensibles en la aplicación, con la llave separada de la base de datos (opción A; llave en servicio aparte como opción de pago) | Railway solo guarda texto cifrado. Responde al argumento CLOUD Act: el proveedor podría entregar datos, pero ilegibles | parcial: Medical y Dental cifran algunos campos, pero la llave está en Railway; Justice no cifra nada (§1.1) |
 | Región Railway **EU West (Ámsterdam)** para servicio, base de datos y volúmenes | Datos dentro del Reino de los Países Bajos, bajo régimen GDPR, en vez de California. Cambio de configuración, no de código | hecho (2026-10-08) |
 | Seudonimización: tabla de identidad separada de la tabla clínica o judicial, enlazadas por identificador interno | Un acceso indebido a una tabla no revela a quién pertenece el dato | no implementada en ninguna app (§1.1) |
 | Copia de respaldo cifrada periódica en el destino que elija la institución al contratar (su servidor en Aruba, su nube o la nube DERR) | "¿Y si Railway desaparece o nos corta el servicio?" | parcial: Dental y Medical tienen copias incompletas o sin cifrar; ninguna sale de Railway (§1.1) |
@@ -74,7 +74,8 @@ ningún dato real.
 | Cabeceras de seguridad, auditoría de cada guardado en el servidor, health sin errores internos, token del monitor por cabecera | Justice | hecho, Robelt1971/DERR-Justice-System#7 |
 | Quitar el nombre del paciente en todo envío a Anthropic | Medical | en curso |
 | Respaldos cifrados con llave propia, sin secretos de usuarios, copia al destino que elija la institución | Dental | en curso |
-| Diseño de copia en el navegador más sincronización con el servidor | Medical | en diseño |
+| Diseño de copia en el navegador más sincronización con el servidor | Medical | diseño listo, `DERR-Medical-Diseno-Sincronizacion.md` |
+| Quitar hashes del propietario del navegador en Justice; un intento de contraseña de propietario por conexión | Las tres | en curso |
 
 **Decisiones del propietario (2026-10-08):**
 
@@ -83,6 +84,11 @@ ningún dato real.
 - **Respaldos:** cada institución decide al contratar dónde se guardan. Se concreta en la
   ficha `DERR-Ficha-Opciones-Institucion.md`, que se firma con el contrato.
 - **IA de Medical:** siempre se quita el nombre del paciente antes de enviar a Anthropic.
+- **Llave de cifrado (opción A):** la llave se guarda en la configuración del servidor,
+  separada de la base de datos. La política lo dice así, sin prometer que el proveedor no
+  pueda acceder. La llave en un servicio aparte queda como opción de pago en la ficha.
+- **Contraseña de propietario:** se quitan sus hashes del código de Justice que descarga el
+  navegador, y en las tres apps se permite **un solo intento** por conexión cada 15 minutos.
 
 ---
 
@@ -125,9 +131,9 @@ acepta.
 ## 4. Texto propuesto para el apartado 6
 
 > **Aviso (2026-10-08):** según la auditoría de §1.1, hoy **no son ciertas** estas
-> frases del texto propuesto: que los campos sensibles se cifran con llaves fuera del
-> alcance de los proveedores; que la identidad se guarda separada; que cada institución
-> recibe un respaldo cifrado en Aruba. Tampoco menciona que Medical guarda datos en los
+> frases del texto propuesto: que los campos sensibles se cifran en las tres apps (Justice
+> no cifra); que la identidad se guarda separada; que los respaldos van cifrados al destino
+> que elige la institución (en curso). Tampoco menciona que Medical guarda datos en los
 > equipos de la institución ni que algunas funciones envían datos a Anthropic o Google.
 > No publicar este texto hasta que §1.1 lo respalde.
 
@@ -144,13 +150,12 @@ certificaciones de seguridad independientes (SOC 2, ISO 27001) disponibles
 a solicitud.
 
 Los datos de pacientes y de personas detenidas se cifran en tránsito y en
-reposo. Los campos sensibles se cifran además en la propia aplicación con
-llaves que no están en poder de los proveedores de infraestructura, de modo
-que estos nunca tienen acceso a información legible. Los datos de identidad
+reposo. Los campos sensibles se cifran además en la propia aplicación, con
+una llave que se guarda separada de la base de datos. Los datos de identidad
 se almacenan separados de los datos clínicos o judiciales.
 
-Cada institución recibe una copia de respaldo cifrada en Aruba bajo su
-propio control, puede auditar el tratamiento, es notificada de cualquier
+Cada institución elige al contratar dónde se guardan sus copias de respaldo
+cifradas, incluido un servidor propio en Aruba, puede auditar el tratamiento, es notificada de cualquier
 incidente de seguridad en un plazo máximo de 72 horas y recibe la devolución
 y el borrado certificado de sus datos al finalizar el contrato. La relación
 se rige por un contrato de encargado de tratamiento sujeto a la legislación

@@ -36,8 +36,8 @@ Los respaldos siempre van **cifrados**. La institución elige el destino.
 
 | Opción | Qué implica | Elegida |
 |---|---|---|
-| **Estándar** | La llave está en la configuración del servidor de DERR, separada de la base de datos | ☐ |
-| **Llave en un servicio aparte** | La llave vive en un servicio de llaves distinto del alojamiento. Más protección, coste adicional | ☐ |
+| **Estándar** (incluida) | La llave está en la configuración del servidor de DERR, separada de la base de datos. Protege si se roba la base de datos o un respaldo | ☐ |
+| **Llave en un servicio aparte** (opción de pago) | La llave vive en un servicio de llaves de otra empresa o en un servidor de la institución. El alojamiento solo ve datos cifrados. Si ese servicio cae, la app no puede leer los datos | ☐ |
 
 ## 4. Equipos compartidos
 

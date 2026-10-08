@@ -1,7 +1,8 @@
 # DERR — Política de privacidad, apartado 6: dónde se almacenan los datos y cómo se protegen
 
 > Propuesta de redacción y plan de medidas que la respaldan.
-> Fecha: 2026-10-07 · Estado: **Borrador, pendiente de revisión legal en Aruba**
+> Fecha: 2026-10-07 · Actualizado: 2026-10-08 con la auditoría del código de las tres apps
+> Estado: **Borrador, pendiente de revisión legal en Aruba**
 
 ## Problema
 
@@ -23,12 +24,52 @@ reflejar las tres.
 
 | Medida | Qué resuelve | Estado |
 |---|---|---|
-| Cifrado de campos sensibles en la aplicación, con llaves custodiadas por DERR o por la institución, nunca por Railway | Railway solo guarda texto cifrado. Responde al argumento CLOUD Act: el proveedor podría entregar datos, pero ilegibles | pendiente |
+| Cifrado de campos sensibles en la aplicación, con llaves custodiadas por DERR o por la institución, nunca por Railway | Railway solo guarda texto cifrado. Responde al argumento CLOUD Act: el proveedor podría entregar datos, pero ilegibles | parcial: Medical y Dental cifran algunos campos, pero la llave está en Railway; Justice no cifra nada (§1.1) |
 | Región Railway **EU West (Ámsterdam)** para servicio, base de datos y volúmenes | Datos dentro del Reino de los Países Bajos, bajo régimen GDPR, en vez de California. Cambio de configuración, no de código | hecho (2026-10-08) |
-| Seudonimización: tabla de identidad separada de la tabla clínica o judicial, enlazadas por identificador interno | Un acceso indebido a una tabla no revela a quién pertenece el dato | pendiente |
-| Copia de respaldo cifrada periódica en Aruba, bajo control de la institución | "¿Y si Railway desaparece o nos corta el servicio?" | pendiente |
-| Autenticación de dos factores, roles por perfil, registro inalterable de accesos, acceso administrativo de DERR limitado y registrado | Trazabilidad y mínimo privilegio | pendiente |
-| TLS en todo el recorrido, incluido aplicación ↔ base de datos dentro de Railway | Cifrado en tránsito | pendiente |
+| Seudonimización: tabla de identidad separada de la tabla clínica o judicial, enlazadas por identificador interno | Un acceso indebido a una tabla no revela a quién pertenece el dato | no implementada en ninguna app (§1.1) |
+| Copia de respaldo cifrada periódica en Aruba, bajo control de la institución | "¿Y si Railway desaparece o nos corta el servicio?" | parcial: Dental y Medical tienen copias incompletas o sin cifrar; ninguna sale de Railway (§1.1) |
+| Autenticación de dos factores, roles por perfil, registro inalterable de accesos, acceso administrativo de DERR limitado y registrado | Trazabilidad y mínimo privilegio | parcial, con fallos de seguridad que se corrigen primero (§1.1) |
+| TLS en todo el recorrido, incluido aplicación ↔ base de datos dentro de Railway | Cifrado en tránsito | parcial: navegador ↔ app sí; app ↔ base de datos sin TLS o sin verificar certificado (§1.1) |
+
+### 1.1 Estado verificado por aplicación (auditoría del código, 2026-10-08)
+
+Auditoría de solo lectura del código y la configuración de las tres apps. No se abrió
+ningún dato real.
+
+| Medida | DERR Medical | DERR Dental | DERR Justice |
+|---|---|---|---|
+| Cifrado de campos en el servidor | Parcial. AES-256-GCM en nombre, MRN, fecha de nacimiento, diagnóstico y notas. Sin cifrar: celda, departamento, archivos subidos, detalle del registro de auditoría (contiene MRN) | Parcial. AES-256-GCM en historia clínica y formulario de ingreso. Sin cifrar: nombre, cédula, fecha de nacimiento, contacto, notas de citas, recetas, archivos subidos | No hay. Todo se guarda en claro |
+| Dónde está la llave | Variable de entorno en Railway | Variable de entorno en Railway | No aplica |
+| Rotación de llave | No | No | No aplica |
+| Datos en el navegador | **La mayor parte de la historia clínica vive solo en el navegador** (IndexedDB), cifrada con una llave guardada en el mismo navegador | Copia completa de la clínica en claro en el navegador; no se borra al cerrar sesión | Expedientes completos, con fotos y huellas, en claro en el navegador; no se borran al cerrar sesión |
+| Seudonimización | No. Las tablas clínicas repiten el nombre del paciente | No | No |
+| Respaldo | Solo tablas del sistema, no las de pacientes; destino en una ruta de Windows que en Railway no persiste | Diario, 14 copias, **dentro de la misma base de datos** y sin cifrar; incluye secretos de usuarios | No hay, salvo los respaldos que ofrece Railway |
+| 2FA | Obligatorio para propietario y administrador, pero se salta si aún no tienen secreto | **No funciona**: la verificación siempre dice "correcto" y el alta falla. El secreto se envía a un servicio externo para dibujar el código QR | No hay |
+| Roles (RBAC) | La matriz de 14 roles existe pero ninguna ruta del servidor la aplica | Sí, en el servidor | Sí, en el servidor |
+| Aislamiento por fila (RLS) | Definido, probablemente no efectivo | Definido; varias rutas lo saltan | No hay |
+| Registro de auditoría | Solo agregable, pero sin cadena de hashes; no registra lecturas | Bloquea edición al rol de la app, sin cadena de hashes; no registra lecturas de historias clínicas | Editable; los cambios los informa el navegador y pueden falsificarse; no registra lecturas |
+| TLS app ↔ base de datos | Activado por defecto, depende de variables en Railway | Sin configurar | Desactivado en la red interna; sin verificar certificado en la pública |
+| Cabeceras de seguridad (HSTS, CSP) | Sí | Sí | No |
+
+**Otros hallazgos que afectan a la política:**
+
+- **Terceros que reciben datos.** Medical envía texto clínico a la API de Anthropic
+  (Estados Unidos) desde las funciones de IA, y solo algunas quitan antes el nombre del
+  paciente. Dental usa el reconocimiento de voz del navegador, que en Chrome envía el audio
+  a Google. Las alertas de seguridad de las tres apps envían IP y usuarios a Resend y a una
+  pasarela de WhatsApp. La lista completa está en `DERR-Subencargados.md`.
+- **Medical guarda la historia clínica en los equipos de la institución,** no en Railway.
+  Eso significa que gran parte de los datos ya está físicamente en Aruba, pero protegida
+  solo por la seguridad de cada equipo.
+- **Justice publica en el código del navegador los hashes de la contraseña del
+  propietario** y permite un inicio de sesión del propietario sin servidor. La cuenta de
+  demostración "test" se crea en el navegador con rol de administrador.
+
+**Correcciones en curso:**
+
+| Corrección | App | Estado |
+|---|---|---|
+| 2FA que verifica de verdad, sin enviar el secreto a terceros, límite de intentos sin atajos, nombres de pacientes fuera de los registros del servidor | Dental | en curso |
 
 ---
 
@@ -70,6 +111,13 @@ acepta.
 
 ## 4. Texto propuesto para el apartado 6
 
+> **Aviso (2026-10-08):** según la auditoría de §1.1, hoy **no son ciertas** estas
+> frases del texto propuesto: que los campos sensibles se cifran con llaves fuera del
+> alcance de los proveedores; que la identidad se guarda separada; que cada institución
+> recibe un respaldo cifrado en Aruba. Tampoco menciona que Medical guarda datos en los
+> equipos de la institución ni que algunas funciones envían datos a Anthropic o Google.
+> No publicar este texto hasta que §1.1 lo respalde.
+
 ```
 6. Dónde se almacenan los datos y cómo se protegen
 
@@ -109,7 +157,15 @@ de aplicación, región en Ámsterdam ni respaldo local, se implementa eso prime
 y luego se actualiza la política. Una política que promete más de lo que hace
 el sistema es peor que la actual en una auditoría.
 
-Orden sugerido: (1) cambiar la región de Railway a Ámsterdam, (2) firmar los
-DPA de Railway y Cloudflare, (3) respaldo cifrado en Aruba, (4) cifrado de
-campos en la aplicación y seudonimización, (5) revisión legal, (6) publicar
-el nuevo apartado 6 y actualizar la tabla de estado de este documento.
+Orden revisado tras la auditoría:
+
+1. ~~Cambiar la región de Railway a Ámsterdam~~ (hecho el 2026-10-08).
+2. Corregir los fallos de seguridad de §1.1: 2FA de Dental, roles sin aplicar y 2FA
+   saltable en Medical, hashes del propietario y cuenta "test" en Justice.
+3. Borrar los datos del navegador al cerrar sesión y cifrar lo que quede en él.
+4. Respaldo cifrado fuera de Railway, con prueba de restauración.
+5. TLS verificado entre app y base de datos, y cabeceras de seguridad en Justice.
+6. Registro de auditoría con lecturas y cadena de hashes.
+7. Cifrado de campos con llave fuera de Railway, y seudonimización.
+8. Firmar los DPA de los subencargados y revisión legal en Aruba.
+9. Publicar el nuevo apartado 6 y actualizar este documento.

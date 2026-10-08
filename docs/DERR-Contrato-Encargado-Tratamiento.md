@@ -179,9 +179,21 @@ historias clínicas y expedientes penitenciarios en Aruba.]
 
 ## Anexo B — Subencargados
 
-[Se completa con la lista verificada en `DERR-Subencargados.md`.]
+La lista vigente está en `DERR-Subencargados.md`. Al firmar con una institución, copiar
+aquí la versión de esa fecha, solo con los proveedores que use la app contratada.
 
 ## Anexo C — Medidas técnicas y organizativas
 
-[Se completa con el estado real verificado por aplicación en
-`DERR-Privacidad-Apartado-6-Ubicacion-Datos.md`.]
+El estado verificado de cada medida, por aplicación, está en la sección 1.1 de
+`DERR-Privacidad-Apartado-6-Ubicacion-Datos.md`. Al firmar, copiar aquí la versión de esa
+fecha con dos columnas: **implementada** y **en curso, con fecha prevista**.
+
+A la fecha de este borrador (2026-10-08), solo se pueden presentar como implementadas:
+
+- Alojamiento de servidores y bases de datos en los Países Bajos.
+- Cifrado entre el navegador y la aplicación (HTTPS).
+- Contraseñas guardadas con hash, sesiones de 15 minutos con renovación controlada.
+- Roles en el servidor en DERR Dental y DERR Justice.
+- Cifrado parcial de campos clínicos en DERR Medical y DERR Dental, con llave en Railway.
+
+Todo lo demás figura como **en curso** hasta que la auditoría lo confirme.

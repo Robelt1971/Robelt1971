@@ -27,7 +27,7 @@ reflejar las tres.
 | Cifrado de campos sensibles en la aplicación, con llaves custodiadas por DERR o por la institución, nunca por Railway | Railway solo guarda texto cifrado. Responde al argumento CLOUD Act: el proveedor podría entregar datos, pero ilegibles | parcial: Medical y Dental cifran algunos campos, pero la llave está en Railway; Justice no cifra nada (§1.1) |
 | Región Railway **EU West (Ámsterdam)** para servicio, base de datos y volúmenes | Datos dentro del Reino de los Países Bajos, bajo régimen GDPR, en vez de California. Cambio de configuración, no de código | hecho (2026-10-08) |
 | Seudonimización: tabla de identidad separada de la tabla clínica o judicial, enlazadas por identificador interno | Un acceso indebido a una tabla no revela a quién pertenece el dato | no implementada en ninguna app (§1.1) |
-| Copia de respaldo cifrada periódica en Aruba, bajo control de la institución | "¿Y si Railway desaparece o nos corta el servicio?" | parcial: Dental y Medical tienen copias incompletas o sin cifrar; ninguna sale de Railway (§1.1) |
+| Copia de respaldo cifrada periódica en el destino que elija la institución al contratar (su servidor en Aruba, su nube o la nube DERR) | "¿Y si Railway desaparece o nos corta el servicio?" | parcial: Dental y Medical tienen copias incompletas o sin cifrar; ninguna sale de Railway (§1.1) |
 | Autenticación de dos factores, roles por perfil, registro inalterable de accesos, acceso administrativo de DERR limitado y registrado | Trazabilidad y mínimo privilegio | parcial, con fallos de seguridad que se corrigen primero (§1.1) |
 | TLS en todo el recorrido, incluido aplicación ↔ base de datos dentro de Railway | Cifrado en tránsito | parcial: navegador ↔ app sí; app ↔ base de datos sin TLS o sin verificar certificado (§1.1) |
 
@@ -65,11 +65,24 @@ ningún dato real.
   propietario** y permite un inicio de sesión del propietario sin servidor. La cuenta de
   demostración "test" se crea en el navegador con rol de administrador.
 
-**Correcciones en curso:**
+**Correcciones:**
 
 | Corrección | App | Estado |
 |---|---|---|
-| 2FA que verifica de verdad, sin enviar el secreto a terceros, límite de intentos sin atajos, nombres de pacientes fuera de los registros del servidor | Dental | en curso |
+| 2FA que verifica de verdad, QR generado en el navegador, límite de intentos sin atajos, nombres de pacientes fuera de los logs | Dental | hecho, Robelt1971/DERR-Dental-System#5 |
+| Modo desarrollo solo explícito, límite de intentos activo, telemetría privada, sin MRN en la auditoría | Medical | hecho, Robelt1971/DERR-Medical-System#10 |
+| Cabeceras de seguridad, auditoría de cada guardado en el servidor, health sin errores internos, token del monitor por cabecera | Justice | hecho, Robelt1971/DERR-Justice-System#7 |
+| Quitar el nombre del paciente en todo envío a Anthropic | Medical | en curso |
+| Respaldos cifrados con llave propia, sin secretos de usuarios, copia al destino que elija la institución | Dental | en curso |
+| Diseño de copia en el navegador más sincronización con el servidor | Medical | en diseño |
+
+**Decisiones del propietario (2026-10-08):**
+
+- **Medical:** la historia clínica se guarda en el navegador para trabajar sin conexión **y** se sincroniza con el servidor.
+- **Justice:** la cuenta de demostración "test" se mantiene.
+- **Respaldos:** cada institución decide al contratar dónde se guardan. Se concreta en la
+  ficha `DERR-Ficha-Opciones-Institucion.md`, que se firma con el contrato.
+- **IA de Medical:** siempre se quita el nombre del paciente antes de enviar a Anthropic.
 
 ---
 

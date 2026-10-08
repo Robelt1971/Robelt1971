@@ -72,10 +72,11 @@ ningún dato real.
 | 2FA que verifica de verdad, QR generado en el navegador, límite de intentos sin atajos, nombres de pacientes fuera de los logs | Dental | hecho, Robelt1971/DERR-Dental-System#5 |
 | Modo desarrollo solo explícito, límite de intentos activo, telemetría privada, sin MRN en la auditoría | Medical | hecho, Robelt1971/DERR-Medical-System#10 |
 | Cabeceras de seguridad, auditoría de cada guardado en el servidor, health sin errores internos, token del monitor por cabecera | Justice | hecho, Robelt1971/DERR-Justice-System#7 |
-| Quitar el nombre del paciente en todo envío a Anthropic | Medical | en curso |
-| Respaldos cifrados con llave propia, sin secretos de usuarios, copia al destino que elija la institución | Dental | en curso |
+| Quitar el nombre del paciente en todo envío a Anthropic | Medical | pull request abierto: Robelt1971/DERR-Medical-System#12 |
+| Respaldos cifrados con llave propia, sin secretos de usuarios, copia al destino que elija la institución | Dental | pull request abierto: Robelt1971/DERR-Dental-System#6 |
 | Diseño de copia en el navegador más sincronización con el servidor | Medical | diseño listo, `DERR-Medical-Diseno-Sincronizacion.md` |
-| Quitar hashes del propietario del navegador en Justice; un intento de contraseña de propietario por conexión | Las tres | en curso |
+| Quitar hashes del propietario del navegador en Justice; un intento de contraseña de propietario por conexión | Las tres | pull requests abiertos: Robelt1971/DERR-Justice-System#8, Robelt1971/DERR-Medical-System#13, Robelt1971/DERR-Dental-System#7 |
+| Acceso entre compañeros (médicos, dentistas, psicólogos, enfermería) y agenda completa para enfermería | Medical | pull request abierto: Robelt1971/DERR-Medical-System#11 |
 
 **Decisiones del propietario (2026-10-08):**
 

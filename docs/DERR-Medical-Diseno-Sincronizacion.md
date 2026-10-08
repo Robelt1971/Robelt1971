@@ -4,7 +4,7 @@
 > trabajar sin conexión **y** se sincroniza con el servidor.
 > Este documento es el diseño previo a programar. Se hizo leyendo solo código y
 > configuración, sin abrir datos reales.
-> Estado: **Propuesta, pendiente de las respuestas del propietario (sección 7)**
+> Estado: **Propuesta. Respuestas del propietario del 2026-10-08 en la sección 8**
 
 ## 0. Problemas actuales que condicionan el diseño
 
@@ -159,3 +159,34 @@ tenant_settings(sync_mode, local_cache_policy, backup_target)
 7. ¿El servidor puede guardar celda y departamento sin cifrar para las estadísticas?
 8. ¿Está definida en producción la variable `REQUEST_SIGNING_SECRET`?
 9. ¿Se acepta una fecha límite para dejar de usar los archivos `.enc`?
+
+## 8. Respuestas del propietario (2026-10-08) y propuestas
+
+1. **Acceso entre compañeros:** médicos, dentistas, psicólogos y enfermeros ven y amplían
+   los registros de todos sus compañeros de la misma institución, porque asumen sus
+   pacientes cuando faltan. En DERR Dental ya era así por clínica. Los enfermeros también
+   dan citas cuando falta la secretaria. Aplicado en Robelt1971/DERR-Medical-System#11.
+   En el servidor, la sincronización usará `write` para estos roles, no `own`.
+2. **Trabajo sin conexión:** deseado. Se diseña como en la sección 2: cada PC guarda su
+   copia, envía cada cambio al servidor en cuanto hay red y recibe los cambios de los demás
+   PCs cada pocos segundos. Propuesta: permitir seguir trabajando sin conexión después de un
+   primer inicio de sesión con conexión en ese PC. El inicio de sesión sin conexión al
+   empezar el turno solo es posible si ese usuario ya entró antes en ese PC y la política
+   del PC no borra la copia local.
+3. **Política de PCs en KIA:** pendiente hasta el piloto en KIA. Mientras tanto, por
+   defecto `shared_persist`: al cerrar sesión se olvida la llave, la copia sigue cifrada y se
+   borra tras N días sin uso. Se elige por institución en la ficha de opciones.
+4. **Quién resuelve conflictos y duplicados.** Propuesta:
+   - **Conflicto** (dos PCs cambiaron el mismo campo del mismo registro sin conexión): se
+     guarda la versión que llegó primero al servidor y la otra no se pierde. Aparece un
+     aviso al profesional que hizo el segundo cambio, que elige cuál queda o las combina.
+     Si en 48 horas no lo resuelve, pasa al jefe del servicio: jefe médico, de enfermería o
+     de psicología. Todo queda en la auditoría.
+   - **Para reducir conflictos:** cuando alguien abre un registro que otra persona está
+     editando, la app lo indica, por ejemplo "Dra. X está editando esta consulta".
+   - **Paciente posiblemente duplicado** (mismo nombre y fecha de nacimiento, o mismo
+     número de registro): nunca se fusiona solo. Lo revisa el personal de admisión o la
+     secretaría, comparando cédula, fecha de nacimiento y foto. Al fusionar se conserva
+     todo el historial de ambos, queda registrado y se puede deshacer.
+5. **Citas:** son datos de pacientes. Se cifran, se sincronizan con permisos y se auditan
+   como el resto. Reclasificadas en `CLAUDE.md` en Robelt1971/DERR-Medical-System#11.

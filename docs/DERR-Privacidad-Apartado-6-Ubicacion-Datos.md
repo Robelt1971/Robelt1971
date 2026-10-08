@@ -24,7 +24,7 @@ reflejar las tres.
 | Medida | Qué resuelve | Estado |
 |---|---|---|
 | Cifrado de campos sensibles en la aplicación, con llaves custodiadas por DERR o por la institución, nunca por Railway | Railway solo guarda texto cifrado. Responde al argumento CLOUD Act: el proveedor podría entregar datos, pero ilegibles | pendiente |
-| Región Railway **EU West (Ámsterdam)** para servicio, base de datos y volúmenes | Datos dentro del Reino de los Países Bajos, bajo régimen GDPR, en vez de California. Cambio de configuración, no de código | pendiente |
+| Región Railway **EU West (Ámsterdam)** para servicio, base de datos y volúmenes | Datos dentro del Reino de los Países Bajos, bajo régimen GDPR, en vez de California. Cambio de configuración, no de código | hecho (2026-10-08) |
 | Seudonimización: tabla de identidad separada de la tabla clínica o judicial, enlazadas por identificador interno | Un acceso indebido a una tabla no revela a quién pertenece el dato | pendiente |
 | Copia de respaldo cifrada periódica en Aruba, bajo control de la institución | "¿Y si Railway desaparece o nos corta el servicio?" | pendiente |
 | Autenticación de dos factores, roles por perfil, registro inalterable de accesos, acceso administrativo de DERR limitado y registrado | Trazabilidad y mínimo privilegio | pendiente |

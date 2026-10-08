@@ -64,8 +64,9 @@ avisa a la Institución de cualquier cambio relevante.
 ## 5. Ubicación de los datos
 
 5.1. Los datos se almacenan en servidores situados en los **Países Bajos** (región
-EU West de Railway, Ámsterdam). Las copias de respaldo se almacenan en [Países Bajos /
-Aruba, según la medida de respaldo acordada].
+EU West de Railway, Ámsterdam), salvo que la Institución haya elegido instalación local
+en el **Anexo D**. Las copias de respaldo se cifran y se guardan en el destino que la
+Institución elige en el Anexo D.
 
 5.2. DERR no traslada el almacenamiento de los datos a otro país sin el consentimiento
 previo y por escrito de la Institución.
@@ -197,3 +198,10 @@ A la fecha de este borrador (2026-10-08), solo se pueden presentar como implemen
 - Cifrado parcial de campos clínicos en DERR Medical y DERR Dental, con llave en Railway.
 
 Todo lo demás figura como **en curso** hasta que la auditoría lo confirme.
+
+## Anexo D — Opciones elegidas por la Institución
+
+La ficha `DERR-Ficha-Opciones-Institucion.md`, rellenada y firmada por ambas partes:
+dónde funciona la aplicación, destino de los respaldos y quién guarda su llave, custodia
+de la llave de cifrado, política para equipos compartidos, y funciones que envían datos a
+terceros.

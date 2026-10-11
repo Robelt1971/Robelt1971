@@ -1,7 +1,7 @@
 # DERR — Contrato de encargado del tratamiento de datos personales
 
 > Plantilla. Borrador para revisión de un abogado en Aruba antes de firmarla con ninguna institución.
-> Fecha: 2026-10-08 · Estado: **Borrador, no firmar sin revisión legal**
+> Fecha: 2026-10-08 · Anexo C revisado el 2026-10-11 · Estado: **Borrador, no firmar sin revisión legal**
 > Relación con otros documentos: cumple el compromiso de la sección 2 de
 > `DERR-Privacidad-Apartado-6-Ubicacion-Datos.md`. Las preguntas abiertas para el
 > abogado están en `DERR-Revision-Legal-Aruba.md`.
@@ -55,8 +55,9 @@ que están obligadas a confidencialidad por escrito y que conocen sus obligacion
 4.1. DERR aplica las medidas técnicas y organizativas descritas en el **Anexo C**, adecuadas
 al riesgo de los datos de salud y de personas privadas de libertad.
 
-4.2. El Anexo C distingue entre medidas **implementadas** y **en curso**, con fecha
-prevista para cada una. DERR no presenta como implementada ninguna medida que no lo esté.
+4.2. El Anexo C distingue entre medidas **implementadas**, **listas pendientes de
+activar** y **en curso**, con fecha prevista para las dos últimas. DERR no presenta como
+implementada ninguna medida que no esté activa en producción.
 
 4.3. DERR puede actualizar las medidas siempre que el nivel de protección no baje, y
 avisa a la Institución de cualquier cambio relevante.
@@ -187,17 +188,51 @@ aquí la versión de esa fecha, solo con los proveedores que use la app contrata
 
 El estado verificado de cada medida, por aplicación, está en la sección 1.1 de
 `DERR-Privacidad-Apartado-6-Ubicacion-Datos.md`. Al firmar, copiar aquí la versión de esa
-fecha con dos columnas: **implementada** y **en curso, con fecha prevista**.
+fecha con tres columnas: **implementada**, **lista, pendiente de activar** y **en curso,
+con fecha prevista**.
 
-A la fecha de este borrador (2026-10-08), solo se pueden presentar como implementadas:
+- **Implementada:** fusionada en el código y activa por defecto en producción.
+- **Lista, pendiente de activar:** fusionada, pero apagada hasta que se configure una
+  variable del servidor o el propietario la active. No se presenta como implementada.
+- **En curso:** todavía no está hecha.
+
+**Implementadas** a la fecha de esta revisión (2026-10-11):
 
 - Alojamiento de servidores y bases de datos en los Países Bajos.
 - Cifrado entre el navegador y la aplicación (HTTPS).
 - Contraseñas guardadas con hash, sesiones de 15 minutos con renovación controlada.
-- Roles en el servidor en DERR Dental y DERR Justice.
+- Cerrar sesión revoca la sesión en el servidor (DERR Medical).
+- Roles en el servidor en las tres apps. En DERR Medical la matriz del navegador y la del
+  servidor son idénticas, y los permisos personalizados del propietario se guardan en el
+  servidor y cada cambio queda auditado.
 - Cifrado parcial de campos clínicos en DERR Medical y DERR Dental, con llave en Railway.
+- DERR Medical no guarda nunca datos de pacientes en claro en el navegador.
+- Inicio de sesión del propietario: tras un intento fallido, esa dirección IP queda bloqueada
+  15 minutos (las tres apps). DERR Justice ya no incluye los hashes de esa contraseña en el
+  código del navegador.
+- 2FA que verifica de verdad, obligatorio para el personal de DERR Dental.
+- Respaldos de DERR Dental cifrados y sin contraseñas ni secretos 2FA (siguen dentro de
+  la misma base de datos; la llave propia de respaldos está pendiente de configurar).
+- Registros del servidor de DERR Medical sin nombres, MRN ni búsquedas.
+- Nombre del paciente quitado antes de cualquier envío a Anthropic (DERR Medical). La
+  función de IA está hoy inactiva en producción.
 
-Todo lo demás figura como **en curso** hasta que la auditoría lo confirme.
+**Listas, pendientes de activar** (DERR Medical):
+
+- Rol de base de datos sin privilegios, para que el aislamiento por fila (RLS) se aplique
+  de verdad.
+- Cifrado de campos versión 2, con una llave por institución.
+- Respaldo completo y cifrado con llave propia, enviado al almacenamiento que elija la
+  Institución, verificado, con retención y prueba de restauración con acta firmada.
+- Sincronización con el servidor, apagada por defecto en cada institución: registro de
+  accesos inalterable con cadena de hashes, identificadores seudónimos para que los MRN y
+  los nombres no lleguen en claro al servidor, y panel de conflictos.
+
+**En curso:** borrado de la copia del navegador al cerrar sesión y política de equipos
+compartidos; llave del navegador protegida por la contraseña; registro de lecturas en las
+rutas antiguas; TLS verificado entre aplicación y base de datos; cifrado en DERR Justice;
+copia externa de los respaldos de DERR Dental y respaldos de DERR Justice; llave de cifrado
+fuera de Railway. Todo lo que no figure arriba se considera **en curso**.
 
 ## Anexo D — Opciones elegidas por la Institución
 

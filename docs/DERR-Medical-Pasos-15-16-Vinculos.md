@@ -338,6 +338,9 @@ A1–A9 (sección 1.5) · B1–B6 (sección 2.6) · C1–C7 (sección 3.5).
 | B4 · un administrador puede enviar el trabajo pendiente de otro usuario, registrado como "enviado por X en nombre de Y" | **Sí** | 2026-10-12 |
 | B5 · `shared_persist` por defecto hasta el piloto en KIA | **Sí** | 2026-10-12 |
 | C1 · psicología, psiquiatría, fisioterapia y optometría eligen al paciente de la lista y guardan el MRN | **Sí** | octubre 2026 |
+| A3 · borrar la llave antigua de cada PC (15d) cuando ese PC esté migrado al cifrado nuevo, verificado y sin trabajo pendiente | **Sí, con esas condiciones** | 2026-10-12 |
+| A9 · un administrador puede restablecer la contraseña de un usuario | **Sí** | 2026-10-12 |
+| Paso 17 (diseño, pregunta 9) · los `.enc` dejan de escribirse y pasan a servir solo para importar | **Sí: 90 días después de activar la sincronización en ambos sentidos en la institución** | 2026-10-12 |
 
 **Aplicado por defecto, a falta de respuesta** (se puede cambiar):
 
@@ -346,10 +349,9 @@ A1–A9 (sección 1.5) · B1–B6 (sección 2.6) · C1–C7 (sección 3.5).
 - C5: las tareas de enfermería creadas desde psiquiatría guardan también el paciente.
 - C6: no hay "deshacer vínculo".
 
-**Sin responder, y por eso no se construye:** A3 (borrar la llave antigua, 15d), A8 (portal de
-pacientes con 15c activo), A9 (restablecer la contraseña por un administrador), B6 (fecha límite
-para trabajar sin conexión dentro de Justice), C4 (quién confirma los casos dudosos) y C7 (quién ve
-"Vincular registros").
+**Sin responder, y por eso no se construye:** A8 (portal de pacientes con 15c activo), B6 (fecha
+límite para trabajar sin conexión dentro de Justice), C4 (quién confirma los casos dudosos) y C7
+(quién ve "Vincular registros").
 
 **Qué significa B2–B5 en la práctica:** con `shared_persist`, cerrar sesión, la inactividad o un
 cierre del navegador **nunca borran nada**: la llave se olvida o la pantalla se bloquea. Solo un PC

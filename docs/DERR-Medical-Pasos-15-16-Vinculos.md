@@ -2,7 +2,7 @@
 
 > Propuesta para decidir **antes** de programar. Se hizo leyendo solo código y el historial de
 > git (`origin/master`, commit `9dd7efb`), sin abrir datos reales.
-> Estado: **propuesta, pendiente de las respuestas del propietario (sección 5).**
+> Estado: **respondida en parte.** Las respuestas del propietario están en la sección 6.
 
 ## 0. Resumen en una página
 
@@ -321,6 +321,42 @@ La copia local solo se borra si se cumplen **todas** estas condiciones. Si falta
 ## 5. Todas las preguntas, juntas
 
 A1–A9 (sección 1.5) · B1–B6 (sección 2.6) · C1–C7 (sección 3.5).
+
+## 6. Respuestas del propietario
+
+| Pregunta | Respuesta | Fecha |
+|---|---|---|
+| A1 · una llave por PC, una envoltura por usuario | **Sí** | octubre 2026 |
+| A2 · llave nueva PBKDF2 600 000 y volver a cifrar, conservando la llave actual | **Sí** | octubre 2026 |
+| A4 · entrar sin conexión sin 2FA, también propietario y administrador | **Sí** | octubre 2026 |
+| A5 · máximo 7 días sin conexión | **Sí** | octubre 2026 |
+| A6 · 12 caracteres para entrar sin conexión | **Sí** | octubre 2026 |
+| A7 · llave de recuperación por PC en el servidor, registrada | **Sí** | octubre 2026 |
+| B1 · bloqueo de pantalla a los 15 minutos en PCs compartidos | **Sí** | octubre 2026 |
+| B2 · N = 30 días para `shared_persist` | **Sí** | 2026-10-12 |
+| B3 · ningún borrado hasta que la sincronización en ambos sentidos sea real y el PC esté verificado | **Sí** | 2026-10-12 |
+| B4 · un administrador puede enviar el trabajo pendiente de otro usuario, registrado como "enviado por X en nombre de Y" | **Sí** | 2026-10-12 |
+| B5 · `shared_persist` por defecto hasta el piloto en KIA | **Sí** | 2026-10-12 |
+| C1 · psicología, psiquiatría, fisioterapia y optometría eligen al paciente de la lista y guardan el MRN | **Sí** | octubre 2026 |
+
+**Aplicado por defecto, a falta de respuesta** (se puede cambiar):
+
+- C2: se puede seguir guardando con nombre libre, marcado "sin vincular".
+- C3: no hay vinculación automática; una persona confirma cada vínculo, también los únicos.
+- C5: las tareas de enfermería creadas desde psiquiatría guardan también el paciente.
+- C6: no hay "deshacer vínculo".
+
+**Sin responder, y por eso no se construye:** A3 (borrar la llave antigua, 15d), A8 (portal de
+pacientes con 15c activo), A9 (restablecer la contraseña por un administrador), B6 (fecha límite
+para trabajar sin conexión dentro de Justice), C4 (quién confirma los casos dudosos) y C7 (quién ve
+"Vincular registros").
+
+**Qué significa B2–B5 en la práctica:** con `shared_persist`, cerrar sesión, la inactividad o un
+cierre del navegador **nunca borran nada**: la llave se olvida o la pantalla se bloquea. Solo un PC
+compartido que nadie abre durante 30 días se borra, y solo si se cumplen las cuatro condiciones de
+la sección 2.2. Se borran primero la llave del PC y sus envolturas, y después la copia local de los
+datos de pacientes y la copia `shadow`. Nunca se borran el servidor, el trabajo sin enviar, los
+datos del sistema ni los PCs `personal`.
 
 ---
 

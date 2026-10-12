@@ -1,0 +1,91 @@
+# DERR — Dictado clínico local con whisper.cpp
+# Spec: docs/DERR-Dictado-Clinico-Whisper-Spec.md
+#
+# Uso (desde esta carpeta):
+#   ./descargar-modelos.sh                       # una sola vez, verifica SHA-256
+#   docker compose -f docker-compose.whisper.yml up -d
+#   abrir http://127.0.0.1:8081/                 # página de dictado de prueba
+#   ./probar-dictado.sh aislamiento              # cero conexiones salientes
+#
+# Para integrarlo en DERR: copiar este servicio al docker-compose principal.
+# El servicio NO debe compartir red con nada que tenga salida a internet.
+
+services:
+  derr-whisper:
+    # TODO antes de producción: fijar por digest, no por etiqueta.
+    #   docker pull ghcr.io/ggml-org/whisper.cpp:main
+    #   docker inspect --format '{{index .RepoDigests 0}}' ghcr.io/ggml-org/whisper.cpp:main
+    # y sustituir la línea de abajo por  image: ghcr.io/ggml-org/whisper.cpp@sha256:...
+    # Anotar el digest en .claude/SHA256SUMS (sección whisper.cpp).
+    image: ghcr.io/ggml-org/whisper.cpp:main
+    container_name: derr-whisper
+    restart: unless-stopped
+    command:
+      - whisper-server
+      # 0.0.0.0 es DENTRO del contenedor; hacia fuera solo se publica en 127.0.0.1 (ver ports).
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8080"
+      - --model
+      - /models/${WHISPER_MODEL:-ggml-large-v3-turbo-q5_0.bin}
+      - --language
+      - ${WHISPER_LANGUAGE:-auto}
+      - --threads
+      - ${WHISPER_THREADS:-4}
+      # Acepta webm/ogg/m4a del navegador y los pasa a WAV 16 kHz con ffmpeg.
+      - --convert
+      - --tmp-dir
+      - /tmp
+      # VAD: recorta silencios y reduce las alucinaciones de Whisper (spec §8).
+      - --vad
+      - --vad-model
+      - /models/ggml-silero-v5.1.2.bin
+      # Sin tokens que no sean habla (música, ruidos) y sin arrastrar contexto
+      # entre peticiones: cada dictado es independiente.
+      - --suppress-nst
+      - --no-context
+      # Página de dictado de prueba (public/index.html).
+      - --public
+      - /public
+    ports:
+      # SOLO loopback. Nunca "8081:8080" a secas: eso lo expondría a la red local.
+      - "127.0.0.1:${WHISPER_PORT:-8081}:8080"
+    volumes:
+      - ./models:/models:ro
+      - ./public:/public:ro
+      - ./prompts:/public/prompts:ro
+    tmpfs:
+      # Los WAV convertidos viven en RAM y desaparecen con el contenedor.
+      - /tmp:size=512m
+    networks:
+      - derr-dictado
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          memory: ${WHISPER_MEMORY:-4g}
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "-o", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    logging:
+      # whisper-server no registra el texto transcrito; aun así, acotar logs.
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+networks:
+  derr-dictado:
+    # internal: true bloquearía también el puerto publicado en algunos
+    # motores Docker (Desktop/Windows). Por eso la red es normal y el
+    # aislamiento se COMPRUEBA con ./probar-dictado.sh aislamiento. Si en la
+    # máquina de producción `internal: true` deja pasar el puerto en loopback,
+    # activarlo aquí es la opción más segura.
+    driver: bridge

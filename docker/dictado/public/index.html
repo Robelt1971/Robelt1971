@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DERR · Dictado de prueba</title>
+<!--
+  DERR — página de dictado de prueba servida por whisper-server (--public).
+  Sin dependencias externas: funciona sin internet. Es también la implementación
+  de referencia para el botón "Dictar" del cliente DERR: la función
+  transcribir() de abajo es lo que hay que portar (spec §3.4).
+  SOLO notas sintéticas. Nunca datos reales de pacientes en esta página.
+-->
+<style>
+  :root { --bg:#f6f7f9; --fg:#1b1f23; --card:#fff; --line:#d5d9e0; --warn:#fff4cc; --warnb:#b38600; --ok:#e3f6e8; --okb:#1f7a3a; --acc:#1f5fbf; --rec:#c62828; }
+  * { box-sizing:border-box }
+  body { margin:0; font:16px/1.5 system-ui, sans-serif; background:var(--bg); color:var(--fg) }
+  main { max-width:860px; margin:0 auto; padding:24px 16px }
+  h1 { font-size:1.4rem; margin:0 0 4px } .sub { color:#555; margin:0 0 20px }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px }
+  .row { display:flex; gap:12px; flex-wrap:wrap; align-items:end }
+  label { display:block; font-size:.85rem; color:#444 } select,button { font:inherit }
+  select { padding:8px; border:1px solid var(--line); border-radius:6px; background:#fff }
+  button { padding:10px 16px; border:0; border-radius:8px; background:var(--acc); color:#fff; cursor:pointer }
+  button:disabled { opacity:.5; cursor:default }
+  button.rec { background:var(--rec) } button.sec { background:#e9ecf1; color:var(--fg) }
+  .banner { padding:10px 12px; border-radius:8px; margin:12px 0; font-size:.95rem }
+  .banner.warn { background:var(--warn); border-left:4px solid var(--warnb) }
+  .banner.ok { background:var(--ok); border-left:4px solid var(--okb) }
+  .banner.phi { background:#fde8e8; border-left:4px solid var(--rec) }
+  textarea { width:100%; min-height:160px; padding:10px; font:inherit; border:1px solid var(--line); border-radius:8px; resize:vertical }
+  #vista { white-space:pre-wrap; padding:10px; border:1px dashed var(--line); border-radius:8px; min-height:60px; background:#fafbfc }
+  mark { background:#ffe08a; padding:0 2px; border-radius:3px } mark.neg { background:#ffc9c9 }
+  .meta { font-size:.85rem; color:#555 } .meta span { margin-right:16px }
+  #estado { font-weight:600 } .pulse { animation:p 1s infinite } @keyframes p { 50% { opacity:.4 } }
+</style>
+</head>
+<body>
+<main>
+  <h1>DERR · Dictado clínico local (prueba)</h1>
+  <p class="sub">whisper.cpp en Docker, solo <code>127.0.0.1</code>. El audio no sale de esta máquina y se descarta tras transcribir.</p>
+  <div class="banner phi"><strong>Sin PHI.</strong> Esta página es de prueba: dicta únicamente notas sintéticas, nunca datos de pacientes reales.</div>
+
+  <div class="card">
+    <div class="row">
+      <div><label for="modulo">Módulo (vocabulario)</label>
+        <select id="modulo"><option value="ms">MS · medicina</option><option value="dental">Dental</option></select></div>
+      <div><label for="idioma">Idioma</label>
+        <select id="idioma"><option value="auto">Automático</option><option value="es">Español</option><option value="nl">Nederlands</option><option value="en">English</option></select></div>
+      <div><button id="btn">🎙 Dictar</button></div>
+      <div><span id="estado" class="meta">Listo.</span></div>
+    </div>
+    <div class="meta" id="metricas"></div>
+  </div>
+
+  <div class="card">
+    <div id="aviso" class="banner warn" hidden>⚠ <strong>Dictado sin revisar.</strong> Lee el texto, corrige dosis, lateralidad y negaciones, y pulsa «Confirmar revisión» antes de usarlo.</div>
+    <div id="revisado" class="banner ok" hidden>✔ Revisado y confirmado.</div>
+    <label for="nota">Nota</label>
+    <textarea id="nota" placeholder="El texto dictado se inserta aquí, en la posición del cursor."></textarea>
+    <label style="margin-top:10px">Vista con números y negaciones resaltados</label>
+    <div id="vista"></div>
+    <div class="row" style="margin-top:12px">
+      <button id="confirmar" class="sec" disabled>Confirmar revisión</button>
+      <button id="copiar" class="sec">Copiar texto</button>
+      <button id="limpiar" class="sec">Limpiar</button>
+    </div>
+  </div>
+</main>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const nota = $('nota'), vista = $('vista'), btn = $('btn'), estado = $('estado');
+  let rec = null, chunks = [], t0 = 0, revisado = true;
+
+  // --- Prompt inicial por módulo e idioma (prompts/<modulo>-<idioma>.txt, montados en /public/prompts).
+  const prompts = {};
+  async function promptPara(modulo, idioma) {
+    const lang = (idioma === 'auto' || idioma === 'en') ? 'es' : idioma;
+    const key = `${modulo}-${lang}`;
+    if (!(key in prompts)) {
+      try { const r = await fetch(`prompts/${key}.txt`); prompts[key] = r.ok ? (await r.text()).replace(/\s+/g, ' ').trim() : ''; }
+      catch { prompts[key] = ''; }
+    }
+    return prompts[key];
+  }
+
+  // --- Lo que hay que portar al cliente DERR (spec §3.4) --------------------
+  // Envía un blob de audio al servidor local y devuelve {text, language, duration}.
+  async function transcribir(blob, { idioma = 'auto', prompt = '' } = {}) {
+    const fd = new FormData();
+    fd.append('file', blob, 'dictado.webm');
+    fd.append('language', idioma);
+    if (prompt) fd.append('prompt', prompt);
+    fd.append('temperature', '0.0');
+    fd.append('temperature_inc', '0.2');
+    fd.append('response_format', 'verbose_json');
+    const r = await fetch('inference', { method: 'POST', body: fd });  // misma origen → 127.0.0.1
+    if (!r.ok) throw new Error(`whisper-server HTTP ${r.status}`);
+    const j = await r.json();
+    return { text: (j.text || '').trim(), language: j.language || '?', duration: j.duration || 0 };
+  }
+  // -----------------------------------------------------------------------------
+
+  function insertarEnCursor(texto) {
+    const a = nota.selectionStart ?? nota.value.length, b = nota.selectionEnd ?? a;
+    const antes = nota.value.slice(0, a), despues = nota.value.slice(b);
+    const sep = antes && !/\s$/.test(antes) ? ' ' : '';
+    nota.value = antes + sep + texto + despues;
+    const pos = (antes + sep + texto).length;
+    nota.setSelectionRange(pos, pos);
+    marcarSinRevisar(true);
+    actualizarVista();
+  }
+
+  function marcarSinRevisar(v) {
+    revisado = !v;
+    $('aviso').hidden = !v; $('revisado').hidden = v || !nota.value.trim();
+    $('confirmar').disabled = !v;
+  }
+
+  function actualizarVista() {
+    const esc = s => s.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+    const neg = /\b(no|sin|niega|nunca|ausencia de|geen|niet|nooit|zonder|not|without|denies)\b/gi;
+    vista.innerHTML = esc(nota.value)
+      .replace(/\d+([.,]\d+)?\s?(%|mg|g|ml|mcg|ui|mmhg|°c|h|horas|días|dagen|uur)?/gi, m => `<mark>${m}</mark>`)
+      .replace(neg, m => `<mark class="neg">${m}</mark>`);
+  }
+
+  async function empezar() {
+    if (!navigator.mediaDevices?.getUserMedia) { estado.textContent = 'Este navegador no permite grabar.'; return; }
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true } });
+    const mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4'].find(m => MediaRecorder.isTypeSupported(m)) || '';
+    rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+    chunks = [];
+    rec.ondataavailable = e => e.data.size && chunks.push(e.data);
+    rec.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      const blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
+      const seg = (performance.now() - t0) / 1000;
+      estado.textContent = 'Transcribiendo…'; estado.classList.add('pulse'); btn.disabled = true;
+      try {
+        const idioma = $('idioma').value, modulo = $('modulo').value;
+        const prompt = await promptPara(modulo, idioma);
+        const t1 = performance.now();
+        const r = await transcribir(blob, { idioma, prompt });
+        const tt = (performance.now() - t1) / 1000;
+        if (r.text) insertarEnCursor(r.text); else estado.textContent = 'No se detectó habla.';
+        $('metricas').innerHTML = `<span>idioma: <b>${r.language}</b></span><span>audio: ${seg.toFixed(1)} s</span><span>transcripción: ${tt.toFixed(1)} s</span><span>ratio: <b>${(tt / Math.max(seg, .1)).toFixed(2)}x</b> (objetivo ≤ 1.5x)</span>`;
+        if (r.text) estado.textContent = 'Texto insertado. Revísalo.';
+      } catch (e) { estado.textContent = `Error: ${e.message}. ¿Está levantado el contenedor derr-whisper?`; }
+      estado.classList.remove('pulse'); btn.disabled = false;
+      btn.textContent = '🎙 Dictar'; btn.classList.remove('rec');
+    };
+    rec.start();
+    t0 = performance.now();
+    btn.textContent = '■ Parar'; btn.classList.add('rec');
+    estado.textContent = 'Grabando… (máx. 3 min)'; estado.classList.add('pulse');
+    // Spec §4: duración máxima por grabación 3 min.
+    setTimeout(() => { if (rec && rec.state === 'recording') rec.stop(); }, 3 * 60 * 1000);
+  }
+
+  btn.onclick = async () => {
+    if (rec && rec.state === 'recording') { rec.stop(); return; }
+    try { await empezar(); } catch (e) { estado.textContent = `No se pudo acceder al micrófono: ${e.message}`; }
+  };
+  $('confirmar').onclick = () => marcarSinRevisar(false);
+  $('copiar').onclick = async () => { try { await navigator.clipboard.writeText(nota.value); estado.textContent = 'Copiado.'; } catch { estado.textContent = 'No se pudo copiar.'; } };
+  $('limpiar').onclick = () => { nota.value = ''; $('metricas').textContent = ''; marcarSinRevisar(false); $('revisado').hidden = true; actualizarVista(); estado.textContent = 'Listo.'; };
+  nota.addEventListener('input', actualizarVista);
+})();
+</script>
+</body>
+</html>

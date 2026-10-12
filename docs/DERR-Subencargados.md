@@ -1,7 +1,7 @@
 # DERR — Subencargados y terceros que reciben datos
 
 > Lista de los proveedores que intervienen en el tratamiento, verificada contra el código
-> de las tres apps el 2026-10-08 y revisada el 2026-10-11. Es el Anexo B del contrato de encargado
+> de las tres apps el 2026-10-08 y revisada el 2026-10-11 y el 2026-10-12. Es el Anexo B del contrato de encargado
 > (`DERR-Contrato-Encargado-Tratamiento.md`).
 > Estado: **Borrador.** Las filas marcadas "por confirmar" necesitan una comprobación en el
 > panel del proveedor.
@@ -30,6 +30,7 @@ No son subencargados de DERR, pero reciben datos y la institución debe saberlo.
 | **api.qrserver.com** | Ya no se usa | Nada | **Eliminado** el 2026-10-08 (Robelt1971/DERR-Dental-System#5): el código QR se genera en el navegador |
 | **WhatsApp / Meta**, mediante enlaces `wa.me` | Al enviar recordatorios a pacientes desde Medical o Dental | Teléfono del paciente y texto del mensaje, enviado por el usuario desde su propio WhatsApp | Avisar en la política; evitar datos clínicos en el texto |
 | **Google Fonts** y **cdnjs** | Al cargar las páginas | Dirección IP del navegador | Servir fuentes y librerías desde la propia app |
+| **FDA (openFDA) y NLM (RxNav)**, bases públicas de medicamentos del Gobierno de EE. UU. | Al actualizar la base de medicamentos de las alertas clínicas de Medical | Hoy nada: la CSP de Medical bloquea esas consultas desde el navegador. Con Robelt1971/DERR-Medical-System#43 (abierto el 2026-10-12) irían desde el servidor, solo al abrir la pantalla de alertas o cuando el propietario la actualiza a mano, con nombres de medicamentos fijos en el código y sin ningún dato de pacientes; esos servicios verían la IP del servidor | Mantener la consulta en el servidor y sin datos de pacientes |
 | **Dentalink** (Healthatom) | Integración de Dental, si la clínica la activa | Dental recibe datos de pacientes desde Dentalink | Es proveedor de la clínica, no de DERR; mencionarlo en el contrato con la clínica que la use |
 
 ## Mantenimiento

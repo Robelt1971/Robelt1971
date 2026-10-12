@@ -4,9 +4,11 @@
 > trabajar sin conexión **y** se sincroniza con el servidor.
 > Este documento es el diseño previo a programar. Se hizo leyendo solo código y
 > configuración, sin abrir datos reales.
-> Estado: **En construcción. Respuestas del propietario del 2026-10-08 en la sección 8.
-> Al 2026-10-11 están fusionados 15 de los 19 pasos (sección 6); la sincronización sigue
-> apagada en todas las instituciones (sección 9)**
+> Estado: **En construcción. Respuestas del propietario del 2026-10-08 en la sección 8; las
+> de los pasos 15, 16 y 17, en `DERR-Medical-Pasos-15-16-Vinculos.md`, sección 6.
+> Al 2026-10-12 están fusionados del todo 16 de los 19 pasos, 2 en parte (15 y 16) y 1
+> pendiente (17) (sección 6). La sincronización viene apagada en cada institución y solo se
+> enciende con su interruptor (sección 9)**
 
 ## 0. Problemas actuales que condicionan el diseño
 
@@ -17,8 +19,10 @@
   datos.
 - **La llave local apenas protege.** Se genera una vez y se guarda en la misma base de datos
   (`database.js:104`). Además, si el cifrado falla, `_writeCommitted` escribe **en claro**
-  (`database.js:490-497`). *La escritura en claro está corregida (Medical#16); la llave
-  sigue en la misma base de datos hasta el paso 15.*
+  (`database.js:490-497`). *La escritura en claro está corregida (Medical#16). Desde
+  Medical#38 cada PC tiene además una llave propia, guardada solo envuelta; volver a cifrar
+  los datos con ella está fusionado pero apagado (Medical#40, `vault_mode`). La llave antigua
+  sigue en la misma base de datos hasta el paso 15d.*
 - **La llave de los archivos `.enc` la puede reconstruir cualquiera** (sal fija, parte del
   user agent y el origen; `external-storage.js:111,126`). Una actualización del navegador
   puede dejar los archivos ilegibles.
@@ -135,31 +139,42 @@ tenant_settings(sync_mode, local_cache_policy, backup_target)
 
 ## 6. Plan por fases (pull requests independientes)
 
-"Hecho" significa fusionado y activo por defecto; "fusionado" sin más, que está en el código
-pero apagado hasta que se active (variable de Railway o interruptor de la institución).
-Los enlaces son a `Robelt1971/DERR-Medical-System`.
+Cómo se lee el estado:
 
-| # | Cambio | Riesgo | Tamaño | Estado (2026-10-11) |
+- **Activo al desplegar:** fusionado y sin interruptor; funciona en cuanto se despliega.
+- **Fusionado, pendiente de activar:** en el código, apagado hasta poner una variable en
+  Railway o encender el interruptor de la institución (`sync_mode`, `vault_mode`).
+- **PR abierto** o **pendiente:** no fusionado. El 2026-10-12, el único pull request abierto
+  en DERR Medical era el #43, que no es un paso de este plan.
+
+No se comprobó qué versión está desplegada. Los enlaces son a `Robelt1971/DERR-Medical-System`.
+
+| # | Cambio | Riesgo | Tamaño | Estado (2026-10-12) |
 |---|---|---|---|---|
-| 1 | Orden correcto del contexto RLS | bajo | S | hecho, [#14](https://github.com/Robelt1971/DERR-Medical-System/pull/14) |
-| 2 | Quitar la escritura en claro; aviso si falla el cifrado | bajo | S | hecho, [#16](https://github.com/Robelt1971/DERR-Medical-System/pull/16) |
-| 3 | Rol `derrms_app` sin bypass de RLS y separación de conexiones | medio (configuración de Railway) | M | fusionado, [#19](https://github.com/Robelt1971/DERR-Medical-System/pull/19); pendiente de activar (`DB_APP_ROLE_PASSWORD`) |
-| 4 | Aplicar la matriz de roles en las rutas | medio (puede bloquear a usuarios) | S | hecho, [#21](https://github.com/Robelt1971/DERR-Medical-System/pull/21) (y [#30](https://github.com/Robelt1971/DERR-Medical-System/pull/30)) |
-| 5 | Auditoría que falla cerrada y `data_access_log` | bajo | S | fusionado, [#17](https://github.com/Robelt1971/DERR-Medical-System/pull/17); se escribe solo con la sincronización |
-| 6 | Cifrado del servidor versión 2 | medio | M | fusionado, [#22](https://github.com/Robelt1971/DERR-Medical-System/pull/22); pendiente de activar (`CRYPTO_WRITE_VERSION=v2`) |
-| 7 | Cliente de API común, arreglo de compras, cookie particionada | bajo | S | hecho, [#18](https://github.com/Robelt1971/DERR-Medical-System/pull/18) |
-| 8 | Tablas de sincronización con RLS | bajo | M | fusionado, [#20](https://github.com/Robelt1971/DERR-Medical-System/pull/20) |
-| 9 | Registro `collections.ts` y control en CI | bajo | S | hecho, [#15](https://github.com/Robelt1971/DERR-Medical-System/pull/15) |
-| 10 | Rutas `/api/sync` en el servidor | alto | L | fusionado, [#24](https://github.com/Robelt1971/DERR-Medical-System/pull/24); apagado por institución |
-| 11 | Diferencias y cola de envío en el navegador (desactivado) | medio | M | fusionado, [#23](https://github.com/Robelt1971/DERR-Medical-System/pull/23); apagado por defecto |
-| 12 | Motor de sincronización en modo sombra e indicador de estado | medio | M | fusionado, [#28](https://github.com/Robelt1971/DERR-Medical-System/pull/28); solo modo sombra |
-| 13 | Subida de datos antiguos, zona de espera, duplicados, verificación | alto | L | en curso |
-| 14 | Fusión por campos y panel de conflictos | medio | M | fusionado, [#27](https://github.com/Robelt1971/DERR-Medical-System/pull/27); apagado por institución |
-| 15 | Bóveda local, llaves, apertura sin conexión | alto | L | en curso |
-| 16 | Políticas de PCs compartidos y borrado | alto | M | en curso (la política ya se guarda, [#28](https://github.com/Robelt1971/DERR-Medical-System/pull/28)) |
-| 17 | `.enc` solo importación; retirar su escritura | medio | S | en curso |
-| 18 | Exportar respaldos al destino de la institución | medio | M | fusionado, [#25](https://github.com/Robelt1971/DERR-Medical-System/pull/25); pendiente de activar (`BACKUP_TARGET`, `BACKUP_ENCRYPTION_KEY`) |
-| 19 | Seudonimización: identidad separada en `subjects` | medio | M | fusionado, [#31](https://github.com/Robelt1971/DERR-Medical-System/pull/31); apagado por institución |
+| 1 | Orden correcto del contexto RLS | bajo | S | activo al desplegar, [#14](https://github.com/Robelt1971/DERR-Medical-System/pull/14) |
+| 2 | Quitar la escritura en claro; aviso si falla el cifrado | bajo | S | activo al desplegar, [#16](https://github.com/Robelt1971/DERR-Medical-System/pull/16) |
+| 3 | Rol `derrms_app` sin bypass de RLS y separación de conexiones | medio (configuración de Railway) | M | fusionado, pendiente de activar (`DB_APP_ROLE_PASSWORD`), [#19](https://github.com/Robelt1971/DERR-Medical-System/pull/19); las rutas antiguas lo usan desde [#35](https://github.com/Robelt1971/DERR-Medical-System/pull/35) |
+| 4 | Aplicar la matriz de roles en las rutas | medio (puede bloquear a usuarios) | S | activo al desplegar, [#21](https://github.com/Robelt1971/DERR-Medical-System/pull/21) y [#30](https://github.com/Robelt1971/DERR-Medical-System/pull/30) |
+| 5 | Auditoría que falla cerrada y `data_access_log` | bajo | S | fusionado, [#17](https://github.com/Robelt1971/DERR-Medical-System/pull/17). Activo al desplegar en las rutas antiguas con datos de pacientes ([#35](https://github.com/Robelt1971/DERR-Medical-System/pull/35)) y en la bóveda; en la sincronización, cuando se encienda |
+| 6 | Cifrado del servidor versión 2 | medio | M | fusionado, [#22](https://github.com/Robelt1971/DERR-Medical-System/pull/22); pendiente de activar para las tablas antiguas (`CRYPTO_WRITE_VERSION=v2`); siempre activo en sincronización, importación y bóveda |
+| 7 | Cliente de API común, arreglo de compras, cookie particionada | bajo | S | activo al desplegar, [#18](https://github.com/Robelt1971/DERR-Medical-System/pull/18); cierre de sesión sin servidor corregido en [#41](https://github.com/Robelt1971/DERR-Medical-System/pull/41) |
+| 8 | Tablas de sincronización con RLS | bajo | M | fusionado, [#20](https://github.com/Robelt1971/DERR-Medical-System/pull/20); vacías mientras `sync_mode = off` |
+| 9 | Registro `collections.ts` y control en CI | bajo | S | activo al desplegar, [#15](https://github.com/Robelt1971/DERR-Medical-System/pull/15) |
+| 10 | Rutas `/api/sync` en el servidor | alto | L | fusionado, pendiente de activar (`sync_mode`), [#24](https://github.com/Robelt1971/DERR-Medical-System/pull/24) |
+| 11 | Diferencias y cola de envío en el navegador | medio | M | fusionado, pendiente de activar (`sync_mode`), [#23](https://github.com/Robelt1971/DERR-Medical-System/pull/23) |
+| 12 | Motor de sincronización e indicador de estado | medio | M | fusionado, pendiente de activar (`sync_mode`), [#28](https://github.com/Robelt1971/DERR-Medical-System/pull/28); el modo bidireccional aplica los cambios de otros PCs desde [#39](https://github.com/Robelt1971/DERR-Medical-System/pull/39) |
+| 13 | Subida de datos antiguos, zona de espera, duplicados, verificación | alto | L | fusionado, pendiente de activar (`sync_mode` y campaña abierta por un administrador), [#37](https://github.com/Robelt1971/DERR-Medical-System/pull/37) |
+| 14 | Fusión por campos y panel de conflictos | medio | M | fusionado, pendiente de activar (`sync_mode`), [#27](https://github.com/Robelt1971/DERR-Medical-System/pull/27) |
+| 15 | Bóveda local, llaves, apertura sin conexión | alto | L | **en parte.** 15a y 15b activos al desplegar ([#34](https://github.com/Robelt1971/DERR-Medical-System/pull/34), [#38](https://github.com/Robelt1971/DERR-Medical-System/pull/38)); 15c fusionado, pendiente de activar (`vault_mode`, [#40](https://github.com/Robelt1971/DERR-Medical-System/pull/40)); 15d pendiente |
+| 16 | Políticas de PCs compartidos y borrado | alto | M | **en parte.** Primera parte fusionada ([#36](https://github.com/Robelt1971/DERR-Medical-System/pull/36)): aviso al cerrar sesión, reglas de borrado seguro sin borrar nada, lista de PCs (con la sincronización); bloqueo de pantalla activo al desplegar ([#38](https://github.com/Robelt1971/DERR-Medical-System/pull/38)). Segunda parte (borrado y envío por un administrador) pendiente |
+| 17 | `.enc` solo importación; retirar su escritura | medio | S | pendiente. Plazo decidido: 90 días después de pasar a `bidirectional` |
+| 18 | Exportar respaldos al destino de la institución | medio | M | fusionado, pendiente de activar (`BACKUP_TARGET`, `BACKUP_ENCRYPTION_KEY`, `BACKUP_S3_*`), [#25](https://github.com/Robelt1971/DERR-Medical-System/pull/25) |
+| 19 | Seudonimización: identidad separada en `subjects` | medio | M | fusionado, pendiente de activar (`sync_mode`), [#31](https://github.com/Robelt1971/DERR-Medical-System/pull/31); los cuatro módulos que solo guardaban el nombre guardan el MRN desde [#33](https://github.com/Robelt1971/DERR-Medical-System/pull/33) |
+
+Fuera del plan, también fusionados: 2FA obligatoria de verdad para propietario y
+administrador ([#32](https://github.com/Robelt1971/DERR-Medical-System/pull/32)) y códigos
+2FA no reutilizables ([#42](https://github.com/Robelt1971/DERR-Medical-System/pull/42)),
+activos al desplegar.
 
 ## 7. Preguntas para el propietario
 
@@ -175,6 +190,9 @@ Los enlaces son a `Robelt1971/DERR-Medical-System`.
 7. ¿El servidor puede guardar celda y departamento sin cifrar para las estadísticas?
 8. ¿Está definida en producción la variable `REQUEST_SIGNING_SECRET`? (Sigue sin confirmar.)
 9. ¿Se acepta una fecha límite para dejar de usar los archivos `.enc`?
+
+Respondidas: 1, 2, 4 (en parte), 6 (sección 8); 2, 3 y 9 también en
+`DERR-Medical-Pasos-15-16-Vinculos.md`, sección 6. Siguen abiertas: 5, 7 y 8.
 
 ## 8. Respuestas del propietario (2026-10-08) y propuestas
 
@@ -207,33 +225,43 @@ Los enlaces son a `Robelt1971/DERR-Medical-System`.
 5. **Citas:** son datos de pacientes. Se cifran, se sincronizan con permisos y se auditan
    como el resto. Reclasificadas en `CLAUDE.md` en Robelt1971/DERR-Medical-System#11.
 
-## 9. Estado de la implementación (2026-10-11)
+## 9. Estado de la implementación (2026-10-12)
 
-**Qué hay en producción por defecto:** nada de la sincronización está encendido. Cada
-institución tiene `sync_mode = off` mientras no exista su fila en `tenant_settings`; con
-`off`, todas las rutas `/api/sync` responden 409 `SYNC_OFF` y no escriben nada, y el
-navegador no abre su cola de cambios. El propietario o un administrador lo cambia en
-Administración → Configuración.
+**Qué hace por defecto la versión fusionada:** nada de la sincronización está encendido.
+Cada institución tiene `sync_mode = off` mientras no exista su fila en `tenant_settings`;
+con `off`, todas las rutas `/api/sync` y `/api/sync/import` responden 409 `SYNC_OFF` y no
+escriben nada, y el navegador no abre su cola de cambios. El propietario o un
+administrador lo cambia en Administración → Configuración.
 
-**Qué queda por hacer antes de encenderlo en una institución:**
+Sí funcionan sin interruptor, en cuanto se despliega: la llave por PC, la entrada sin
+conexión y el bloqueo de pantalla (15a, 15b); el aviso de trabajo pendiente al cerrar
+sesión (16, primera parte); el vínculo por MRN en los cuatro módulos (#33); y el registro
+de accesos en las rutas antiguas con datos de pacientes (#35).
 
-- **Paso 13:** subir los datos que ya hay en cada navegador. Hoy solo se envían los cambios
-  hechos después de encender la sincronización.
-- **Modo bidireccional:** en el código existe, pero de momento se comporta igual que el
-  modo sombra. Los cambios de otros PCs se guardan aparte y no se escriben en la copia local.
-- **Pasos 15 y 16:** llave del navegador protegida por la contraseña, y aplicar la política
-  de PCs compartidos (`personal`, `shared_persist` o `shared_wipe`). La política ya se
-  guarda por institución (por defecto `shared_persist`), pero no se aplica.
+**Qué queda por hacer o activar antes de encenderlo en una institución:**
+
 - **Rol `derrms_app` activado** (`DB_APP_ROLE_PASSWORD`). Sin él, el servidor usa el usuario
   principal de Railway y RLS no protege nada.
+- **Paso 13:** abrir la campaña de subida, que cada PC suba sus datos (directamente y dentro
+  de Justice, en sus dos direcciones), revisar duplicados y variantes, promover y verificar.
+  Un PC solo aplica cambios de otros en modo bidireccional si pasó esa verificación.
+- **Paso 15:** `vault_mode = encrypt` exige la sincronización encendida y que todos los PCs
+  activos tengan la versión con la bóveda; está pendiente la respuesta A8 (portal de
+  pacientes). 15d (borrar la llave antigua) no está construido.
+- **Paso 16, segunda parte:** el borrado en PCs compartidos y el envío del trabajo de otro
+  usuario por un administrador no están construidos. Hoy nada se borra (`canWipe()` nunca lo
+  permite).
+- **Paso 17:** los `.enc` se siguen escribiendo.
+- **Sin red al recargar:** la entrada sin conexión solo funciona en una pestaña ya abierta;
+  la app no queda guardada para arrancar sin red.
 - **Límites:** las peticiones de sincronización comparten el límite general de 100 por
   minuto por IP, que varios PCs de KIA detrás de una misma salida a internet alcanzan; un
   registro de más de 512 KB, por ejemplo con imágenes incrustadas, se rechaza. Ambos
   necesitan decisión del propietario.
-- **Seudónimos (paso 19):** los registros enlazados con el paciente solo por el nombre
-  (psicología, psiquiatría, fisioterapia, optometría) aún no se asocian a su fila de
-  `subjects`. La llave de los seudónimos sale de `ENCRYPTION_MASTER_KEY`: esa variable no
-  debe cambiarse nunca.
+- **Seudónimos (paso 19):** los registros antiguos de psicología, psiquiatría, fisioterapia y
+  optometría que solo tienen el nombre no se enlazan con su paciente hasta que una persona
+  los vincula en "Vincular registros". La llave de los seudónimos sale de
+  `ENCRYPTION_MASTER_KEY`: esa variable no debe cambiarse nunca.
 - **Conflictos (paso 14):** el aviso "Dra. X está editando esta consulta" no está hecho. Los
   conflictos sin resolver pasan a los administradores a las 48 horas
   (`SYNC_CONFLICT_ESCALATION_HOURS`); no hay todavía un reparto por servicio.

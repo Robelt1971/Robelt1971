@@ -89,6 +89,7 @@ Para KIA la elección queda pendiente hasta después del piloto.
 | Función | Opción | Elegida |
 |---|---|---|
 | **IA clínica** (DERR Medical, Anthropic, EE. UU.). Hoy inactiva en producción | Activada: se quita el nombre del paciente antes de enviar | ☐ |
+| | IA local con modelo abierto (Qwen 3.5 o gpt-oss, Apache 2.0) en un servidor de la institución o de DERR: el texto clínico no sale de ese servidor. Pendiente de fusionar en Medical | ☐ |
 | | Desactivada | ☐ |
 | **Dictado por voz** | Navegador Chrome (el audio pasa por Google) | ☐ |
 | | Dictado local, sin enviar audio fuera (cuando esté disponible) | ☐ |

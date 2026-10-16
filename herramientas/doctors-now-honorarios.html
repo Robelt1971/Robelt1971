@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
-/* Layout: libro de honorarios — resumen del ciclo arriba, luego una fila por día (hoy primero); cada paciente es una ficha que se abre para marcar procedimientos. */
+/* Layout: hoja de comprobación — arriba lo que calculo contra lo que me pagaron; abajo un renglón por día con contadores. */
 :root {
   --bg: #f3f6f6;
   --surface: #ffffff;
@@ -14,24 +14,26 @@
   --accent-soft: #dcefee;
   --proc: #7a4b9e;
   --proc-soft: #efe6f6;
-  --chip: #e8eeee;
-  --warn: #a64b1f;
+  --ok: #1f7a3d;
+  --ok-soft: #e1f3e6;
+  --bad: #b03a1a;
+  --bad-soft: #fbe7e1;
   --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --font-body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
   --font-num: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #0d1716; --surface: #142221; --ink: #e2eeed; --muted: #8fa7a5;
-    --line: #243937; --accent: #4fc2bd; --accent-soft: #1b3735; --proc: #c9a2e8; --proc-soft: #2c2236;
-    --chip: #1d2f2e; --warn: #f0976a;
+    --bg: #0d1716; --surface: #142221; --ink: #e2eeed; --muted: #8fa7a5; --line: #243937;
+    --accent: #4fc2bd; --accent-soft: #1b3735; --proc: #c9a2e8; --proc-soft: #2c2236;
+    --ok: #6fd08f; --ok-soft: #173322; --bad: #f29b7c; --bad-soft: #3a2018;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg: #0d1716; --surface: #142221; --ink: #e2eeed; --muted: #8fa7a5;
-  --line: #243937; --accent: #4fc2bd; --accent-soft: #1b3735; --proc: #c9a2e8; --proc-soft: #2c2236;
-  --chip: #1d2f2e; --warn: #f0976a;
+  --bg: #0d1716; --surface: #142221; --ink: #e2eeed; --muted: #8fa7a5; --line: #243937;
+  --accent: #4fc2bd; --accent-soft: #1b3735; --proc: #c9a2e8; --proc-soft: #2c2236;
+  --ok: #6fd08f; --ok-soft: #173322; --bad: #f29b7c; --bad-soft: #3a2018;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
@@ -41,228 +43,157 @@ body {
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: 20px 48px;
 }
-.wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 18px; }
+.wrap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px; }
 h1, h2 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
-h1 { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.01em; }
+h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.01em; }
 h2 { font-size: 1.05rem; font-weight: 700; }
 .num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
 .eyebrow { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
-button { font: inherit; color: inherit; cursor: pointer; }
-button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
-.top a { color: var(--accent); font-size: 0.85rem; }
 .status { font-size: 0.8rem; color: var(--muted); }
+button { font: inherit; color: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
 
-.summary { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
 .period-nav { display: flex; align-items: center; gap: 10px; }
 .period-nav .label { flex: 1; min-width: 0; }
 .period-nav .name { font-family: var(--font-display); font-size: 1.15rem; font-weight: 700; }
 .period-nav .range { font-size: 0.85rem; color: var(--muted); }
 .icon-btn { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); font-size: 1.1rem; }
 .icon-btn:disabled { opacity: 0.35; cursor: default; }
-.total { font-family: var(--font-num); font-size: clamp(2.2rem, 9vw, 3.2rem); font-weight: 600; line-height: 1; color: var(--accent); letter-spacing: -0.02em; }
-.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
-.stat { display: flex; flex-direction: column; gap: 2px; }
-.stat b { font-family: var(--font-num); font-size: 1.1rem; font-weight: 600; }
-.ledger { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-.ledger td { padding: 5px 0; border-top: 1px solid var(--line); }
-.ledger td:nth-child(2), .ledger td:nth-child(3) { text-align: right; font-family: var(--font-num); font-variant-numeric: tabular-nums; white-space: nowrap; padding-left: 12px; }
-.ledger tr.sub td { font-weight: 700; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; padding-top: 10px; }
-.ledger tr.sub td:nth-child(3) { color: var(--ink); font-size: 0.9rem; letter-spacing: 0; text-transform: none; }
-.ledger .p td:first-child { color: var(--proc); }
-.hist-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
-.hist { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
-.hist th { text-align: right; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 7px 10px; background: var(--bg); white-space: nowrap; }
-.hist th:first-child, .hist td:first-child { text-align: left; }
-.hist td { padding: 7px 10px; border-top: 1px solid var(--line); text-align: right; white-space: nowrap; }
-.hist td small { display: block; color: var(--muted); font-size: 0.75rem; }
-.hist td.strong { font-weight: 600; color: var(--accent); }
-.hist tr.current td { background: var(--accent-soft); }
-.hist tr.year td { font-weight: 700; border-top: 2px solid var(--line); }
-.linkish { background: none; border: 0; padding: 0; color: var(--accent); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
-.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 12px; font-size: 0.9rem; }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); font-weight: 700; }
-.btn.danger { color: var(--warn); }
+
+.compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.fig { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.fig .big { font-family: var(--font-num); font-size: clamp(1.7rem, 7vw, 2.4rem); font-weight: 600; line-height: 1.1; color: var(--accent); }
+.paid { display: flex; align-items: center; gap: 4px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); padding: 4px 10px; }
+.paid span { font-family: var(--font-num); font-size: 1.4rem; color: var(--muted); }
+.paid input { width: 100%; min-width: 0; border: 0; background: transparent; color: var(--ink); font-family: var(--font-num); font-size: clamp(1.4rem, 6vw, 2rem); font-weight: 600; padding: 2px 0; }
+.paid input:focus-visible { outline: none; }
+.paid:focus-within { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.verdict { border-radius: 10px; padding: 10px 12px; font-weight: 700; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.verdict.ok { background: var(--ok-soft); color: var(--ok); }
+.verdict.bad { background: var(--bad-soft); color: var(--bad); }
+.verdict.wait { background: var(--bg); color: var(--muted); font-weight: 400; }
+
+.ledger { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+.ledger td { padding: 6px 0; border-top: 1px solid var(--line); }
+.ledger td + td { text-align: right; font-family: var(--font-num); font-variant-numeric: tabular-nums; white-space: nowrap; padding-left: 12px; }
+.ledger tr.p td:first-child { color: var(--proc); }
+.ledger tr.tot td { font-weight: 700; border-top: 2px solid var(--line); }
 
 .days { display: flex; flex-direction: column; gap: 8px; }
 .day { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; display: flex; flex-direction: column; gap: 10px; }
 .day.today { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-.day.future { opacity: 0.55; }
-.day.empty-past { background: transparent; }
+.day.empty { background: transparent; }
 .day-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
 .day-head .d { font-weight: 700; }
 .day-head .d small { font-weight: 400; color: var(--muted); margin-left: 6px; }
 .day-head .t { font-family: var(--font-num); font-weight: 600; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { display: inline-flex; align-items: baseline; gap: 6px; background: var(--chip); border: 1px solid transparent; border-radius: 8px; padding: 4px 9px; font-size: 0.84rem; text-align: left; max-width: 100%; }
-.chip .m { font-family: var(--font-num); font-weight: 600; }
-.chip .pr { color: var(--proc); }
-.chip.open { border-color: var(--accent); background: var(--accent-soft); }
-.quick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.quick .q { border: 1px dashed var(--accent); background: var(--accent-soft); color: var(--accent); border-radius: 8px; padding: 6px 11px; font-size: 0.86rem; font-weight: 700; }
-.quick .q span { font-family: var(--font-num); font-weight: 600; margin-left: 4px; }
-
-.editor { border: 1px solid var(--accent); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: var(--bg); }
-.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; align-self: flex-start; }
-.seg button { border: 0; background: var(--surface); padding: 6px 14px; font-size: 0.88rem; }
-.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); font-weight: 700; }
-.procs { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; }
-.proc { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 9px; padding: 6px 8px; min-width: 0; }
-.proc.on { border-color: var(--proc); background: var(--proc-soft); }
-.proc .n { font-size: 0.86rem; min-width: 0; }
-.proc .n small { display: block; color: var(--muted); font-family: var(--font-num); font-size: 0.75rem; }
+.counters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.counter { display: flex; align-items: center; justify-content: space-between; gap: 8px; border: 1px solid var(--line); border-radius: 10px; padding: 6px 8px; background: var(--bg); min-width: 0; }
+.counter.on { border-color: var(--accent); background: var(--accent-soft); }
+.counter.p.on { border-color: var(--proc); background: var(--proc-soft); }
+.counter .n { font-size: 0.86rem; min-width: 0; }
+.counter .n small { display: block; color: var(--muted); font-family: var(--font-num); font-size: 0.74rem; }
 .stepper { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
-.stepper button { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); font-weight: 700; }
-.stepper output { width: 22px; text-align: center; font-family: var(--font-num); font-weight: 600; }
-.ed-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
-.ed-foot .sum { font-family: var(--font-num); font-weight: 600; font-size: 1.05rem; }
-.extra { display: flex; gap: 6px; align-items: center; font-size: 0.86rem; color: var(--muted); }
-.extra input, .field input { width: 90px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); padding: 5px 8px; font-family: var(--font-num); }
+.stepper button { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); font-weight: 700; font-size: 1rem; }
+.stepper button:disabled { opacity: 0.35; cursor: default; }
+.stepper output { width: 24px; text-align: center; font-family: var(--font-num); font-weight: 600; }
+.toggle-proc { align-self: flex-start; border: 1px dashed var(--proc); background: transparent; color: var(--proc); border-radius: 8px; padding: 4px 10px; font-size: 0.85rem; font-weight: 700; }
+.procs { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
 
-.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-.panel p { margin: 0; color: var(--muted); font-size: 0.88rem; max-width: 62ch; }
-.panel textarea { width: 100%; min-height: 130px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink); padding: 10px; font-family: var(--font-num); font-size: 0.82rem; white-space: pre; overflow-wrap: normal; overflow-x: auto; }
-.mapping { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
-.mapping.pdf .col-map { display: none; }
-.mapping .field { flex-direction: column; align-items: stretch; gap: 3px; font-size: 0.82rem; color: var(--muted); }
-select { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); padding: 6px 8px; font: inherit; font-size: 0.88rem; max-width: 100%; }
-select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .tablebox { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
-.preview { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-.preview th { text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 6px 10px; background: var(--bg); }
-.preview td { padding: 6px 10px; border-top: 1px solid var(--line); white-space: nowrap; }
-.preview td.warn { color: var(--warn); }
-.check { display: flex; gap: 8px; align-items: center; font-size: 0.88rem; }
-label.btn { display: inline-block; cursor: pointer; }
-.prices { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
-.field { display: flex; gap: 8px; align-items: center; justify-content: space-between; font-size: 0.9rem; }
-.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 9px 14px; border-radius: 10px; font-size: 0.9rem; display: flex; gap: 12px; align-items: center; max-width: calc(100% - 32px); }
-.toast button { background: none; border: 0; color: var(--bg); text-decoration: underline; font-weight: 700; }
-@media (max-width: 420px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (prefers-reduced-motion: no-preference) { .chip, .q, .btn, .proc { transition: background .15s, border-color .15s, transform .1s; } .q:active { transform: scale(.95); } }
+.hist { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.hist th { text-align: right; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 7px 10px; background: var(--bg); white-space: nowrap; }
+.hist th:first-child, .hist td:first-child { text-align: left; }
+.hist td { padding: 7px 10px; border-top: 1px solid var(--line); text-align: right; white-space: nowrap; font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+.hist td:first-child { font-family: var(--font-body); }
+.hist tr.current td { background: var(--accent-soft); }
+.hist .ok { color: var(--ok); font-weight: 600; }
+.hist .bad { color: var(--bad); font-weight: 600; }
+.linkish { background: none; border: 0; padding: 0; color: var(--accent); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+
+details.settings summary { cursor: pointer; font-weight: 700; color: var(--muted); }
+.prices { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; margin-top: 12px; }
+.field { display: flex; gap: 8px; align-items: center; justify-content: space-between; font-size: 0.9rem; flex-wrap: wrap; }
+.field input { width: 90px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); padding: 6px 8px; font-family: var(--font-num); }
+.btn { border: 1px solid var(--accent); background: var(--accent); color: var(--surface); border-radius: 10px; padding: 8px 14px; font-weight: 700; margin-top: 12px; }
+@media (max-width: 420px) { .counters { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: no-preference) { .counter, .stepper button { transition: background .15s, border-color .15s; } }
 </style>
 
 <div class="wrap">
   <header class="top">
     <div>
-      <div class="eyebrow">Consultas Doctors Now</div>
-      <h1>Honorarios por ciclo</h1>
+      <div class="eyebrow">Doctors Now</div>
+      <h1>Comprobación mensual</h1>
     </div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
-      <a href="https://mrdoctorsnowusa.com/medicalcases" target="_blank" rel="noopener">Abrir Medical Cases ↗</a>
-      <span class="status" id="status">Cargando…</span>
-    </div>
+    <span class="status" id="status">Cargando…</span>
   </header>
 
-  <section class="summary" aria-live="polite">
+  <section class="card" aria-live="polite">
     <div class="period-nav">
-      <button class="icon-btn" id="prev" aria-label="Ciclo anterior">‹</button>
+      <button class="icon-btn" id="prev" aria-label="Período anterior">‹</button>
       <div class="label">
         <div class="name" id="pname">—</div>
         <div class="range" id="prange"></div>
       </div>
-      <button class="icon-btn" id="next" aria-label="Ciclo siguiente">›</button>
+      <button class="icon-btn" id="next" aria-label="Período siguiente">›</button>
     </div>
-    <div>
-      <div class="eyebrow">Total del ciclo</div>
-      <div class="total" id="ptotal">$0</div>
-    </div>
-    <div class="stats">
-      <div class="stat"><span class="eyebrow">Pacientes</span><b id="pcount">0</b></div>
-      <div class="stat"><span class="eyebrow">Días trabajados</span><b id="pdays">0</b></div>
-      <div class="stat"><span class="eyebrow">Promedio / día</span><b id="pavg">$0</b></div>
-    </div>
-    <table class="ledger"><tbody id="pledger"></tbody></table>
-    <div class="actions">
-      <button class="btn" id="copy">Copiar resumen</button>
-      <button class="btn" id="toggleImport">Importar PDF</button>
-      <button class="btn" id="toggleSettings">Precios y ciclo</button>
-    </div>
-  </section>
-
-  <section class="panel" id="importPanel" hidden>
-    <h2>Importar casos desde PDF</h2>
-    <p>Elige el PDF de tus casos de Doctors Now (puedes elegir varios a la vez). El PDF se lee aquí mismo, en tu navegador: cada renglón con una fecha cuenta como un paciente. Solo se guardan la fecha, el tipo, los procedimientos y el monto; los nombres y lo demás se ignoran. También acepta Excel o filas pegadas.</p>
-    <div class="actions">
-      <label class="btn primary" for="importFile">Elegir PDF</label>
-      <input id="importFile" type="file" accept=".pdf,.xlsx,.xls,.csv,.tsv,.txt" multiple hidden>
-      <span class="status" id="fileName"></span>
-    </div>
-    <textarea id="importText" placeholder="Aquí aparecerá el texto leído del PDF.&#10;También puedes pegar filas de Excel o notas como: 75 dólares 25/9/26"></textarea>
-    <div class="mapping" id="mapping" hidden>
-      <div class="field col-map"><label for="mapDate">Columna de fecha</label><select id="mapDate"></select></div>
-      <div class="field"><label for="mapOrder">Las fechas están en</label><select id="mapOrder"><option value="mdy">mes/día/año (EE. UU.)</option><option value="dmy">día/mes/año</option></select></div>
-      <div class="field col-map"><label for="mapMoney">Columna de monto</label><select id="mapMoney"></select></div>
-      <div class="field col-map"><label for="mapText">Columna de tipo o servicio</label><select id="mapText"></select></div>
-    </div>
-    <div class="status" id="importPreview">Elige un PDF o pega tus filas.</div>
-    <div class="tablebox" id="previewBox" hidden>
-      <table class="preview"><thead><tr><th>Fecha</th><th>Tipo y procedimientos</th><th>Monto</th><th></th></tr></thead><tbody id="previewBody"></tbody></table>
-    </div>
-    <label class="check"><input type="checkbox" id="importReplace" checked> Reemplazar lo que ya tengo en esas fechas, para no contar dos veces</label>
-    <div class="actions"><button class="btn primary" id="importDo" disabled>Importar</button></div>
-  </section>
-
-  <section class="panel" id="settingsPanel" hidden>
-    <h2>Precios y ciclo</h2>
-    <p>Un precio nuevo se aplica a los pacientes que agregues o edites a partir de ahora. Los ya guardados conservan su monto.</p>
-    <div class="prices" id="priceFields"></div>
-    <div class="field" style="justify-content:flex-start"><label for="startDay">El ciclo empieza el día</label><input id="startDay" type="number" min="1" max="28" style="width:70px"><span class="status">de cada mes (25 → del 25 sep al 24 oct)</span></div>
-    <div class="actions"><button class="btn primary" id="saveSettings">Guardar</button></div>
-  </section>
-
-  <section class="panel" id="history">
-    <div class="hist-head">
-      <h2>Historial por mes y año</h2>
-      <div class="actions">
-        <div class="seg" id="histMode" role="group" aria-label="Agrupar por">
-          <button data-mode="ciclo" aria-pressed="true">Ciclo de pago</button>
-          <button data-mode="mes" aria-pressed="false">Mes calendario</button>
-          <button data-mode="anio" aria-pressed="false">Año</button>
-        </div>
-        <button class="btn primary" id="exportXlsx">Exportar a Excel</button>
+    <div class="compare">
+      <div class="fig"><span class="eyebrow">Lo que calculo</span><span class="big" id="ptotal">$0</span></div>
+      <div class="fig"><label class="eyebrow" for="paid">Lo que me pagaron</label>
+        <div class="paid"><span>$</span><input id="paid" type="number" min="0" step="any" inputmode="decimal" placeholder="0"></div>
       </div>
     </div>
-    <p id="histEmpty" hidden>Todavía no hay pacientes. Cuando agregues o importes casos, aquí verás el total de cada mes.</p>
-    <div class="tablebox" id="histTable">
+    <div class="verdict wait" id="verdict">Escribe lo que te pagaron para comparar.</div>
+    <table class="ledger"><tbody id="pledger"></tbody></table>
+  </section>
+
+  <section class="days" id="days"></section>
+
+  <section class="card">
+    <h2>Meses anteriores</h2>
+    <div class="tablebox">
       <table class="hist">
-        <thead><tr><th id="histFirst">Mes</th><th>Pacientes</th><th>Online</th><th>Visitas</th><th>Procedimientos</th><th>Total</th></tr></thead>
+        <thead><tr><th>Período</th><th>Pacientes</th><th>Calculo</th><th>Me pagaron</th><th>Diferencia</th></tr></thead>
         <tbody id="histBody"></tbody>
       </table>
     </div>
   </section>
 
-  <section class="days" id="days"></section>
+  <section class="card">
+    <details class="settings">
+      <summary>Precios y período</summary>
+      <div class="prices" id="priceFields"></div>
+      <div class="field" style="justify-content:flex-start;margin-top:10px"><label for="startDay">El período empieza el día</label><input id="startDay" type="number" min="1" max="28" style="width:70px"><span class="status">25 = del 25 al 24 · 1 = mes calendario</span></div>
+      <button class="btn" id="saveSettings">Guardar</button>
+    </details>
+  </section>
 </div>
-<div class="toast" id="toast" hidden><span id="toastMsg"></span><button id="toastUndo" hidden>Deshacer</button></div>
 
 <script>
 (() => {
-  const TYPES = [
-    { k: "online", name: "Consulta online", short: "Online" },
-    { k: "visita", name: "Visita", short: "Visita" },
+  const KINDS = [
+    { k: "online", name: "Teleconsultas", one: "teleconsulta", base: true },
+    { k: "visita", name: "Visitas domiciliarias", one: "visita", base: true },
+    { k: "oido", name: "Lavado de oído", one: "oído", many: "oídos", per: "por oído" },
+    { k: "inyeccion", name: "Inyección", one: "inyección", many: "inyecciones", per: "por inyección" },
+    { k: "herida", name: "Curación de herida", one: "curación", many: "curaciones", per: "por curación" },
+    { k: "absceso", name: "Drenaje de absceso", one: "drenaje", many: "drenajes", per: "por drenaje" },
+    { k: "sutura", name: "Sutura", one: "sutura", many: "suturas", per: "por sutura" },
   ];
-  const PROCS = [
-    { k: "oido", name: "Lavado de oído", per: "por oído", short: n => n > 1 ? `${n} oídos` : "1 oído" },
-    { k: "inyeccion", name: "Inyección", per: "por inyección", short: n => n > 1 ? `${n} iny.` : "1 iny." },
-    { k: "herida", name: "Curación de herida", per: "por curación", short: n => n > 1 ? `${n} curaciones` : "curación" },
-    { k: "absceso", name: "Drenaje de absceso", per: "por drenaje", short: n => n > 1 ? `${n} drenajes` : "drenaje" },
-    { k: "sutura", name: "Sutura", per: "por sutura", short: n => n > 1 ? `${n} suturas` : "sutura" },
-  ];
-  // Notas antiguas de $230: 2 inyecciones o lavado de oído bilateral, sin saber cuál. Solo aparece si se usa.
-  const LEGACY = { k: "p40", name: "2 inyecciones u oído bilateral (sin detalle)", per: "cada uno, en notas antiguas", short: n => n === 2 ? "2 iny. u oído bilat." : `${n}× iny./oído`, legacy: true };
-  const ALL_PROCS = [...PROCS, LEGACY];
-  const DEFAULT_PRICES = { online: 75, visita: 150, oido: 40, inyeccion: 40, herida: 50, absceso: 200, sutura: 150, p40: 40 };
-  const DEFAULTS = { startDay: 25, prices: DEFAULT_PRICES };
+  const PROC_KINDS = KINDS.filter(k => !k.base);
+  const DEFAULT_PRICES = { online: 75, visita: 150, oido: 40, inyeccion: 40, herida: 50, absceso: 200, sutura: 150 };
   const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
   const WEEKDAYS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
-  const LS_KEY = "dn-honorarios-v1";
+  const LS_KEY = "dn-comprobacion-v2";
+  const LS_OLD = "dn-honorarios-v1";
   const $ = id => document.getElementById(id);
-  const money = n => "$" + (Math.round(n * 100) / 100).toLocaleString("en-US", { maximumFractionDigits: 2 });
   const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  const money = n => (n < 0 ? "−$" : "$") + (Math.round(Math.abs(n) * 100) / 100).toLocaleString("en-US", { maximumFractionDigits: 2 });
 
-  // ---- fechas (locales, YYYY-MM-DD) ----
+  // ---- fechas ----
   const pad = n => String(n).padStart(2, "0");
   const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const parseIso = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
@@ -273,952 +204,266 @@ label.btn { display: inline-block; cursor: pointer; }
     if (d.getDate() < startDay) s.setMonth(s.getMonth() - 1);
     return s;
   }
-  function periodOf(s) {
-    const e = new Date(s.getFullYear(), s.getMonth() + 1, s.getDate() - 1);
-    return { start: iso(s), end: iso(e), s, e };
-  }
-  const shiftPeriod = (s, months) => new Date(s.getFullYear(), s.getMonth() + months, s.getDate());
-  function periodName(p, startDay) {
-    if (startDay === 1) return `${MONTHS[p.s.getMonth()]} ${p.s.getFullYear()}`;
-    const y = p.s.getFullYear() === p.e.getFullYear() ? p.e.getFullYear() : `${p.s.getFullYear()}/${p.e.getFullYear()}`;
-    return `${MONTHS[p.s.getMonth()]}/${MONTHS[p.e.getMonth()]} ${y}`;
+  function periodOf(s) { const e = new Date(s.getFullYear(), s.getMonth() + 1, s.getDate() - 1); return { start: iso(s), end: iso(e), s, e }; }
+  const shift = (s, m) => new Date(s.getFullYear(), s.getMonth() + m, s.getDate());
+  function periodName(p) {
+    if (settings.startDay === 1) return `${MONTHS[p.s.getMonth()]} ${p.s.getFullYear()}`;
+    return `${MONTHS[p.s.getMonth()]}/${MONTHS[p.e.getMonth()]} ${p.e.getFullYear()}`;
   }
   const fmtShort = d => `${d.getDate()} ${MONTHS[d.getMonth()]}`;
 
   // ---- estado ----
-  let entries = [];
-  let settings = { startDay: DEFAULTS.startDay, prices: { ...DEFAULT_PRICES } };
-  let viewStart = null;
+  let days = {};        // "YYYY-MM-DD" -> { online, visita, oido, ... }
+  let pagos = {};       // inicio de período -> { pagado }
+  let settings = { startDay: 25, prices: { ...DEFAULT_PRICES } };
+  let viewStart = periodStart(todayIso, 25);
   let store = null;
-  let editing = null; // { id, draft }
-
-  // ---- modelo de paciente ----
-  // Guardado: { fecha, tipo, procs: {oido: n, ...}, extra, monto, creado }. "monto" queda fijo al guardar.
+  const open = new Set(); // días con procedimientos abiertos
+  const pending = {}, timers = {};
   const price = k => Number(settings.prices[k] ?? DEFAULT_PRICES[k] ?? 0);
-  function computeMonto(d) {
-    let m = price(d.tipo) + Number(d.extra || 0);
-    if (d.tipo !== "online") for (const p of ALL_PROCS) m += (d.procs[p.k] || 0) * price(p.k);
-    return m;
-  }
-  // Reparte un monto suelto (notas a mano) en tipo + procedimientos.
-  function inferFromAmount(amt) {
-    const procs = {};
-    if (amt < price("visita")) return { tipo: "online", procs, extra: amt - price("online") };
-    let rest = amt - price("visita");
-    const single = PROCS.find(p => p.k !== "oido" && p.k !== "inyeccion" && price(p.k) === rest);
-    if (rest === 0) return { tipo: "visita", procs, extra: 0 };
-    if (single) { procs[single.k] = 1; return { tipo: "visita", procs, extra: 0 }; }
-    // $40 extra = una inyección (un lavado de oído siempre es bilateral en las notas: $80).
-    if (rest === price("inyeccion")) { procs.inyeccion = 1; return { tipo: "visita", procs, extra: 0 }; }
-    if (rest % price("p40") === 0) { procs.p40 = rest / price("p40"); return { tipo: "visita", procs, extra: 0 }; }
-    return { tipo: "visita", procs, extra: rest };
-  }
-  function normalize(e) {
-    const monto = Number(e.monto) || 0;
-    const base = e.tipo ? { tipo: e.tipo, procs: { ...(e.procs || {}) }, extra: Number(e.extra) || 0 } : inferFromAmount(monto);
-    return { ...e, ...base, monto };
-  }
-  function chipParts(e) {
-    const t = TYPES.find(x => x.k === e.tipo) || TYPES[1];
-    const pr = ALL_PROCS.filter(p => e.procs[p.k] > 0).map(p => p.short(e.procs[p.k]));
-    if (e.extra) pr.push(`${e.extra > 0 ? "+" : "−"}${money(Math.abs(e.extra))}`);
-    return { tipo: t.short, procs: pr.join(" · ") };
+  const dayTotal = d => KINDS.reduce((a, k) => a + (d[k.k] || 0) * price(k.k), 0);
+  const getDay = day => pending[day] || days[day] || {};
+
+  function periodSums(p) {
+    const c = {}; let total = 0, pacientes = 0;
+    const all = new Set([...Object.keys(days), ...Object.keys(pending)]);
+    for (const day of all) if (day >= p.start && day <= p.end) {
+      const d = getDay(day);
+      for (const k of KINDS) c[k.k] = (c[k.k] || 0) + (d[k.k] || 0);
+      total += dayTotal(d); pacientes += (d.online || 0) + (d.visita || 0);
+    }
+    return { c, total, pacientes };
   }
 
   // ---- almacenamiento ----
+  // Datos de la versión anterior (un registro por paciente) -> conteo por día.
+  function daysFromOld(entries) {
+    const out = {};
+    for (const e of entries || []) {
+      const d = out[e.fecha] = out[e.fecha] || {};
+      let tipo = e.tipo, procs = e.procs || {};
+      if (!tipo) {
+        const m = Number(e.monto) || 0;
+        tipo = m < 150 ? "online" : "visita"; procs = {};
+        const rest = m - 150;
+        if (tipo === "visita" && rest === 50) procs.herida = 1;
+        else if (tipo === "visita" && rest === 200) procs.absceso = 1;
+        else if (tipo === "visita" && rest > 0 && rest % 40 === 0) procs.inyeccion = rest / 40;
+      }
+      d[tipo] = (d[tipo] || 0) + 1;
+      if (tipo !== "online") for (const k in procs) {
+        const key = k === "p40" ? "inyeccion" : k;
+        if (DEFAULT_PRICES[key] != null) d[key] = (d[key] || 0) + Number(procs[k] || 0);
+      }
+    }
+    return out;
+  }
   function localStore() {
-    const read = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; } };
-    const write = obj => { try { localStorage.setItem(LS_KEY, JSON.stringify(obj)); } catch {} };
-    const data = read();
-    data.entries = data.entries || [];
-    const newId = () => "l" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+    const read = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+    let data = read(LS_KEY);
+    if (!data) {
+      const old = read(LS_OLD);
+      data = {
+        days: old && old.entries ? daysFromOld(old.entries) : (window.DN_SEED_DAYS || {}),
+        pagos: {},
+        settings: old && old.settings && old.settings.prices ? { startDay: old.settings.startDay, prices: old.settings.prices } : null,
+      };
+      try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch {}
+    }
+    const write = () => { try { localStorage.setItem(LS_KEY, JSON.stringify(data)); } catch {} };
     return {
       label: "Guardado en este navegador",
-      local: true,
-      start(onEntries, onSettings) { onEntries(data.entries); onSettings(data.settings || null); },
-      async add(list) { const ids = []; for (const e of list) { const id = newId(); ids.push(id); data.entries.push({ id, ...e }); } write(data); return ids; },
-      async update(id, body) { data.entries = data.entries.map(e => e.id === id ? { id, ...body } : e); write(data); },
-      async remove(id) { data.entries = data.entries.filter(e => e.id !== id); write(data); },
-      async saveSettings(s) { data.settings = s; write(data); },
-      current() { return data.entries; },
+      start(onDays, onPagos, onSettings) { onDays({ ...data.days }); onPagos({ ...data.pagos }); onSettings(data.settings); },
+      async saveDay(day, body) { if (isEmpty(body)) delete data.days[day]; else data.days[day] = body; days = { ...data.days }; write(); },
+      async savePago(key, body) { if (body.pagado == null) delete data.pagos[key]; else data.pagos[key] = body; write(); },
+      async saveSettings(s) { data.settings = s; write(); },
     };
   }
   function dbStore(db) {
-    const col = db.collection("consultas");
-    const cfg = db.doc("ajustes/general");
+    const dias = db.collection("dias"), pg = db.collection("pagos"), cfg = db.doc("ajustes/general");
     return {
       label: "Guardado en tu cuenta",
-      start(onEntries, onSettings) {
-        col.onSnapshot(snap => onEntries(snap.docs.map(d => ({ id: d.id, ...d.data() }))), e => showStatus("No se pudo leer: " + (e && e.code || "error")));
-        cfg.onSnapshot(snap => onSettings(snap.exists ? snap.data() : null), () => {});
+      start(onDays, onPagos, onSettings) {
+        dias.onSnapshot(s => { const o = {}; s.docs.forEach(d => { o[d.id] = d.data(); }); onDays(o); }, e => showStatus("No se pudo leer: " + (e && e.code || "error")));
+        pg.onSnapshot(s => { const o = {}; s.docs.forEach(d => { o[d.id] = d.data(); }); onPagos(o); }, () => {});
+        cfg.onSnapshot(s => onSettings(s.exists ? s.data() : null), () => {});
       },
-      async add(list, onProgress) { const ids = []; for (const e of list) { const ref = await col.add(e); ids.push(ref.id); if (onProgress) onProgress(ids.length); } return ids; },
-      async update(id, body) { await col.doc(id).set(body); },
-      async remove(id) { await col.doc(id).delete(); },
+      async saveDay(day, body) { if (isEmpty(body)) await dias.doc(day).delete(); else await dias.doc(day).set(body); },
+      async savePago(key, body) { if (body.pagado == null) await pg.doc(key).delete(); else await pg.doc(key).set(body); },
       async saveSettings(s) { await cfg.set(s); },
     };
   }
-  const refreshLocal = () => { if (store && store.local) { entries = store.current().slice(); render(); } };
-
+  const isEmpty = b => !KINDS.some(k => b[k.k] > 0);
   function showStatus(t) { $("status").textContent = t; }
-  let toastTimer = null, undoFn = null;
-  function toast(msg, undo) {
-    $("toastMsg").textContent = msg; undoFn = undo || null; $("toastUndo").hidden = !undo; $("toast").hidden = false;
-    clearTimeout(toastTimer); toastTimer = setTimeout(() => { $("toast").hidden = true; undoFn = null; }, 5000);
-  }
-  $("toastUndo").addEventListener("click", () => { if (undoFn) undoFn(); $("toast").hidden = true; undoFn = null; });
 
-  // ---- cálculo del ciclo ----
-  function periodData(p) {
-    const list = entries.filter(e => e.fecha >= p.start && e.fecha <= p.end).map(normalize);
-    const byDay = {};
-    const types = {}, procs = {};
-    let total = 0, consultas = 0, procTotal = 0, extras = 0;
-    for (const e of list) {
-      (byDay[e.fecha] = byDay[e.fecha] || []).push(e);
-      total += e.monto;
-      // El monto guardado manda; consulta + procedimientos se reparten con los precios con que se guardó.
-      const base = e.monto - (e.extra || 0);
-      let pSum = 0;
-      if (e.tipo !== "online") for (const pr of ALL_PROCS) {
-        const n = e.procs[pr.k] || 0; if (!n) continue;
-        const v = n * (e.precios && e.precios[pr.k] != null ? Number(e.precios[pr.k]) : price(pr.k));
-        procs[pr.k] = procs[pr.k] || { n: 0, v: 0 }; procs[pr.k].n += n; procs[pr.k].v += v; pSum += v;
-      }
-      types[e.tipo] = types[e.tipo] || { n: 0, v: 0 }; types[e.tipo].n++; types[e.tipo].v += base - pSum;
-      consultas += base - pSum; procTotal += pSum; extras += e.extra || 0;
-    }
-    for (const k in byDay) byDay[k].sort((a, b) => (a.creado || 0) - (b.creado || 0));
-    return { list, total, byDay, types, procs, consultas, procTotal, extras, days: Object.keys(byDay).length };
+  // Escrituras de un día: los toques seguidos se agrupan en una sola escritura.
+  function queueDay(day) {
+    clearTimeout(timers[day]);
+    timers[day] = setTimeout(async () => {
+      const body = { ...pending[day] };
+      try { await store.saveDay(day, body); showStatus(store.label); }
+      catch { showStatus("No se pudo guardar; revisa tu conexión"); return; }
+      if (JSON.stringify(pending[day]) === JSON.stringify(body)) { delete pending[day]; days = { ...days }; if (isEmpty(body)) delete days[day]; else days[day] = body; }
+    }, 700);
   }
 
   // ---- render ----
   function render() {
     const p = periodOf(viewStart);
-    const data = periodData(p);
-    $("pname").textContent = periodName(p, settings.startDay);
+    const sums = periodSums(p);
+    $("pname").textContent = periodName(p);
     $("prange").textContent = `${fmtShort(p.s)} – ${fmtShort(p.e)} ${p.e.getFullYear()}`;
-    $("ptotal").textContent = money(data.total);
-    $("pcount").textContent = data.list.length;
-    $("pdays").textContent = data.days;
-    $("pavg").textContent = money(data.days ? data.total / data.days : 0);
+    $("ptotal").textContent = money(sums.total);
     $("next").disabled = p.start > todayIso;
-    renderLedger(data);
-    renderHistory();
+    const paidInput = $("paid");
+    const pago = pagos[p.start];
+    if (document.activeElement !== paidInput) paidInput.value = pago && pago.pagado != null ? pago.pagado : "";
+    renderVerdict(sums.total, pago && pago.pagado != null ? Number(pago.pagado) : null);
+
+    const tb = $("pledger"); tb.replaceChildren();
+    for (const k of KINDS) {
+      const n = sums.c[k.k] || 0;
+      if (!n && !k.base) continue;
+      const tr = el("tr", k.base ? "" : "p");
+      tr.append(el("td", null, k.name), el("td", null, `${n} × ${money(price(k.k))}`), el("td", null, money(n * price(k.k))));
+      tb.append(tr);
+    }
+    const tot = el("tr", "tot");
+    tot.append(el("td", null, `Total · ${sums.pacientes} pacientes`), el("td"), el("td", null, money(sums.total)));
+    tb.append(tot);
 
     const box = $("days"); box.replaceChildren();
-    for (let d = new Date(p.e); d >= p.s; d.setDate(d.getDate() - 1)) {
-      const day = iso(d);
-      if (day > todayIso && !data.byDay[day]) continue; // días futuros vacíos no se muestran
-      box.append(dayRow(day, data.byDay[day] || []));
-    }
+    const last = p.end < todayIso ? p.e : parseIso(todayIso);
+    for (let d = new Date(last); d >= p.s; d.setDate(d.getDate() - 1)) box.append(dayRow(iso(d)));
+    renderHistory();
   }
 
-  function ledgerRow(tb, cells, cls) {
-    const tr = el("tr", cls); cells.forEach(c => tr.append(el("td", null, c))); tb.append(tr);
-  }
-  function renderLedger(data) {
-    const tb = $("pledger"); tb.replaceChildren();
-    if (!data.list.length) return;
-    ledgerRow(tb, ["Consultas", "", money(data.consultas)], "sub");
-    for (const t of TYPES) if (data.types[t.k]) ledgerRow(tb, [t.name, `${data.types[t.k].n} ×`, money(data.types[t.k].v)]);
-    if (data.procTotal) {
-      ledgerRow(tb, ["Procedimientos", "", money(data.procTotal)], "sub");
-      for (const pr of ALL_PROCS) if (data.procs[pr.k]) ledgerRow(tb, [pr.name, `${data.procs[pr.k].n} ×`, money(data.procs[pr.k].v)], "p");
-    }
-    if (data.extras) ledgerRow(tb, ["Ajustes sueltos", "", money(data.extras)], "sub");
+  function renderVerdict(total, paid) {
+    const v = $("verdict");
+    if (paid == null) { v.className = "verdict wait"; v.textContent = "Escribe lo que te pagaron para comparar."; return; }
+    const diff = Math.round((paid - total) * 100) / 100;
+    v.replaceChildren();
+    if (diff === 0) { v.className = "verdict ok"; v.append(el("span", null, "Cuadra: te pagaron lo que calculaste."), el("span", "num", "✓")); }
+    else if (diff < 0) { v.className = "verdict bad"; v.append(el("span", null, "Te pagaron menos de lo que calculaste"), el("span", "num", money(-diff))); }
+    else { v.className = "verdict ok"; v.append(el("span", null, "Te pagaron más de lo que calculaste"), el("span", "num", "+" + money(diff))); }
   }
 
-  function dayRow(day, list) {
-    const d = parseIso(day);
-    const future = day > todayIso;
-    const row = el("article", "day" + (day === todayIso ? " today" : "") + (future ? " future" : "") + (!future && !list.length ? " empty-past" : ""));
-    const total = list.reduce((a, e) => a + e.monto, 0);
+  function stepper(label, small, value, onChange, cls) {
+    const box = el("div", "counter" + (cls ? " " + cls : "") + (value ? " on" : ""));
+    const n = el("div", "n", label); if (small) n.append(el("small", null, small));
+    const st = el("div", "stepper");
+    const minus = el("button", null, "−"); minus.disabled = !value; minus.setAttribute("aria-label", "Quitar " + label);
+    const out = el("output", null, String(value || 0));
+    const plus = el("button", null, "+"); plus.setAttribute("aria-label", "Agregar " + label);
+    minus.addEventListener("click", () => onChange(Math.max(0, (value || 0) - 1)));
+    plus.addEventListener("click", () => onChange((value || 0) + 1));
+    st.append(minus, out, plus); box.append(n, st);
+    return box;
+  }
+
+  function dayRow(day) {
+    const d = getDay(day);
+    const dt = parseIso(day);
+    const total = dayTotal(d);
+    const pacientes = (d.online || 0) + (d.visita || 0);
+    const row = el("article", "day" + (day === todayIso ? " today" : "") + (!total ? " empty" : ""));
     const head = el("div", "day-head");
-    const name = el("div", "d", `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`);
-    name.append(el("small", null, day === todayIso ? "hoy" : list.length ? `${list.length} paciente${list.length > 1 ? "s" : ""}` : ""));
-    head.append(name, el("div", "t", list.length ? money(total) : ""));
+    const name = el("div", "d", `${WEEKDAYS[dt.getDay()]} ${dt.getDate()} ${MONTHS[dt.getMonth()]}`);
+    name.append(el("small", null, day === todayIso ? "hoy" : pacientes ? `${pacientes} paciente${pacientes > 1 ? "s" : ""}` : ""));
+    head.append(name, el("div", "t", total ? money(total) : ""));
     row.append(head);
 
-    if (list.length) {
-      const chips = el("div", "chips");
-      for (const e of list) {
-        const parts = chipParts(e);
-        const c = el("button", "chip" + (editing && editing.id === e.id ? " open" : ""));
-        c.setAttribute("aria-label", `Editar paciente: ${parts.tipo} ${parts.procs} ${money(e.monto)}`);
-        c.setAttribute("aria-expanded", editing && editing.id === e.id ? "true" : "false");
-        c.append(el("span", null, parts.tipo));
-        if (parts.procs) c.append(el("span", "pr", parts.procs));
-        c.append(el("span", "m", money(e.monto)));
-        c.addEventListener("click", () => openEditor(e));
-        chips.append(c);
-      }
-      row.append(chips);
-      const open = editing && list.find(e => e.id === editing.id);
-      if (open) row.append(editorView(open));
-    }
-    if (!future) {
-      const q = el("div", "quick");
-      for (const t of TYPES) {
-        const b = el("button", "q", "+ " + t.short);
-        b.append(el("span", null, money(price(t.k))));
-        b.setAttribute("aria-label", `Agregar ${t.name} el ${day}`);
-        b.addEventListener("click", () => addPatient(day, t.k));
-        q.append(b);
-      }
-      row.append(q);
+    const set = (k, v) => {
+      const body = { ...getDay(day), [k]: v };
+      for (const key in body) if (!body[key]) delete body[key];
+      pending[day] = body; queueDay(day); render();
+    };
+    const main = el("div", "counters");
+    for (const k of KINDS.filter(k => k.base)) main.append(stepper(k.name, money(price(k.k)), d[k.k], v => set(k.k, v)));
+    row.append(main);
+
+    const procCount = PROC_KINDS.reduce((a, k) => a + (d[k.k] || 0), 0);
+    const isOpen = open.has(day);
+    const label = isOpen ? "Ocultar procedimientos"
+      : procCount ? `Procedimientos: ${PROC_KINDS.filter(k => d[k.k]).map(k => `${d[k.k]} ${d[k.k] > 1 ? k.many : k.one}`).join(", ")}` : "+ Procedimientos";
+    const tg = el("button", "toggle-proc", label);
+    tg.setAttribute("aria-expanded", isOpen ? "true" : "false");
+    tg.addEventListener("click", () => { if (open.has(day)) open.delete(day); else open.add(day); render(); });
+    row.append(tg);
+    if (isOpen) {
+      const grid = el("div", "procs");
+      for (const k of PROC_KINDS) grid.append(stepper(k.name, `${money(price(k.k))} ${k.per}`, d[k.k], v => set(k.k, v), "p"));
+      row.append(grid);
     }
     return row;
   }
 
-  function openEditor(e) {
-    if (editing && editing.id === e.id) { editing = null; render(); return; }
-    editing = { id: e.id, draft: { tipo: e.tipo, procs: { ...e.procs }, extra: e.extra || 0 } };
-    render();
-  }
-
-  function editorView(e) {
-    const draft = editing.draft;
-    const box = el("div", "editor");
-    const seg = el("div", "seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Tipo de consulta");
-    for (const t of TYPES) {
-      const b = el("button", null, `${t.short} ${money(price(t.k))}`);
-      b.setAttribute("aria-pressed", draft.tipo === t.k ? "true" : "false");
-      b.addEventListener("click", () => { draft.tipo = t.k; render(); });
-      seg.append(b);
-    }
-    box.append(seg);
-
-    if (draft.tipo !== "online") {
-      const grid = el("div", "procs");
-      for (const pr of ALL_PROCS) {
-        const n = draft.procs[pr.k] || 0;
-        if (pr.legacy && !n) continue;
-        const item = el("div", "proc" + (n ? " on" : ""));
-        const label = el("div", "n", pr.name); label.append(el("small", null, `${money(price(pr.k))} ${pr.per}`));
-        const st = el("div", "stepper");
-        const minus = el("button", null, "−"); minus.setAttribute("aria-label", `Quitar ${pr.name}`);
-        const out = el("output", null, String(n));
-        const plus = el("button", null, "+"); plus.setAttribute("aria-label", `Agregar ${pr.name}`);
-        minus.addEventListener("click", () => { draft.procs[pr.k] = Math.max(0, n - 1); render(); });
-        plus.addEventListener("click", () => { draft.procs[pr.k] = n + 1; render(); });
-        st.append(minus, out, plus);
-        item.append(label, st);
-        grid.append(item);
-      }
-      box.append(grid);
-    }
-
-    const ex = el("label", "extra", "Ajuste $");
-    const exIn = el("input"); exIn.type = "number"; exIn.step = "any"; exIn.id = "extra-" + e.id; exIn.value = draft.extra || "";
-    exIn.placeholder = "0";
-    exIn.addEventListener("input", () => { draft.extra = Number(exIn.value) || 0; sum.textContent = money(computeMonto(draft)); });
-    ex.append(exIn);
-    box.append(ex);
-
-    const foot = el("div", "ed-foot");
-    const sum = el("span", "sum", money(computeMonto(draft)));
-    const acts = el("div", "actions");
-    const del = el("button", "btn danger", "Quitar paciente");
-    const close = el("button", "btn", "Cerrar");
-    const save = el("button", "btn primary", "Guardar");
-    del.addEventListener("click", () => removePatient(e));
-    close.addEventListener("click", () => { editing = null; render(); });
-    save.addEventListener("click", () => savePatient(e));
-    acts.append(del, close, save);
-    foot.append(sum, acts);
-    box.append(foot);
-    return box;
-  }
-
-  function bodyFor(fecha, d, creado) {
-    const procs = {};
-    if (d.tipo !== "online") for (const pr of ALL_PROCS) if (d.procs[pr.k] > 0) procs[pr.k] = d.procs[pr.k];
-    const precios = { [d.tipo]: price(d.tipo) };
-    for (const k in procs) precios[k] = price(k);
-    return { fecha, tipo: d.tipo, procs, extra: Number(d.extra) || 0, monto: computeMonto({ ...d, procs }), precios, creado };
-  }
-
-  // ---- historial por mes ----
-  const MONTHS_LONG = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
-  let histMode = "ciclo";
-  try { histMode = localStorage.getItem("dn-hist-mode") || "ciclo"; } catch {}
   function renderHistory() {
-    for (const b of document.querySelectorAll("#histMode button")) b.setAttribute("aria-pressed", b.dataset.mode === histMode ? "true" : "false");
-    const body = $("histBody"); body.replaceChildren();
-    if (!entries.length) { $("histEmpty").hidden = false; $("histTable").hidden = true; return; }
-    $("histEmpty").hidden = true; $("histTable").hidden = false;
-    $("histFirst").textContent = histMode === "anio" ? "Año" : histMode === "ciclo" ? "Ciclo" : "Mes";
+    const tb = $("histBody"); tb.replaceChildren();
+    const starts = new Set([...Object.keys(days), ...Object.keys(pending)].map(day => iso(periodStart(day, settings.startDay))));
+    for (const k in pagos) starts.add(k);
     const viewing = periodOf(viewStart).start;
-    const groups = historyGroups(histMode).reverse();
-    const cells = d => [
-      el("td", "num", String(d.n)), el("td", "num", String(d.online)), el("td", "num", String(d.visita)),
-      el("td", "num", money(d.proc)), el("td", "num strong", money(d.total)),
-    ];
-    const sum = list => list.reduce((a, { data: d }) => ({
-      n: a.n + d.list.length, online: a.online + (d.types.online ? d.types.online.n : 0), visita: a.visita + (d.types.visita ? d.types.visita.n : 0),
-      proc: a.proc + d.procTotal, total: a.total + d.total,
-    }), { n: 0, online: 0, visita: 0, proc: 0, total: 0 });
-    if (histMode === "anio") {
-      for (const g of groups) { const tr = el("tr"); const name = el("td", null, g.label); tr.append(name, ...cells(sum([g]))); body.append(tr); }
-      if (groups.length > 1) { const tr = el("tr", "year"); tr.append(el("td", null, "Total general"), ...cells(sum(groups))); body.append(tr); }
-      return;
-    }
-    const byYear = new Map();
-    for (const g of groups) { const y = g.p.e.getFullYear(); if (!byYear.has(y)) byYear.set(y, []); byYear.get(y).push(g); }
-    for (const [y, list] of byYear) {
-      const head = el("tr", "year"); head.append(el("td", null, String(y)), ...cells(sum(list))); body.append(head);
-      for (const { p, label, data: d } of list) {
-        const tr = el("tr", histMode === "ciclo" && p.start === viewing ? "current" : "");
-        const name = el("td");
-        if (histMode === "ciclo") {
-          const b = el("button", "linkish", label); b.title = "Ver este ciclo";
-          b.addEventListener("click", () => { viewStart = p.s; editing = null; render(); window.scrollTo({ top: 0, behavior: "smooth" }); });
-          name.append(b);
-        } else name.textContent = label;
-        name.append(el("small", null, `${fmtShort(p.s)} – ${fmtShort(p.e)}`));
-        tr.append(name, ...cells(sum([{ data: d }])));
-        body.append(tr);
-      }
+    const list = [...starts].sort().reverse();
+    if (!list.length) { const tr = el("tr"); const td = el("td", null, "Todavía no hay días anotados."); td.colSpan = 5; tr.append(td); tb.append(tr); return; }
+    for (const start of list) {
+      const p = periodOf(parseIso(start));
+      const s = periodSums(p);
+      const pago = pagos[start] && pagos[start].pagado != null ? Number(pagos[start].pagado) : null;
+      const tr = el("tr", start === viewing ? "current" : "");
+      const name = el("td"); const b = el("button", "linkish", periodName(p));
+      b.addEventListener("click", () => { viewStart = p.s; render(); window.scrollTo({ top: 0, behavior: "smooth" }); });
+      name.append(b);
+      const diff = pago == null ? null : Math.round((pago - s.total) * 100) / 100;
+      tr.append(name, el("td", null, String(s.pacientes)), el("td", null, money(s.total)), el("td", null, pago == null ? "—" : money(pago)),
+        el("td", diff == null ? "" : diff < 0 ? "bad" : "ok", diff == null ? "—" : diff === 0 ? "cuadra" : (diff > 0 ? "+" : "") + money(diff)));
+      tb.append(tr);
     }
   }
-  for (const b of document.querySelectorAll("#histMode button")) b.addEventListener("click", () => {
-    histMode = b.dataset.mode; try { localStorage.setItem("dn-hist-mode", histMode); } catch {} renderHistory();
-  });
 
   // ---- acciones ----
-  async function addPatient(day, tipo) {
-    const body = bodyFor(day, { tipo, procs: {}, extra: 0 }, Date.now());
-    try {
-      const [id] = await store.add([body]);
-      if (tipo === "visita") editing = { id, draft: { tipo, procs: {}, extra: 0 } };
-      refreshLocal(); render();
-      toast(tipo === "visita" ? `Visita agregada · marca los procedimientos si hubo` : `Online agregada · ${money(body.monto)}`);
-    } catch { toast("No se pudo guardar. Revisa tu conexión e inténtalo otra vez."); }
-  }
-  async function savePatient(e) {
-    const body = bodyFor(e.fecha, editing.draft, e.creado || Date.now());
-    try { await store.update(e.id, body); editing = null; refreshLocal(); render(); toast(`Guardado · ${money(body.monto)}`); }
-    catch { toast("No se pudo guardar el cambio. Inténtalo otra vez."); }
-  }
-  async function removePatient(e) {
-    const { id, ...body } = e;
-    try {
-      await store.remove(id); editing = null; refreshLocal(); render();
-      toast(`Paciente quitado · ${money(e.monto)}`, async () => { await store.add([body]); refreshLocal(); });
-    } catch { toast("No se pudo quitar. Inténtalo otra vez."); }
-  }
-
-  $("prev").addEventListener("click", () => { viewStart = shiftPeriod(viewStart, -1); editing = null; render(); });
-  $("next").addEventListener("click", () => { viewStart = shiftPeriod(viewStart, 1); editing = null; render(); });
-
-  $("copy").addEventListener("click", () => {
-    const p = periodOf(viewStart), data = periodData(p);
-    const lines = [`Doctors Now · ${periodName(p, settings.startDay)} (${fmtShort(p.s)} – ${fmtShort(p.e)})`,
-      `Total: ${money(data.total)} · ${data.list.length} pacientes · ${data.days} días`, ""];
-    for (const t of TYPES) if (data.types[t.k]) lines.push(`${t.name}: ${data.types[t.k].n} = ${money(data.types[t.k].v)}`);
-    for (const pr of ALL_PROCS) if (data.procs[pr.k]) lines.push(`${pr.name}: ${data.procs[pr.k].n} = ${money(data.procs[pr.k].v)}`);
-    if (data.extras) lines.push(`Ajustes sueltos: ${money(data.extras)}`);
-    lines.push("");
-    Object.keys(data.byDay).sort().forEach(day => {
-      const l = data.byDay[day]; const d = parseIso(day);
-      const items = l.map(e => { const c = chipParts(e); return `${c.tipo}${c.procs ? " + " + c.procs : ""} ${money(e.monto)}`; });
-      lines.push(`${d.getDate()}/${d.getMonth() + 1} (${money(l.reduce((a, e) => a + e.monto, 0))}): ${items.join("; ")}`);
-    });
-    const text = lines.join("\n");
-    navigator.clipboard.writeText(text).then(() => toast("Resumen copiado"), () => {
-      $("importPanel").hidden = false; $("importText").value = text; $("importText").select(); toast("Selecciona y copia el texto del cuadro");
-    });
+  $("prev").addEventListener("click", () => { viewStart = shift(viewStart, -1); render(); });
+  $("next").addEventListener("click", () => { viewStart = shift(viewStart, 1); render(); });
+  let paidTimer = null;
+  $("paid").addEventListener("input", () => {
+    const key = periodOf(viewStart).start;
+    const raw = $("paid").value.trim();
+    const body = { pagado: raw === "" ? null : Number(raw) };
+    pagos = { ...pagos }; if (body.pagado == null) delete pagos[key]; else pagos[key] = body;
+    renderVerdict(periodSums(periodOf(viewStart)).total, body.pagado); renderHistory();
+    clearTimeout(paidTimer);
+    paidTimer = setTimeout(() => store.savePago(key, body).catch(() => showStatus("No se pudo guardar el pago")), 700);
   });
 
-  // ---- importar desde Excel, CSV o notas ----
-  // Solo se guardan fecha, tipo, procedimientos y monto: el texto de las filas (nombres, notas) nunca se guarda.
-  const TYPE_KW = {
-    online: /online|en l[ií]nea|virtual|tele|video/i,
-    visita: /visit|visita|domicil|home|house|presencial|in.?person|office/i,
-  };
-  const PROC_KW = [
-    { k: "oido", re: /o[ií]dos?|ears?\b|cerumen|lavage|irrigat/i, bil: /bilat|ambos|both|2\s*o[ií]dos|2\s*ears/i },
-    { k: "inyeccion", re: /inyecci[oó]n(?:es)?|inject\w*|shots?\b|\bim\b|intramusc\w*/i },
-    { k: "herida", re: /heridas?|curaci[oó]n(?:es)?|wounds?|dressing/i },
-    { k: "absceso", re: /absces\w*|drenaj\w*|drain\w*|i\s*&\s*d/i },
-    { k: "sutura", re: /sutur\w*|stitch\w*|laceraci\w*/i },
-  ];
-  function countIn(text, re) {
-    const before = text.match(new RegExp("(\\d+)\\s*(?:x\\s*)?(?:" + re.source + ")", "i"));
-    const after = text.match(new RegExp("(?:" + re.source + ")\\s*(?:x|×)\\s*(\\d+)", "i"));
-    const n = Number((before || after || [])[1]);
-    return n > 0 && n <= 10 ? n : 1;
-  }
-  function classify(text) {
-    if (!text) return null;
-    const procs = {};
-    for (const p of PROC_KW) if (p.re.test(text)) procs[p.k] = p.bil && p.bil.test(text) ? 2 : countIn(text, p.re);
-    const tipo = TYPE_KW.online.test(text) ? "online" : (TYPE_KW.visita.test(text) || Object.keys(procs).length) ? "visita" : null;
-    if (!tipo) return null;
-    return { tipo, procs: tipo === "online" ? {} : procs, extra: 0 };
-  }
-
-  const MON = { ene: 1, jan: 1, feb: 2, mar: 3, abr: 4, apr: 4, may: 5, jun: 6, jul: 7, ago: 8, aug: 8, sep: 9, set: 9, oct: 10, nov: 11, dic: 12, dec: 12 };
-  function dateParts(raw) {
-    const s = String(raw == null ? "" : raw).trim().toLowerCase();
-    let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-    if (m) return { y: +m[1], m: +m[2], d: +m[3] };
-    m = s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2}|\d{4})\b/);
-    if (m) { let y = +m[3]; if (y < 100) y += 2000; return { a: +m[1], b: +m[2], y }; }
-    m = s.match(/^(?:[a-zé]+,?\s+)?([a-zé]{3})[a-zé]*\.?\s+(\d{1,2}),?\s+(\d{4})/);
-    if (m && MON[m[1]]) return { y: +m[3], m: MON[m[1]], d: +m[2] };
-    m = s.match(/^(?:[a-zé]+,?\s+)?(\d{1,2})\s+(?:de\s+)?([a-zé]{3})[a-zé]*\.?,?\s+(?:de\s+)?(\d{4})/);
-    if (m && MON[m[2]]) return { y: +m[3], m: MON[m[2]], d: +m[1] };
-    return null;
-  }
-  function toIsoDate(p, order) {
-    if (!p) return null;
-    const mo = p.m || (order === "mdy" ? p.a : p.b);
-    const d = p.m ? p.d : (order === "mdy" ? p.b : p.a);
-    const dt = new Date(p.y, mo - 1, d);
-    return dt.getMonth() === mo - 1 && dt.getDate() === d ? iso(dt) : null;
-  }
-  function parseMoney(raw) {
-    const s = String(raw == null ? "" : raw).replace(/usd|d[oó]lares|\$|\s/gi, "");
-    if (!/^-?\d{1,3}(,\d{3})*(\.\d+)?$|^-?\d+(\.\d+)?$/.test(s)) return null;
-    return Number(s.replace(/,/g, ""));
-  }
-  function splitRow(line, delim) {
-    if (delim === "\t") return line.split("\t");
-    const out = []; let cur = "", q = false;
-    for (let i = 0; i < line.length; i++) {
-      const c = line[i];
-      if (q) { if (c === '"' && line[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') q = false; else cur += c; }
-      else if (c === '"') q = true; else if (c === delim) { out.push(cur); cur = ""; } else cur += c;
-    }
-    out.push(cur); return out;
-  }
-  function parseTable(text) {
-    const lines = text.replace(/\r/g, "").split("\n").filter(l => l.trim());
-    if (!lines.length) return [];
-    const delim = lines.some(l => l.includes("\t")) ? "\t" : (lines[0].split(";").length > lines[0].split(",").length ? ";" : ",");
-    return lines.map(l => splitRow(l, delim).map(c => c.trim()));
-  }
-  function parseNotes(text) {
-    const out = [];
-    for (const line of text.split(/\n/)) {
-      const m = line.match(/\$?\s*(\d+(?:[.,]\d+)?)\s*(?:d[oó]lares|usd|\$)?\s*(\d{1,2})\/(\d{1,2})\/(\d{2,4})/i);
-      if (!m) continue;
-      let y = Number(m[4]); if (y < 100) y += 2000;
-      const d = new Date(y, Number(m[3]) - 1, Number(m[2]));
-      if (d.getDate() !== Number(m[2])) continue;
-      out.push({ fecha: iso(d), monto: Number(m[1].replace(",", ".")) });
-    }
-    return out;
-  }
-
-  const HINT = {
-    date: /fecha|date|d[ií]a|day|servic.*date/i,
-    money: /monto|amount|fee|pago|pay|total|price|precio|\$|cobro|honorario|rate|tarifa/i,
-    text: /tipo|type|servic|descrip|procedim|visit|motivo|reason|nota|note|categor/i,
-  };
-  let table = null; // { rows, header, hasHeader, map }
-  function analyzeTable(rows) {
-    const ncol = Math.max(...rows.map(r => r.length));
-    const isDateCell = c => !!dateParts(c);
-    const hasHeader = !rows[0].some(isDateCell) && rows.slice(1, 6).some(r => r.some(isDateCell));
-    const header = hasHeader ? rows[0] : null;
-    const data = hasHeader ? rows.slice(1) : rows;
-    const score = (col, fn) => data.length ? data.filter(r => fn(r[col])).length / data.length : 0;
-    const hint = (col, re) => header && re.test(header[col] || "") ? 0.5 : 0;
-    let best = { date: -1, money: -1, text: -1 }, top = { date: 0.5, money: 0.5, text: 0.2 };
-    for (let c = 0; c < ncol; c++) {
-      const sd = score(c, isDateCell) + hint(c, HINT.date);
-      if (sd > top.date) { top.date = sd; best.date = c; }
-    }
-    for (let c = 0; c < ncol; c++) {
-      if (c === best.date) continue;
-      const sm = score(c, v => { const n = parseMoney(v); return n != null && n >= 1 && n <= 5000; }) + hint(c, HINT.money);
-      if (sm > top.money) { top.money = sm; best.money = c; }
-      const st = score(c, v => !!classify(v)) + hint(c, HINT.text) * (score(c, v => !!classify(v)) > 0 ? 1 : 0);
-      if (st > top.text) { top.text = st; best.text = c; }
-    }
-    // Orden de la fecha: si algún primer número pasa de 12 es día/mes; si el segundo, mes/día. Si no se sabe, EE. UU.
-    let dmy = 0, mdy = 0;
-    if (best.date >= 0) for (const r of data) { const p = dateParts(r[best.date]); if (p && p.a) { if (p.a > 12) dmy++; if (p.b > 12) mdy++; } }
-    let order = dmy > mdy ? "dmy" : "mdy";
-    let ambiguous = 0;
-    if (best.date >= 0) for (const r of data) { const p = dateParts(r[best.date]); if (p && p.a) ambiguous++; }
-    let dn = null;
-    if (header) {
-      const find = re => header.findIndex(h => re.test(String(h || "")));
-      const cols = { date: find(/date/i), enc: find(/encounter/i), status: find(/status/i), ct: find(/case/i),
-        proc: header.findIndex(h => /^\s*proc(edure)?s?\s*$/i.test(String(h || ""))), pf: find(/proc.*fee/i), vf: find(/visit.*fee/i), inf: find(/inject.*fee/i) };
-      if (cols.date >= 0 && cols.enc >= 0 && (cols.pf >= 0 || cols.vf >= 0 || cols.inf >= 0)) dn = cols;
-    }
-    if (dn) {
-      dmy = 0; mdy = 0; ambiguous = 0;
-      for (const r of data) { const p = dateParts(r[dn.date]); if (p && p.a) { ambiguous++; if (p.a > 12) dmy++; if (p.b > 12) mdy++; } }
-      order = dmy > mdy ? "dmy" : "mdy";
-    }
-    return { rows, data, header, ncol, dn, map: { ...best, order }, orderKnown: dmy !== mdy || !ambiguous };
-  }
-  function colLabel(t, c) {
-    const L = c < 26 ? String.fromCharCode(65 + c) : "C" + (c + 1);
-    const sample = t.header ? t.header[c] : (t.data[0] || [])[c];
-    const s = String(sample || "").slice(0, 24);
-    return s ? `${L}: ${s}` : L;
-  }
-  function fillSelect(id, t, val) {
-    const s = $(id); s.replaceChildren();
-    const none = el("option", null, "— ninguna —"); none.value = "-1"; s.append(none);
-    for (let c = 0; c < t.ncol; c++) { const o = el("option", null, colLabel(t, c)); o.value = String(c); s.append(o); }
-    s.value = String(val);
-  }
-
-  // Convierte la tabla (o las notas) en pacientes listos para guardar.
-  function buildImport() {
-    if (table && table.dn && dnResult) return { out: dnResult.cases, skipped: { ...dnResult.skipped } };
-    const out = [], skipped = {};
-    const skip = why => { skipped[why] = (skipped[why] || 0) + 1; };
-    if (!table) {
-      for (const n of parseNotes($("importText").value)) out.push({ fecha: n.fecha, d: inferFromAmount(n.monto), monto: n.monto, warn: "" });
-      return { out, skipped };
-    }
-    const { map } = table;
-    if (table.dn) {
-      const c = table.dn, at = (r, k) => (c[k] >= 0 ? r[c[k]] : "");
-      for (const r of table.data) {
-        const fecha = toIsoDate(dateParts(at(r, "date")), map.order);
-        if (!fecha) { skip("sin fecha válida"); continue; }
-        if (/cancel|no.?show|void|anulad/i.test(at(r, "status"))) { skip("cancelados"); continue; }
-        const d = dnClassify({ enc: at(r, "enc"), ct: at(r, "ct"), proc: at(r, "proc"), pf: at(r, "pf"), vf: at(r, "vf"), inf: at(r, "inf") });
-        const monto = price(d.tipo) + d.extrasTotal; delete d.extrasTotal;
-        out.push({ fecha, d, monto, warn: d.extra ? `Cargo extra de ${money(d.extra)} sin procedimiento reconocido; quedó como ajuste.` : "" });
-      }
-      return { out, skipped };
-    }
-    for (const r of table.data) {
-      const fecha = map.date >= 0 ? toIsoDate(dateParts(r[map.date]), map.order) : null;
-      if (!fecha) { skip("sin fecha válida"); continue; }
-      const amt = map.money >= 0 ? parseMoney(r[map.money]) : null;
-      const cls = map.text >= 0 ? classify(r[map.text]) : null;
-      if (amt == null && !cls) { skip("sin monto ni tipo reconocible"); continue; }
-      if (amt === 0) { skip("monto en 0"); continue; }
-      let d = cls ? { ...cls, procs: { ...cls.procs } } : inferFromAmount(amt);
-      let warn = "";
-      if (cls && amt != null) {
-        const diff = amt - computeMonto(cls);
-        if (diff) { d.extra = diff; warn = `El monto no cuadra con el servicio por ${money(diff)}; quedó como ajuste.`; }
-      }
-      out.push({ fecha, d, monto: amt != null ? amt : computeMonto(d), warn });
-    }
-    return { out, skipped };
-  }
-
-  let built = { out: [], skipped: {} };
-  function refreshImport() {
-    const text = $("importText").value;
-    if (!text.trim()) { pdfMode = false; dnResult = null; }
-    if (pdfMode && dnResult && text === pdfText) {
-      table = { dn: true };
-      $("mapping").hidden = true;
-      rebuildPreview();
-      return;
-    }
-    if (pdfMode) {
-      const order = table && table.pdf && table.orderKnown ? table.map.order : null;
-      table = linesToTable(text === pdfText ? pdfItems : text.split("\n").map(t => ({ t })));
-      if (order) { table.map.order = order; table.orderKnown = true; }
-      $("mapOrder").value = table.map.order;
-      $("mapping").hidden = false; $("mapping").classList.add("pdf");
-      rebuildPreview();
-      return;
-    }
-    $("mapping").classList.remove("pdf");
-    const rows = parseTable(text);
-    const isTable = rows.length && Math.max(...rows.map(r => r.length)) >= 2;
-    if (isTable) {
-      const prevMap = table && table.rows.length === rows.length && table.ncol === Math.max(...rows.map(r => r.length)) ? table.map : null;
-      table = analyzeTable(rows);
-      if (prevMap) table.map = prevMap;
-      fillSelect("mapDate", table, table.map.date);
-      fillSelect("mapMoney", table, table.map.money);
-      fillSelect("mapText", table, table.map.text);
-      $("mapOrder").value = table.map.order;
-    } else table = null;
-    $("mapping").hidden = !table;
-    if (table && table.dn) $("mapping").classList.add("pdf");
-    rebuildPreview();
-  }
-  function rebuildPreview() {
-    built = buildImport();
-    const { out, skipped } = built;
-    const total = out.reduce((a, e) => a + e.monto, 0);
-    const skipTxt = Object.entries(skipped).map(([w, n]) => `${n} ${w}`).join(", ");
-    let msg = out.length ? `${out.length} pacientes listos · total ${money(total)}` : pdfMode ? "No encontré renglones con fecha y monto en este PDF. Si es una foto o un escaneo, no tiene texto que se pueda leer." : "No encontré filas con fecha y monto o tipo.";
-    if (out.length) {
-      const ds = out.map(e => e.fecha).sort();
-      msg += ` · del ${fmtShort(parseIso(ds[0]))} al ${fmtShort(parseIso(ds[ds.length - 1]))} ${parseIso(ds[ds.length - 1]).getFullYear()}`;
-    }
-    if (skipTxt) msg += ` · omitidas: ${skipTxt}`;
-    if (table && table.dn && out.length) msg = "Formato de Doctors Now · " + msg;
-    if (table && table.map && !table.orderKnown && table.map.date >= 0 && out.length) msg += " · Revisa que las fechas estén bien leídas (mes/día o día/mes).";
-    if (!$("importText").value.trim()) msg = "Elige un PDF o pega tus filas.";
-    $("importPreview").textContent = msg;
-    const body = $("previewBody"); body.replaceChildren();
-    for (const e of out.slice(0, 12)) {
-      const tr = el("tr");
-      const d = parseIso(e.fecha);
-      const parts = chipParts({ ...e.d, monto: e.monto });
-      tr.append(el("td", "num", `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`),
-        el("td", null, parts.tipo + (parts.procs ? " · " + parts.procs : "")), el("td", "num", money(e.monto)), el("td", "warn", e.warn ? "⚠" : ""));
-      if (e.warn) tr.title = e.warn;
-      body.append(tr);
-    }
-    if (out.length > 12) { const tr = el("tr"); const td = el("td", "status", `y ${out.length - 12} más…`); td.colSpan = 4; tr.append(td); body.append(tr); }
-    $("previewBox").hidden = !out.length;
-    $("importDo").disabled = !out.length;
-    $("importDo").textContent = out.length ? `Importar ${out.length}` : "Importar";
-  }
-  $("importText").addEventListener("input", refreshImport);
-  $("importText").addEventListener("paste", () => { pdfMode = false; });
-  for (const [id, key] of [["mapDate", "date"], ["mapMoney", "money"], ["mapText", "text"]])
-    $(id).addEventListener("change", () => { if (table) { table.map[key] = Number($(id).value); rebuildPreview(); } });
-  $("mapOrder").addEventListener("change", () => { if (table) { table.map.order = $("mapOrder").value; table.orderKnown = true; rebuildPreview(); } });
-
-  // ---- PDF: se lee en el navegador, línea por línea ----
-  const PDFJS = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/";
-  let pdfMode = false, pdfLoading = null, pdfItems = [], pdfText = "", dnResult = null;
-  function loadScript(src) {
-    return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = rej; document.head.append(s); });
-  }
-  function loadPdfJs() {
-    if (window.pdfjsLib && window.pdfjsWorker) return Promise.resolve(window.pdfjsLib);
-    return pdfLoading = pdfLoading || loadScript(PDFJS + "pdf.min.js")
-      .then(() => loadScript(PDFJS + "pdf.worker.min.js"))
-      .then(() => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + "pdf.worker.min.js"; return window.pdfjsLib; })
-      .catch(e => { pdfLoading = null; throw e; });
-  }
-  async function pdfToLines(file) {
-    const lib = await loadPdfJs();
-    const doc = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
-    const lines = [], pageItems = [];
-    for (let n = 1; n <= doc.numPages; n++) {
-      const tc = await (await doc.getPage(n)).getTextContent();
-      pageItems.push(tc.items.filter(i => i.str && i.str.trim()).map(i => ({ x: i.transform[4], y: i.transform[5], w: i.width || 0, s: i.str.trim() })));
-      const rows = [];
-      for (const it of tc.items) {
-        if (!it.str || !it.str.trim()) continue;
-        const x = it.transform[4], y = it.transform[5];
-        let row = rows.find(r => Math.abs(r.y - y) <= 3);
-        if (!row) { row = { y, items: [] }; rows.push(row); }
-        row.items.push({ x, w: it.width || 0, s: it.str });
-      }
-      rows.sort((a, b) => b.y - a.y);
-      for (const r of rows) {
-        r.items.sort((a, b) => a.x - b.x);
-        let line = "", end = null;
-        for (const it of r.items) { if (end != null) line += it.x - end > 6 ? "   " : it.x - end > 0.5 ? " " : ""; line += it.s; end = it.x + it.w; }
-        if (line.trim()) lines.push({ t: line.trim(), y: r.y, page: n });
-      }
-    }
-    return { lines, pages: doc.numPages, pageItems };
-  }
-  // Reporte de Doctors Now: columnas Date Of Service, Encounter Type, Status, Proc, Proc Fee, Visit Fee, Injection Fee.
-  // El reporte no trae el precio de la consulta; se toma del tipo (Housecall = visita, Phone Consult = online) y se suman los cargos extra.
-  const DN_COLS = [
-    ["date", /date/i], ["enc", /encounter/i], ["status", /status/i], ["name", /patient|name/i], ["zid", /zendesk/i],
-    ["weekend", /weekend/i], ["ct", /case/i], ["pf", /proc.*fee/i], ["vf", /visit.*fee/i], ["inf", /inject.*fee/i], ["proc", /^proc$/i],
-  ];
-  function dnHeader(items) {
-    const enc = items.find(i => /^encounter$/i.test(i.s));
-    if (!enc || !items.some(i => /^injection$/i.test(i.s))) return null;
-    const head = items.filter(i => i.y <= enc.y + 8 && i.y >= enc.y - 14).sort((a, b) => a.x - b.x);
-    const groups = [];
-    for (const it of head) {
-      const g = groups.find(g => Math.abs(g.x - it.x) < 14);
-      if (g) { g.parts.push(it); g.x = Math.min(g.x, it.x); g.end = Math.max(g.end, it.x + it.w); } else groups.push({ x: it.x, end: it.x + it.w, parts: [it] });
-    }
-    const cols = [];
-    for (const g of groups) {
-      const label = g.parts.sort((a, b) => b.y - a.y).map(p => p.s).join(" ");
-      const def = DN_COLS.find(([, re]) => re.test(label));
-      if (def) cols.push({ key: def[0], c: (g.x + g.end) / 2 });
-    }
-    return cols.some(c => c.key === "date") && cols.some(c => c.key === "enc") ? { cols, top: enc.y + 8 } : null;
-  }
-  function dnClassify(r) {
-    const tipo = /phone|tele|video|online|virtual/i.test(r.enc || "") ? "online" : "visita";
-    const fee = k => parseMoney(r[k]) || 0;
-    const txt = `${r.ct || ""} ${r.proc || ""}`.toLowerCase();
-    const kind = /ear|o[ií]do|cerumen|lavage/.test(txt) ? "oido" : /wound|cure|herida|curaci/.test(txt) ? "herida"
-      : /absces|drain|i\s*&\s*d/.test(txt) ? "absceso" : /sutur|stitch|lacer/.test(txt) ? "sutura" : /inject|inyec/.test(txt) ? "inyeccion" : null;
-    const procs = {}; let extra = 0;
-    const put = (k, amt) => { if (amt > 0 && price(k) > 0 && amt % price(k) === 0) procs[k] = (procs[k] || 0) + amt / price(k); else extra += amt; };
-    if (fee("inf")) put("inyeccion", fee("inf"));
-    for (const k of ["pf", "vf"]) if (fee(k)) put(kind || "p40", fee(k));
-    const extras = fee("pf") + fee("vf") + fee("inf");
-    if (tipo === "online") return { tipo, procs: {}, extra: extras, extrasTotal: extras };
-    return { tipo, procs, extra, extrasTotal: extras };
-  }
-  function parseDoctorsNow(pages) {
-    const cases = [], skipped = {};
-    let header = null;
-    for (const items of pages) {
-      header = dnHeader(items) || header;
-      if (!header) continue;
-      const colOf = it => { const c = it.x + it.w / 2; let best = null, d = Infinity; for (const col of header.cols) if (Math.abs(col.c - c) < d) { d = Math.abs(col.c - c); best = col.key; } return best; };
-      const body = items.filter(i => i.y < header.top - 14 || !dnHeader(items));
-      const anchors = body.filter(i => colOf(i) === "date" && /^\d{4}-\d{1,2}-?/.test(i.s)).sort((a, b) => b.y - a.y);
-      anchors.forEach((a, k) => {
-        const lo = k + 1 < anchors.length ? anchors[k + 1].y + 4 : a.y - 22, hi = a.y + 4;
-        const r = {};
-        body.filter(i => i.y > lo && i.y <= hi).sort((p, q) => q.y - p.y || p.x - q.x).forEach(i => {
-          const key = colOf(i); if (key === "name") return; // el nombre del paciente nunca se lee
-          r[key] = r[key] ? r[key] + (key === "date" ? "" : " ") + i.s : i.s;
-        });
-        const fecha = toIsoDate(dateParts(r.date), "mdy");
-        if (!fecha) { skipped["sin fecha válida"] = (skipped["sin fecha válida"] || 0) + 1; return; }
-        if (/cancel|no.?show|void|anulad/i.test(r.status || "")) { skipped["cancelados"] = (skipped["cancelados"] || 0) + 1; return; }
-        const d = dnClassify(r);
-        const monto = price(d.tipo) + d.extrasTotal;
-        delete d.extrasTotal;
-        const warn = d.extra ? `Cargo extra de ${money(d.extra)} sin procedimiento reconocido; quedó como ajuste.` : "";
-        cases.push({ fecha, d, monto, warn, line: `${fecha}  ${r.enc || ""}  ${r.proc || ""}  extras ${money(monto - price(d.tipo))}  total ${money(monto)}`.replace(/\s{3,}/g, "  ") });
-      });
-    }
-    return { cases, skipped };
-  }
-
-  const DATE_RE = /\b\d{4}-\d{1,2}-\d{1,2}\b|\b\d{1,2}[\/.\-]\d{1,2}[\/.\-](?:\d{4}|\d{2})\b|\b[a-zé]{3,9}\.?\s+\d{1,2},?\s+\d{4}\b|\b\d{1,2}\s+(?:de\s+)?[a-zé]{3,9}\.?,?\s+(?:de\s+)?\d{4}\b/gi;
-  const MONEY_RE = /\$\s?\d[\d,]*(?:\.\d{1,2})?|\b\d{1,3}(?:,\d{3})*\.\d{2}\b|\b\d+\.\d{2}\b/g;
-  const SKIP_RE = /\b(?:sub)?total\b|balance|saldo|per[ií]odo|\bperiod\b|statement|invoice date|fecha de (?:emisi[oó]n|pago)|page \d|p[aá]gina \d/i;
-  // Cada línea con una fecha es un caso. Las líneas sueltas (un servicio escrito en varios renglones) se unen
-  // al caso más cercano en la página; si no hay posición (texto editado a mano), al caso anterior.
-  function linesToTable(items) {
-    const rows = [], cases = [], loose = [];
-    for (const it of items) {
-      const line = String(it.t).replace(/\s+/g, " ").trim();
-      if (!line || SKIP_RE.test(line)) continue;
-      const dates = (line.match(DATE_RE) || []).filter(d => dateParts(d));
-      if (dates.length === 1) {
-        const rest = line.replace(dates[0], " ");
-        const moneys = rest.match(MONEY_RE) || [];
-        const row = [dates[0], moneys.length ? moneys[moneys.length - 1] : "", rest];
-        rows.push(row); cases.push({ row, y: it.y, page: it.page });
-      } else if (!dates.length && !(line.match(MONEY_RE) || []).length && line.length < 80) {
-        if (it.y == null) { if (rows.length) rows[rows.length - 1][2] += " " + line; }
-        else loose.push({ line, y: it.y, page: it.page });
-      }
-    }
-    for (const l of loose) {
-      let best = null, dist = Infinity;
-      for (const c of cases) if (c.page === l.page && Math.abs(c.y - l.y) < dist) { dist = Math.abs(c.y - l.y); best = c; }
-      if (best && dist <= 16) best.row[2] += " " + l.line;
-    }
-    let dmy = 0, mdy = 0, amb = 0;
-    for (const r of rows) { const p = dateParts(r[0]); if (p && p.a) { amb++; if (p.a > 12) dmy++; if (p.b > 12) mdy++; } }
-    return { pdf: true, rows, data: rows, header: null, ncol: 3, map: { date: 0, money: 1, text: 2, order: dmy > mdy ? "dmy" : "mdy" }, orderKnown: dmy !== mdy || !amb };
-  }
-
-  let xlsxLoading = null;
-  function loadXlsx() {
-    if (window.XLSX) return Promise.resolve(window.XLSX);
-    return xlsxLoading = xlsxLoading || new Promise((res, rej) => {
-      const s = document.createElement("script");
-      s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
-      s.onload = () => res(window.XLSX); s.onerror = () => { xlsxLoading = null; rej(new Error("xlsx")); };
-      document.head.append(s);
-    });
-  }
-  const cellText = v => v instanceof Date ? iso(new Date(v.getTime() + 60000)) : String(v == null ? "" : v);
-  $("importFile").addEventListener("change", async ev => {
-    const files = [...(ev.target.files || [])]; if (!files.length) return;
-    $("fileName").textContent = files.map(f => f.name).join(", ");
-    const pdfs = files.filter(f => /\.pdf$/i.test(f.name) || f.type === "application/pdf");
-    try {
-      if (pdfs.length) {
-        $("importPreview").textContent = "Leyendo el PDF…";
-        let lines = [], pages = 0, pageItems = [];
-        for (const f of pdfs) { const r = await pdfToLines(f); lines = lines.concat(r.lines); pages += r.pages; pageItems = pageItems.concat(r.pageItems); }
-        pdfMode = true; table = null; pdfItems = lines;
-        const dn = parseDoctorsNow(pageItems);
-        dnResult = dn.cases.length ? dn : null;
-        pdfText = dnResult ? dn.cases.map(c => c.line).join("\n") : lines.map(l => l.t).join("\n");
-        $("importText").value = pdfText;
-        refreshImport();
-        if (!lines.length) $("importPreview").textContent = `Leí ${pages} página${pages > 1 ? "s" : ""} pero no tienen texto. Parece un PDF escaneado o una foto; pide a Doctors Now el PDF original o la versión en Excel.`;
-      } else {
-        const f = files[0];
-        pdfMode = false;
-        if (/\.(xlsx|xls)$/i.test(f.name)) {
-          $("importPreview").textContent = "Leyendo el archivo…";
-          const X = await loadXlsx();
-          const wb = X.read(await f.arrayBuffer(), { type: "array", cellDates: true });
-          const ws = wb.Sheets[wb.SheetNames[0]];
-          const rows = X.utils.sheet_to_json(ws, { header: 1, raw: true, defval: "" }).filter(r => r.some(c => String(c).trim()));
-          $("importText").value = rows.map(r => r.map(cellText).map(c => c.replace(/[\t\n]/g, " ")).join("\t")).join("\n");
-        } else {
-          $("importText").value = await f.text();
-        }
-        refreshImport();
-      }
-    } catch { $("importPreview").textContent = "No pude leer ese archivo. Revisa tu conexión a internet (se necesita para abrir PDF) e inténtalo otra vez."; }
-    ev.target.value = "";
-  });
-
-  $("importDo").addEventListener("click", async () => {
-    const rows = built.out; if (!rows.length) return;
-    $("importDo").disabled = true;
-    const dates = new Set(rows.map(e => e.fecha));
-    const replace = $("importReplace").checked;
-    const old = replace ? entries.filter(e => dates.has(e.fecha)) : [];
-    const now = Date.now();
-    const bodies = rows.map((e, i) => { const b = bodyFor(e.fecha, e.d, now + i); b.monto = e.monto; return b; });
-    try {
-      const big = old.length + bodies.length > 40;
-      let done = 0;
-      const step = () => { done++; if (big && done % 10 === 0) $("importDo").textContent = `Guardando… ${Math.round(done * 100 / (old.length + bodies.length))}%`; };
-      for (const e of old) { await store.remove(e.id); step(); }
-      await store.add(bodies, step);
-      editing = null;
-      const last = [...dates].sort().pop();
-      viewStart = periodStart(last, settings.startDay);
-      refreshLocal(); render();
-      toast(`${bodies.length} pacientes importados` + (old.length ? ` · ${old.length} reemplazados` : ""));
-      $("importText").value = ""; $("fileName").textContent = ""; table = null; pdfMode = false; dnResult = null; refreshImport();
-      $("importPanel").hidden = true;
-    } catch { toast("No se pudo terminar la importación. Revisa los días afectados e inténtalo otra vez."); $("importDo").disabled = false; }
-  });
-  $("toggleImport").addEventListener("click", () => { $("importPanel").hidden = !$("importPanel").hidden; });
-
-  // ---- precios y ciclo ----
-  function fillSettingsForm() {
+  function fillSettings() {
     const box = $("priceFields"); box.replaceChildren();
-    for (const item of [...TYPES, ...PROCS]) {
-      const f = el("div", "field");
-      const lab = el("label", null, item.name); lab.htmlFor = "price-" + item.k;
-      const inp = el("input"); inp.type = "number"; inp.min = "0"; inp.step = "any"; inp.id = "price-" + item.k; inp.value = price(item.k);
+    for (const k of KINDS) {
+      const f = el("div", "field"); const lab = el("label", null, k.name); lab.htmlFor = "price-" + k.k;
+      const inp = el("input"); inp.type = "number"; inp.min = "0"; inp.step = "any"; inp.id = "price-" + k.k; inp.value = price(k.k);
       f.append(lab, inp); box.append(f);
     }
     $("startDay").value = settings.startDay;
   }
-  $("toggleSettings").addEventListener("click", () => {
-    const panel = $("settingsPanel"); panel.hidden = !panel.hidden; if (!panel.hidden) fillSettingsForm();
-  });
   $("saveSettings").addEventListener("click", async () => {
     const prices = { ...settings.prices };
-    for (const item of [...TYPES, ...PROCS]) { const v = Number($("price-" + item.k).value); if (v >= 0) prices[item.k] = v; }
-    const sd = Math.min(28, Math.max(1, parseInt($("startDay").value, 10) || DEFAULTS.startDay));
-    const next = { startDay: sd, prices };
-    applySettings(next);
-    try { await store.saveSettings(next); toast("Precios y ciclo guardados"); } catch { toast("No se pudieron guardar los ajustes."); }
-    $("settingsPanel").hidden = true;
+    for (const k of KINDS) { const v = Number($("price-" + k.k).value); if (v >= 0) prices[k.k] = v; }
+    const sd = Math.min(28, Math.max(1, parseInt($("startDay").value, 10) || 25));
+    applySettings({ startDay: sd, prices });
+    try { await store.saveSettings(settings); showStatus("Precios guardados"); } catch { showStatus("No se pudieron guardar los precios"); }
   });
-
   function applySettings(s) {
     const prevSd = settings.startDay;
-    settings = {
-      startDay: Number(s && s.startDay) || DEFAULTS.startDay,
-      prices: { ...DEFAULT_PRICES, ...((s && s.prices) || {}) },
-    };
-    if (!viewStart || prevSd !== settings.startDay) viewStart = periodStart(todayIso, settings.startDay);
-    render();
+    settings = { startDay: Number(s && s.startDay) || 25, prices: { ...DEFAULT_PRICES, ...((s && s.prices) || {}) } };
+    if (prevSd !== settings.startDay) viewStart = periodStart(todayIso, settings.startDay);
+    fillSettings(); render();
   }
-
-  // ---- arranque ----
-  // ---- exportar historial a Excel ----
-  function historyGroups(mode) {
-    const keys = new Map();
-    for (const e of entries) {
-      let p, label;
-      if (mode === "ciclo") { p = periodOf(periodStart(e.fecha, settings.startDay)); label = periodName(p, settings.startDay); }
-      else if (mode === "anio") { const y = parseIso(e.fecha).getFullYear(); p = { s: new Date(y, 0, 1), e: new Date(y, 11, 31) }; p.start = iso(p.s); p.end = iso(p.e); label = String(y); }
-      else { const d = parseIso(e.fecha); const s = new Date(d.getFullYear(), d.getMonth(), 1); p = { s, e: new Date(d.getFullYear(), d.getMonth() + 1, 0) }; p.start = iso(p.s); p.end = iso(p.e); label = `${MONTHS_LONG[d.getMonth()]} ${d.getFullYear()}`; }
-      if (!keys.has(p.start)) keys.set(p.start, { p, label });
-    }
-    return [...keys.values()].sort((a, b) => a.p.start.localeCompare(b.p.start)).map(g => ({ ...g, data: periodData(g.p) }));
-  }
-  function summarySheet(X, mode, title) {
-    const head = [title, "Desde", "Hasta", "Pacientes", "Online", "Visitas", "Consultas $", "Procedimientos $", "Ajustes $", "Total $"];
-    const rows = [head], years = {};
-    for (const { p, label, data: d } of historyGroups(mode)) {
-      rows.push([label, p.s, p.e, d.list.length, d.types.online ? d.types.online.n : 0, d.types.visita ? d.types.visita.n : 0, d.consultas, d.procTotal, d.extras, d.total]);
-      const y = p.e.getFullYear(); years[y] = years[y] || [0, 0, 0, 0, 0, 0, 0];
-      [d.list.length, d.types.online ? d.types.online.n : 0, d.types.visita ? d.types.visita.n : 0, d.consultas, d.procTotal, d.extras, d.total].forEach((v, i) => { years[y][i] += v; });
-    }
-    rows.push([]);
-    for (const y of Object.keys(years).sort()) rows.push([`Total ${y}`, "", "", ...years[y]]);
-    const ws = X.utils.aoa_to_sheet(rows, { cellDates: true });
-    ws["!cols"] = [{ wch: 20 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 8 }, { wch: 8 }, { wch: 13 }, { wch: 16 }, { wch: 11 }, { wch: 12 }];
-    formatCols(X, ws, { 1: "dd/mm/yyyy", 2: "dd/mm/yyyy", 6: "$#,##0.00", 7: "$#,##0.00", 8: "$#,##0.00", 9: "$#,##0.00" });
-    return ws;
-  }
-  function patientsSheet(X) {
-    const procCols = ALL_PROCS.map(p => p.name);
-    const rows = [["Fecha", "Ciclo", "Tipo", ...procCols, "Consulta $", "Procedimientos $", "Ajuste $", "Monto $"]];
-    const list = entries.map(normalize).sort((a, b) => a.fecha.localeCompare(b.fecha) || (a.creado || 0) - (b.creado || 0));
-    for (const e of list) {
-      const p = periodOf(periodStart(e.fecha, settings.startDay));
-      let procSum = 0;
-      const counts = ALL_PROCS.map(pr => {
-        const n = e.tipo === "online" ? 0 : (e.procs[pr.k] || 0);
-        procSum += n * (e.precios && e.precios[pr.k] != null ? Number(e.precios[pr.k]) : price(pr.k));
-        return n || "";
-      });
-      const extra = e.extra || 0;
-      rows.push([parseIso(e.fecha), periodName(p, settings.startDay), (TYPES.find(t => t.k === e.tipo) || TYPES[1]).name, ...counts, e.monto - procSum - extra, procSum, extra || "", e.monto]);
-    }
-    const ws = X.utils.aoa_to_sheet(rows, { cellDates: true });
-    ws["!cols"] = [{ wch: 12 }, { wch: 14 }, { wch: 16 }, ...procCols.map(n => ({ wch: Math.max(10, n.length + 2) })), { wch: 11 }, { wch: 16 }, { wch: 10 }, { wch: 10 }];
-    const n = 3 + procCols.length;
-    formatCols(X, ws, { 0: "dd/mm/yyyy", [n]: "$#,##0.00", [n + 1]: "$#,##0.00", [n + 2]: "$#,##0.00", [n + 3]: "$#,##0.00" });
-    return ws;
-  }
-  function formatCols(X, ws, fmts) {
-    const range = X.utils.decode_range(ws["!ref"]);
-    for (let r = 1; r <= range.e.r; r++) for (const c in fmts) {
-      const cell = ws[X.utils.encode_cell({ r, c: Number(c) })];
-      if (cell && (cell.t === "n" || cell.t === "d")) cell.z = fmts[c];
-    }
-  }
-  async function saveFile(filename, buf) {
-    const downloads = window.claude && typeof window.claude.use === "function" ? await window.claude.use("downloads").catch(() => null) : null;
-    if (downloads) {
-      try { await downloads.save({ filename, data: new Blob([buf]) }); toast("Excel guardado"); }
-      catch (e) { if (e && e.code !== "declined") toast("No se pudo guardar el archivo en esta vista."); }
-      return;
-    }
-    // Copia en el escritorio: descarga normal del navegador.
-    const url = URL.createObjectURL(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
-    const a = document.createElement("a"); a.href = url; a.download = filename; document.body.append(a); a.click(); a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-    toast("Excel descargado");
-  }
-  $("exportXlsx").addEventListener("click", async () => {
-    if (!entries.length) { toast("Todavía no hay pacientes para exportar."); return; }
-    const btn = $("exportXlsx"); btn.disabled = true; const old = btn.textContent; btn.textContent = "Preparando…";
-    try {
-      const X = await loadXlsx();
-      const wb = X.utils.book_new();
-      X.utils.book_append_sheet(wb, summarySheet(X, "ciclo", "Ciclo de pago"), "Por ciclo");
-      X.utils.book_append_sheet(wb, summarySheet(X, "mes", "Mes"), "Por mes");
-      X.utils.book_append_sheet(wb, summarySheet(X, "anio", "Año"), "Por año");
-      X.utils.book_append_sheet(wb, patientsSheet(X), "Pacientes");
-      const buf = X.write(wb, { type: "array", bookType: "xlsx", cellDates: true });
-      await saveFile(`Honorarios Doctors Now ${todayIso}.xlsx`, buf);
-    } catch { toast("No se pudo crear el Excel. Revisa tu conexión a internet e inténtalo otra vez."); }
-    btn.disabled = false; btn.textContent = old;
-  });
 
   async function boot() {
     let db = null;
-    if (window.claude && typeof window.claude.use === "function") {
-      try { db = await window.claude.use("db"); } catch { db = null; }
-    }
+    if (window.claude && typeof window.claude.use === "function") { try { db = await window.claude.use("db"); } catch { db = null; } }
     store = db ? dbStore(db) : localStore();
     showStatus(store.label);
-    store.start(list => { entries = list; render(); }, s => applySettings(s));
+    store.start(o => { days = o; render(); }, o => { pagos = o; render(); }, s => applySettings(s));
   }
-  viewStart = periodStart(todayIso, settings.startDay);
-  render();
-  boot();
+  fillSettings(); render(); boot();
 })();
 </script>

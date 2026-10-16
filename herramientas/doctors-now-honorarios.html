@@ -683,6 +683,7 @@ label.btn { display: inline-block; cursor: pointer; }
 
   // Convierte la tabla (o las notas) en pacientes listos para guardar.
   function buildImport() {
+    if (table && table.dn && dnResult) return { out: dnResult.cases, skipped: { ...dnResult.skipped } };
     const out = [], skipped = {};
     const skip = why => { skipped[why] = (skipped[why] || 0) + 1; };
     if (!table) {
@@ -711,7 +712,13 @@ label.btn { display: inline-block; cursor: pointer; }
   let built = { out: [], skipped: {} };
   function refreshImport() {
     const text = $("importText").value;
-    if (!text.trim()) pdfMode = false;
+    if (!text.trim()) { pdfMode = false; dnResult = null; }
+    if (pdfMode && dnResult && text === pdfText) {
+      table = { dn: true };
+      $("mapping").hidden = true;
+      rebuildPreview();
+      return;
+    }
     if (pdfMode) {
       const order = table && table.pdf && table.orderKnown ? table.map.order : null;
       table = linesToTable(text === pdfText ? pdfItems : text.split("\n").map(t => ({ t })));
@@ -747,7 +754,7 @@ label.btn { display: inline-block; cursor: pointer; }
       msg += ` · del ${fmtShort(parseIso(ds[0]))} al ${fmtShort(parseIso(ds[ds.length - 1]))} ${parseIso(ds[ds.length - 1]).getFullYear()}`;
     }
     if (skipTxt) msg += ` · omitidas: ${skipTxt}`;
-    if (table && !table.orderKnown && table.map.date >= 0 && out.length) msg += " · Revisa que las fechas estén bien leídas (mes/día o día/mes).";
+    if (table && table.map && !table.orderKnown && table.map.date >= 0 && out.length) msg += " · Revisa que las fechas estén bien leídas (mes/día o día/mes).";
     if (!$("importText").value.trim()) msg = "Elige un PDF o pega tus filas.";
     $("importPreview").textContent = msg;
     const body = $("previewBody"); body.replaceChildren();
@@ -773,7 +780,7 @@ label.btn { display: inline-block; cursor: pointer; }
 
   // ---- PDF: se lee en el navegador, línea por línea ----
   const PDFJS = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/";
-  let pdfMode = false, pdfLoading = null, pdfItems = [], pdfText = "";
+  let pdfMode = false, pdfLoading = null, pdfItems = [], pdfText = "", dnResult = null;
   function loadScript(src) {
     return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = rej; document.head.append(s); });
   }
@@ -787,9 +794,10 @@ label.btn { display: inline-block; cursor: pointer; }
   async function pdfToLines(file) {
     const lib = await loadPdfJs();
     const doc = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
-    const lines = [];
+    const lines = [], pageItems = [];
     for (let n = 1; n <= doc.numPages; n++) {
       const tc = await (await doc.getPage(n)).getTextContent();
+      pageItems.push(tc.items.filter(i => i.str && i.str.trim()).map(i => ({ x: i.transform[4], y: i.transform[5], w: i.width || 0, s: i.str.trim() })));
       const rows = [];
       for (const it of tc.items) {
         if (!it.str || !it.str.trim()) continue;
@@ -806,8 +814,74 @@ label.btn { display: inline-block; cursor: pointer; }
         if (line.trim()) lines.push({ t: line.trim(), y: r.y, page: n });
       }
     }
-    return { lines, pages: doc.numPages };
+    return { lines, pages: doc.numPages, pageItems };
   }
+  // Reporte de Doctors Now: columnas Date Of Service, Encounter Type, Status, Proc, Proc Fee, Visit Fee, Injection Fee.
+  // El reporte no trae el precio de la consulta; se toma del tipo (Housecall = visita, Phone Consult = online) y se suman los cargos extra.
+  const DN_COLS = [
+    ["date", /date/i], ["enc", /encounter/i], ["status", /status/i], ["name", /patient|name/i], ["zid", /zendesk/i],
+    ["weekend", /weekend/i], ["ct", /case/i], ["pf", /proc.*fee/i], ["vf", /visit.*fee/i], ["inf", /inject.*fee/i], ["proc", /^proc$/i],
+  ];
+  function dnHeader(items) {
+    const enc = items.find(i => /^encounter$/i.test(i.s));
+    if (!enc || !items.some(i => /^injection$/i.test(i.s))) return null;
+    const head = items.filter(i => i.y <= enc.y + 8 && i.y >= enc.y - 14).sort((a, b) => a.x - b.x);
+    const groups = [];
+    for (const it of head) {
+      const g = groups.find(g => Math.abs(g.x - it.x) < 14);
+      if (g) { g.parts.push(it); g.x = Math.min(g.x, it.x); g.end = Math.max(g.end, it.x + it.w); } else groups.push({ x: it.x, end: it.x + it.w, parts: [it] });
+    }
+    const cols = [];
+    for (const g of groups) {
+      const label = g.parts.sort((a, b) => b.y - a.y).map(p => p.s).join(" ");
+      const def = DN_COLS.find(([, re]) => re.test(label));
+      if (def) cols.push({ key: def[0], c: (g.x + g.end) / 2 });
+    }
+    return cols.some(c => c.key === "date") && cols.some(c => c.key === "enc") ? { cols, top: enc.y + 8 } : null;
+  }
+  function dnClassify(r) {
+    const tipo = /phone|tele|video|online|virtual/i.test(r.enc || "") ? "online" : "visita";
+    const fee = k => parseMoney(r[k]) || 0;
+    const txt = `${r.ct || ""} ${r.proc || ""}`.toLowerCase();
+    const kind = /ear|o[ií]do|cerumen|lavage/.test(txt) ? "oido" : /wound|cure|herida|curaci/.test(txt) ? "herida"
+      : /absces|drain|i\s*&\s*d/.test(txt) ? "absceso" : /sutur|stitch|lacer/.test(txt) ? "sutura" : /inject|inyec/.test(txt) ? "inyeccion" : null;
+    const procs = {}; let extra = 0;
+    const put = (k, amt) => { if (amt > 0 && price(k) > 0 && amt % price(k) === 0) procs[k] = (procs[k] || 0) + amt / price(k); else extra += amt; };
+    if (fee("inf")) put("inyeccion", fee("inf"));
+    for (const k of ["pf", "vf"]) if (fee(k)) put(kind || "p40", fee(k));
+    const extras = fee("pf") + fee("vf") + fee("inf");
+    if (tipo === "online") return { tipo, procs: {}, extra: extras, extrasTotal: extras };
+    return { tipo, procs, extra, extrasTotal: extras };
+  }
+  function parseDoctorsNow(pages) {
+    const cases = [], skipped = {};
+    let header = null;
+    for (const items of pages) {
+      header = dnHeader(items) || header;
+      if (!header) continue;
+      const colOf = it => { const c = it.x + it.w / 2; let best = null, d = Infinity; for (const col of header.cols) if (Math.abs(col.c - c) < d) { d = Math.abs(col.c - c); best = col.key; } return best; };
+      const body = items.filter(i => i.y < header.top - 14 || !dnHeader(items));
+      const anchors = body.filter(i => colOf(i) === "date" && /^\d{4}-\d{1,2}-?/.test(i.s)).sort((a, b) => b.y - a.y);
+      anchors.forEach((a, k) => {
+        const lo = k + 1 < anchors.length ? anchors[k + 1].y + 4 : a.y - 22, hi = a.y + 4;
+        const r = {};
+        body.filter(i => i.y > lo && i.y <= hi).sort((p, q) => q.y - p.y || p.x - q.x).forEach(i => {
+          const key = colOf(i); if (key === "name") return; // el nombre del paciente nunca se lee
+          r[key] = r[key] ? r[key] + (key === "date" ? "" : " ") + i.s : i.s;
+        });
+        const fecha = toIsoDate(dateParts(r.date), "mdy");
+        if (!fecha) { skipped["sin fecha válida"] = (skipped["sin fecha válida"] || 0) + 1; return; }
+        if (/cancel|no.?show|void|anulad/i.test(r.status || "")) { skipped["cancelados"] = (skipped["cancelados"] || 0) + 1; return; }
+        const d = dnClassify(r);
+        const monto = price(d.tipo) + d.extrasTotal;
+        delete d.extrasTotal;
+        const warn = d.extra ? `Cargo extra de ${money(d.extra)} sin procedimiento reconocido; quedó como ajuste.` : "";
+        cases.push({ fecha, d, monto, warn, line: `${fecha}  ${r.enc || ""}  ${r.proc || ""}  extras ${money(monto - price(d.tipo))}  total ${money(monto)}`.replace(/\s{3,}/g, "  ") });
+      });
+    }
+    return { cases, skipped };
+  }
+
   const DATE_RE = /\b\d{4}-\d{1,2}-\d{1,2}\b|\b\d{1,2}[\/.\-]\d{1,2}[\/.\-](?:\d{4}|\d{2})\b|\b[a-zé]{3,9}\.?\s+\d{1,2},?\s+\d{4}\b|\b\d{1,2}\s+(?:de\s+)?[a-zé]{3,9}\.?,?\s+(?:de\s+)?\d{4}\b/gi;
   const MONEY_RE = /\$\s?\d[\d,]*(?:\.\d{1,2})?|\b\d{1,3}(?:,\d{3})*\.\d{2}\b|\b\d+\.\d{2}\b/g;
   const SKIP_RE = /\b(?:sub)?total\b|balance|saldo|per[ií]odo|\bperiod\b|statement|invoice date|fecha de (?:emisi[oó]n|pago)|page \d|p[aá]gina \d/i;
@@ -857,9 +931,12 @@ label.btn { display: inline-block; cursor: pointer; }
     try {
       if (pdfs.length) {
         $("importPreview").textContent = "Leyendo el PDF…";
-        let lines = [], pages = 0;
-        for (const f of pdfs) { const r = await pdfToLines(f); lines = lines.concat(r.lines); pages += r.pages; }
-        pdfMode = true; table = null; pdfItems = lines; pdfText = lines.map(l => l.t).join("\n");
+        let lines = [], pages = 0, pageItems = [];
+        for (const f of pdfs) { const r = await pdfToLines(f); lines = lines.concat(r.lines); pages += r.pages; pageItems = pageItems.concat(r.pageItems); }
+        pdfMode = true; table = null; pdfItems = lines;
+        const dn = parseDoctorsNow(pageItems);
+        dnResult = dn.cases.length ? dn : null;
+        pdfText = dnResult ? dn.cases.map(c => c.line).join("\n") : lines.map(l => l.t).join("\n");
         $("importText").value = pdfText;
         refreshImport();
         if (!lines.length) $("importPreview").textContent = `Leí ${pages} página${pages > 1 ? "s" : ""} pero no tienen texto. Parece un PDF escaneado o una foto; pide a Doctors Now el PDF original o la versión en Excel.`;
@@ -898,7 +975,7 @@ label.btn { display: inline-block; cursor: pointer; }
       viewStart = periodStart(last, settings.startDay);
       refreshLocal(); render();
       toast(`${bodies.length} pacientes importados` + (old.length ? ` · ${old.length} reemplazados` : ""));
-      $("importText").value = ""; $("fileName").textContent = ""; table = null; pdfMode = false; refreshImport();
+      $("importText").value = ""; $("fileName").textContent = ""; table = null; pdfMode = false; dnResult = null; refreshImport();
       $("importPanel").hidden = true;
     } catch { toast("No se pudo terminar la importación. Revisa los días afectados e inténtalo otra vez."); $("importDo").disabled = false; }
   });

@@ -70,6 +70,16 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .ledger tr.sub td { font-weight: 700; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; padding-top: 10px; }
 .ledger tr.sub td:nth-child(3) { color: var(--ink); font-size: 0.9rem; letter-spacing: 0; text-transform: none; }
 .ledger .p td:first-child { color: var(--proc); }
+.hist-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.hist { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.hist th { text-align: right; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 7px 10px; background: var(--bg); white-space: nowrap; }
+.hist th:first-child, .hist td:first-child { text-align: left; }
+.hist td { padding: 7px 10px; border-top: 1px solid var(--line); text-align: right; white-space: nowrap; }
+.hist td small { display: block; color: var(--muted); font-size: 0.75rem; }
+.hist td.strong { font-weight: 600; color: var(--accent); }
+.hist tr.current td { background: var(--accent-soft); }
+.hist tr.year td { font-weight: 700; border-top: 2px solid var(--line); }
+.linkish { background: none; border: 0; padding: 0; color: var(--accent); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 12px; font-size: 0.9rem; }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); font-weight: 700; }
@@ -200,6 +210,23 @@ label.btn { display: inline-block; cursor: pointer; }
     <div class="prices" id="priceFields"></div>
     <div class="field" style="justify-content:flex-start"><label for="startDay">El ciclo empieza el día</label><input id="startDay" type="number" min="1" max="28" style="width:70px"><span class="status">de cada mes (25 → del 25 sep al 24 oct)</span></div>
     <div class="actions"><button class="btn primary" id="saveSettings">Guardar</button></div>
+  </section>
+
+  <section class="panel" id="history">
+    <div class="hist-head">
+      <h2>Historial por mes</h2>
+      <div class="seg" id="histMode" role="group" aria-label="Agrupar por">
+        <button data-mode="ciclo" aria-pressed="true">Ciclo de pago</button>
+        <button data-mode="mes" aria-pressed="false">Mes calendario</button>
+      </div>
+    </div>
+    <p id="histEmpty" hidden>Todavía no hay pacientes. Cuando agregues o importes casos, aquí verás el total de cada mes.</p>
+    <div class="tablebox" id="histTable">
+      <table class="hist">
+        <thead><tr><th>Mes</th><th>Pacientes</th><th>Online</th><th>Visitas</th><th>Procedimientos</th><th>Total</th></tr></thead>
+        <tbody id="histBody"></tbody>
+      </table>
+    </div>
   </section>
 
   <section class="days" id="days"></section>
@@ -373,6 +400,7 @@ label.btn { display: inline-block; cursor: pointer; }
     $("pavg").textContent = money(data.days ? data.total / data.days : 0);
     $("next").disabled = p.start > todayIso;
     renderLedger(data);
+    renderHistory();
 
     const box = $("days"); box.replaceChildren();
     for (let d = new Date(p.e); d >= p.s; d.setDate(d.getDate() - 1)) {
@@ -506,6 +534,58 @@ label.btn { display: inline-block; cursor: pointer; }
     for (const k in procs) precios[k] = price(k);
     return { fecha, tipo: d.tipo, procs, extra: Number(d.extra) || 0, monto: computeMonto({ ...d, procs }), precios, creado };
   }
+
+  // ---- historial por mes ----
+  const MONTHS_LONG = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+  let histMode = "ciclo";
+  try { histMode = localStorage.getItem("dn-hist-mode") || "ciclo"; } catch {}
+  function renderHistory() {
+    for (const b of document.querySelectorAll("#histMode button")) b.setAttribute("aria-pressed", b.dataset.mode === histMode ? "true" : "false");
+    const body = $("histBody"); body.replaceChildren();
+    if (!entries.length) { $("histEmpty").hidden = false; $("histTable").hidden = true; return; }
+    $("histEmpty").hidden = true; $("histTable").hidden = false;
+    const keys = new Map();
+    for (const e of entries) {
+      let p, label;
+      if (histMode === "ciclo") { const s = periodStart(e.fecha, settings.startDay); p = periodOf(s); label = periodName(p, settings.startDay); }
+      else { const d = parseIso(e.fecha); const s = new Date(d.getFullYear(), d.getMonth(), 1); p = { s, e: new Date(d.getFullYear(), d.getMonth() + 1, 0) }; p.start = iso(p.s); p.end = iso(p.e); label = `${MONTHS_LONG[d.getMonth()]} ${d.getFullYear()}`; }
+      if (!keys.has(p.start)) keys.set(p.start, { p, label });
+    }
+    const years = {};
+    const viewing = periodOf(viewStart).start;
+    for (const { p, label } of [...keys.values()].sort((a, b) => b.p.start.localeCompare(a.p.start))) {
+      const d = periodData(p);
+      const y = p.e.getFullYear();
+      years[y] = years[y] || { total: 0, n: 0 };
+      years[y].total += d.total; years[y].n += d.list.length;
+      const tr = el("tr", histMode === "ciclo" && p.start === viewing ? "current" : "");
+      const name = el("td");
+      if (histMode === "ciclo") {
+        const b = el("button", "linkish", label); b.title = "Ver este ciclo";
+        b.addEventListener("click", () => { viewStart = p.s; editing = null; render(); window.scrollTo({ top: 0, behavior: "smooth" }); });
+        name.append(b);
+      } else name.textContent = label;
+      name.append(el("small", null, ` ${fmtShort(p.s)} – ${fmtShort(p.e)}`));
+      tr.append(name,
+        el("td", "num", String(d.list.length)),
+        el("td", "num", String(d.types.online ? d.types.online.n : 0)),
+        el("td", "num", String(d.types.visita ? d.types.visita.n : 0)),
+        el("td", "num", money(d.procTotal)),
+        el("td", "num strong", money(d.total)));
+      body.append(tr);
+    }
+    for (const y of Object.keys(years).sort().reverse()) {
+      const tr = el("tr", "year");
+      const td = el("td", null, `Total ${y}`);
+      const n = el("td", "num", String(years[y].n));
+      const sp = el("td"); sp.colSpan = 3;
+      tr.append(td, n, sp, el("td", "num strong", money(years[y].total)));
+      body.append(tr);
+    }
+  }
+  for (const b of document.querySelectorAll("#histMode button")) b.addEventListener("click", () => {
+    histMode = b.dataset.mode; try { localStorage.setItem("dn-hist-mode", histMode); } catch {} renderHistory();
+  });
 
   // ---- acciones ----
   async function addPatient(day, tipo) {

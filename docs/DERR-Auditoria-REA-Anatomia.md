@@ -4,7 +4,7 @@
 > commit `5265f6f7c5f52122c73b6fdd901c063b10af756a` (v0.4).
 > Herramienta: REA (Reverse Engineer Anything) `rea-agents` 6.5.0.
 > Fecha: 2026-10-16 · Entorno: contenedor efímero en la nube, sin red durante el análisis.
-> Estado: **sin hallazgos de severidad media o alta**.
+> Estado: **sin hallazgos de severidad media o alta**; los de severidad baja, aplicados (§4).
 
 ---
 
@@ -114,8 +114,11 @@ Hechas sobre el código fuente para confirmar lo que REA marca como candidato.
 | 4 | Info | `a.href = def.url` sin filtro de esquema. Los datos son propios y hoy están limpios | Defensa en profundidad: aceptar solo `https:` (`new URL(def.url).protocol === 'https:'`) |
 | 5 | Info | GitHub Pages no permite enviar `frame-ancestors`; cualquier sitio puede incrustar el módulo | Aceptable: no hay acciones sensibles (lo más grave es "Borrar progreso local") |
 
-Ninguno de estos cambios se ha aplicado en `DERR-Medical-Anatomia`; esta
-auditoría solo informa.
+**Aplicados (2026-10-16)** los hallazgos 1 a 4 en `DERR-Medical-Anatomia`, rama
+`claude/clever-ramanujan-hcuuyq`, pendiente de mezclar en `main` (hasta
+entonces Pages sigue sirviendo la versión anterior). `tests/humo.mjs` pasa
+sobre el conjunto exacto de archivos que se publica, y falla si la CSP bloquea
+el WASM o el hash del `importmap` deja de coincidir. El 5 se acepta tal cual.
 
 ---
 

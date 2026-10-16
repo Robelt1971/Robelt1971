@@ -161,7 +161,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 
   <section class="panel" id="importPanel" hidden>
     <h2>Pegar notas escritas</h2>
-    <p>Pega líneas como <span class="num">75 dólares 25/9/26</span>, una por paciente. $75 cuenta como online y $150 como visita. Lo que pase de $150 se reparte en procedimientos, y luego puedes abrir cada paciente para corregirlo.</p>
+    <p>Pega líneas como <span class="num">75 dólares 25/9/26</span>, una por paciente. $75 cuenta como online y $150 como visita. $190 es visita con una inyección; $230 es visita con 2 inyecciones u oído bilateral (ábrelo para indicar cuál). Otros montos se reparten en procedimientos y luego puedes corregirlos.</p>
     <textarea id="importText" placeholder="75 dólares 25/9/26&#10;230 dólares 25/9/26"></textarea>
     <div class="actions">
       <span class="status" id="importPreview">Sin líneas reconocidas.</span>
@@ -194,8 +194,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
     { k: "absceso", name: "Drenaje de absceso", per: "por drenaje", short: n => n > 1 ? `${n} drenajes` : "drenaje" },
     { k: "sutura", name: "Sutura", per: "por sutura", short: n => n > 1 ? `${n} suturas` : "sutura" },
   ];
-  // Notas antiguas: $40 extra sin decir si fue oído o inyección. Solo aparece si se usa.
-  const LEGACY = { k: "p40", name: "Oído o inyección (sin detalle)", per: "en notas antiguas", short: n => `${n}× oído/iny.`, legacy: true };
+  // Notas antiguas de $230: 2 inyecciones o lavado de oído bilateral, sin saber cuál. Solo aparece si se usa.
+  const LEGACY = { k: "p40", name: "2 inyecciones u oído bilateral (sin detalle)", per: "cada uno, en notas antiguas", short: n => n === 2 ? "2 iny. u oído bilat." : `${n}× iny./oído`, legacy: true };
   const ALL_PROCS = [...PROCS, LEGACY];
   const DEFAULT_PRICES = { online: 75, visita: 150, oido: 40, inyeccion: 40, herida: 50, absceso: 200, sutura: 150, p40: 40 };
   const DEFAULTS = { startDay: 25, prices: DEFAULT_PRICES };
@@ -252,6 +252,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
     const single = PROCS.find(p => p.k !== "oido" && p.k !== "inyeccion" && price(p.k) === rest);
     if (rest === 0) return { tipo: "visita", procs, extra: 0 };
     if (single) { procs[single.k] = 1; return { tipo: "visita", procs, extra: 0 }; }
+    // $40 extra = una inyección (un lavado de oído siempre es bilateral en las notas: $80).
+    if (rest === price("inyeccion")) { procs.inyeccion = 1; return { tipo: "visita", procs, extra: 0 }; }
     if (rest % price("p40") === 0) { procs.p40 = rest / price("p40"); return { tipo: "visita", procs, extra: 0 }; }
     return { tipo: "visita", procs, extra: rest };
   }

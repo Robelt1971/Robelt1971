@@ -70,9 +70,10 @@ Justice.
 - **Terceros que reciben datos.** Medical envía texto clínico a la API de Anthropic
   (Estados Unidos) desde las funciones de IA. Desde Medical#12 todas las llamadas pasan por
   un único punto que quita el nombre del paciente y no envía nada si no puede quitarlo; los
-  documentos con imagen piden confirmación. **Hoy la IA no funciona en producción:** el
-  navegador llama al servidor sin el token de sesión y recibe 401
-  (`src/services/claudeClient.ts`), así que Anthropic no recibe nada. Dental usa el
+  documentos con imagen piden confirmación. **Hoy la IA no funciona en producción:**
+  Railway no tiene clave de Anthropic (`ANTHROPIC_API_KEY`) ni IA local (`AI_PROVIDER=local`),
+  así que nadie recibe nada. El error que rechazaba las llamadas con 401 se corrigió en
+  Medical#51 (2026-10-16): si se configura un proveedor, la IA empieza a funcionar. Dental usa el
   reconocimiento de voz del navegador, que en Chrome envía el audio a Google. Las alertas de
   seguridad de las tres apps envían IP y usuarios a Resend y a una pasarela de WhatsApp. La
   lista completa está en `DERR-Subencargados.md`.

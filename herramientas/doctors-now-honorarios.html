@@ -114,6 +114,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 .panel p { margin: 0; color: var(--muted); font-size: 0.88rem; max-width: 62ch; }
 .panel textarea { width: 100%; min-height: 130px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink); padding: 10px; font-family: var(--font-num); font-size: 0.82rem; white-space: pre; overflow-wrap: normal; overflow-x: auto; }
 .mapping { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+.mapping.pdf .col-map { display: none; }
 .mapping .field { flex-direction: column; align-items: stretch; gap: 3px; font-size: 0.82rem; color: var(--muted); }
 select { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); padding: 6px 8px; font: inherit; font-size: 0.88rem; max-width: 100%; }
 select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
@@ -165,27 +166,27 @@ label.btn { display: inline-block; cursor: pointer; }
     <table class="ledger"><tbody id="pledger"></tbody></table>
     <div class="actions">
       <button class="btn" id="copy">Copiar resumen</button>
-      <button class="btn" id="toggleImport">Importar Excel</button>
+      <button class="btn" id="toggleImport">Importar PDF</button>
       <button class="btn" id="toggleSettings">Precios y ciclo</button>
     </div>
   </section>
 
   <section class="panel" id="importPanel" hidden>
-    <h2>Importar casos</h2>
-    <p>Copia la tabla de tus casos desde Excel, Google Sheets o Medical Cases y pégala aquí, o elige el archivo. Solo se guardan la fecha, el tipo, los procedimientos y el monto. Los nombres y las demás columnas se ignoran.</p>
+    <h2>Importar casos desde PDF</h2>
+    <p>Elige el PDF de tus casos de Doctors Now (puedes elegir varios a la vez). El PDF se lee aquí mismo, en tu navegador: cada renglón con una fecha cuenta como un paciente. Solo se guardan la fecha, el tipo, los procedimientos y el monto; los nombres y lo demás se ignoran. También acepta Excel o filas pegadas.</p>
     <div class="actions">
-      <label class="btn" for="importFile">Elegir archivo Excel o CSV</label>
-      <input id="importFile" type="file" accept=".xlsx,.xls,.csv,.tsv,.txt" hidden>
+      <label class="btn primary" for="importFile">Elegir PDF</label>
+      <input id="importFile" type="file" accept=".pdf,.xlsx,.xls,.csv,.tsv,.txt" multiple hidden>
       <span class="status" id="fileName"></span>
     </div>
-    <textarea id="importText" placeholder="Pega aquí las filas copiadas de Excel (con o sin encabezados)&#10;o notas como: 75 dólares 25/9/26"></textarea>
+    <textarea id="importText" placeholder="Aquí aparecerá el texto leído del PDF.&#10;También puedes pegar filas de Excel o notas como: 75 dólares 25/9/26"></textarea>
     <div class="mapping" id="mapping" hidden>
-      <div class="field"><label for="mapDate">Columna de fecha</label><select id="mapDate"></select></div>
+      <div class="field col-map"><label for="mapDate">Columna de fecha</label><select id="mapDate"></select></div>
       <div class="field"><label for="mapOrder">Las fechas están en</label><select id="mapOrder"><option value="mdy">mes/día/año (EE. UU.)</option><option value="dmy">día/mes/año</option></select></div>
-      <div class="field"><label for="mapMoney">Columna de monto</label><select id="mapMoney"></select></div>
-      <div class="field"><label for="mapText">Columna de tipo o servicio</label><select id="mapText"></select></div>
+      <div class="field col-map"><label for="mapMoney">Columna de monto</label><select id="mapMoney"></select></div>
+      <div class="field col-map"><label for="mapText">Columna de tipo o servicio</label><select id="mapText"></select></div>
     </div>
-    <div class="status" id="importPreview">Pega tus filas o elige un archivo.</div>
+    <div class="status" id="importPreview">Elige un PDF o pega tus filas.</div>
     <div class="tablebox" id="previewBox" hidden>
       <table class="preview"><thead><tr><th>Fecha</th><th>Tipo y procedimientos</th><th>Monto</th><th></th></tr></thead><tbody id="previewBody"></tbody></table>
     </div>
@@ -710,6 +711,17 @@ label.btn { display: inline-block; cursor: pointer; }
   let built = { out: [], skipped: {} };
   function refreshImport() {
     const text = $("importText").value;
+    if (!text.trim()) pdfMode = false;
+    if (pdfMode) {
+      const order = table && table.pdf && table.orderKnown ? table.map.order : null;
+      table = linesToTable(text === pdfText ? pdfItems : text.split("\n").map(t => ({ t })));
+      if (order) { table.map.order = order; table.orderKnown = true; }
+      $("mapOrder").value = table.map.order;
+      $("mapping").hidden = false; $("mapping").classList.add("pdf");
+      rebuildPreview();
+      return;
+    }
+    $("mapping").classList.remove("pdf");
     const rows = parseTable(text);
     const isTable = rows.length && Math.max(...rows.map(r => r.length)) >= 2;
     if (isTable) {
@@ -729,14 +741,14 @@ label.btn { display: inline-block; cursor: pointer; }
     const { out, skipped } = built;
     const total = out.reduce((a, e) => a + e.monto, 0);
     const skipTxt = Object.entries(skipped).map(([w, n]) => `${n} ${w}`).join(", ");
-    let msg = out.length ? `${out.length} pacientes listos · total ${money(total)}` : "No encontré filas con fecha y monto o tipo.";
+    let msg = out.length ? `${out.length} pacientes listos · total ${money(total)}` : pdfMode ? "No encontré renglones con fecha y monto en este PDF. Si es una foto o un escaneo, no tiene texto que se pueda leer." : "No encontré filas con fecha y monto o tipo.";
     if (out.length) {
       const ds = out.map(e => e.fecha).sort();
       msg += ` · del ${fmtShort(parseIso(ds[0]))} al ${fmtShort(parseIso(ds[ds.length - 1]))} ${parseIso(ds[ds.length - 1]).getFullYear()}`;
     }
     if (skipTxt) msg += ` · omitidas: ${skipTxt}`;
     if (table && !table.orderKnown && table.map.date >= 0 && out.length) msg += " · Revisa que las fechas estén bien leídas (mes/día o día/mes).";
-    if (!$("importText").value.trim()) msg = "Pega tus filas o elige un archivo.";
+    if (!$("importText").value.trim()) msg = "Elige un PDF o pega tus filas.";
     $("importPreview").textContent = msg;
     const body = $("previewBody"); body.replaceChildren();
     for (const e of out.slice(0, 12)) {
@@ -754,9 +766,78 @@ label.btn { display: inline-block; cursor: pointer; }
     $("importDo").textContent = out.length ? `Importar ${out.length}` : "Importar";
   }
   $("importText").addEventListener("input", refreshImport);
+  $("importText").addEventListener("paste", () => { pdfMode = false; });
   for (const [id, key] of [["mapDate", "date"], ["mapMoney", "money"], ["mapText", "text"]])
     $(id).addEventListener("change", () => { if (table) { table.map[key] = Number($(id).value); rebuildPreview(); } });
   $("mapOrder").addEventListener("change", () => { if (table) { table.map.order = $("mapOrder").value; table.orderKnown = true; rebuildPreview(); } });
+
+  // ---- PDF: se lee en el navegador, línea por línea ----
+  const PDFJS = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/";
+  let pdfMode = false, pdfLoading = null, pdfItems = [], pdfText = "";
+  function loadScript(src) {
+    return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res; s.onerror = rej; document.head.append(s); });
+  }
+  function loadPdfJs() {
+    if (window.pdfjsLib && window.pdfjsWorker) return Promise.resolve(window.pdfjsLib);
+    return pdfLoading = pdfLoading || loadScript(PDFJS + "pdf.min.js")
+      .then(() => loadScript(PDFJS + "pdf.worker.min.js"))
+      .then(() => { window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + "pdf.worker.min.js"; return window.pdfjsLib; })
+      .catch(e => { pdfLoading = null; throw e; });
+  }
+  async function pdfToLines(file) {
+    const lib = await loadPdfJs();
+    const doc = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+    const lines = [];
+    for (let n = 1; n <= doc.numPages; n++) {
+      const tc = await (await doc.getPage(n)).getTextContent();
+      const rows = [];
+      for (const it of tc.items) {
+        if (!it.str || !it.str.trim()) continue;
+        const x = it.transform[4], y = it.transform[5];
+        let row = rows.find(r => Math.abs(r.y - y) <= 3);
+        if (!row) { row = { y, items: [] }; rows.push(row); }
+        row.items.push({ x, w: it.width || 0, s: it.str });
+      }
+      rows.sort((a, b) => b.y - a.y);
+      for (const r of rows) {
+        r.items.sort((a, b) => a.x - b.x);
+        let line = "", end = null;
+        for (const it of r.items) { if (end != null) line += it.x - end > 6 ? "   " : it.x - end > 0.5 ? " " : ""; line += it.s; end = it.x + it.w; }
+        if (line.trim()) lines.push({ t: line.trim(), y: r.y, page: n });
+      }
+    }
+    return { lines, pages: doc.numPages };
+  }
+  const DATE_RE = /\b\d{4}-\d{1,2}-\d{1,2}\b|\b\d{1,2}[\/.\-]\d{1,2}[\/.\-](?:\d{4}|\d{2})\b|\b[a-zé]{3,9}\.?\s+\d{1,2},?\s+\d{4}\b|\b\d{1,2}\s+(?:de\s+)?[a-zé]{3,9}\.?,?\s+(?:de\s+)?\d{4}\b/gi;
+  const MONEY_RE = /\$\s?\d[\d,]*(?:\.\d{1,2})?|\b\d{1,3}(?:,\d{3})*\.\d{2}\b|\b\d+\.\d{2}\b/g;
+  const SKIP_RE = /\b(?:sub)?total\b|balance|saldo|per[ií]odo|\bperiod\b|statement|invoice date|fecha de (?:emisi[oó]n|pago)|page \d|p[aá]gina \d/i;
+  // Cada línea con una fecha es un caso. Las líneas sueltas (un servicio escrito en varios renglones) se unen
+  // al caso más cercano en la página; si no hay posición (texto editado a mano), al caso anterior.
+  function linesToTable(items) {
+    const rows = [], cases = [], loose = [];
+    for (const it of items) {
+      const line = String(it.t).replace(/\s+/g, " ").trim();
+      if (!line || SKIP_RE.test(line)) continue;
+      const dates = (line.match(DATE_RE) || []).filter(d => dateParts(d));
+      if (dates.length === 1) {
+        const rest = line.replace(dates[0], " ");
+        const moneys = rest.match(MONEY_RE) || [];
+        const row = [dates[0], moneys.length ? moneys[moneys.length - 1] : "", rest];
+        rows.push(row); cases.push({ row, y: it.y, page: it.page });
+      } else if (!dates.length && !(line.match(MONEY_RE) || []).length && line.length < 80) {
+        if (it.y == null) { if (rows.length) rows[rows.length - 1][2] += " " + line; }
+        else loose.push({ line, y: it.y, page: it.page });
+      }
+    }
+    for (const l of loose) {
+      let best = null, dist = Infinity;
+      for (const c of cases) if (c.page === l.page && Math.abs(c.y - l.y) < dist) { dist = Math.abs(c.y - l.y); best = c; }
+      if (best && dist <= 16) best.row[2] += " " + l.line;
+    }
+    let dmy = 0, mdy = 0, amb = 0;
+    for (const r of rows) { const p = dateParts(r[0]); if (p && p.a) { amb++; if (p.a > 12) dmy++; if (p.b > 12) mdy++; } }
+    return { pdf: true, rows, data: rows, header: null, ncol: 3, map: { date: 0, money: 1, text: 2, order: dmy > mdy ? "dmy" : "mdy" }, orderKnown: dmy !== mdy || !amb };
+  }
 
   let xlsxLoading = null;
   function loadXlsx() {
@@ -770,21 +851,34 @@ label.btn { display: inline-block; cursor: pointer; }
   }
   const cellText = v => v instanceof Date ? iso(new Date(v.getTime() + 60000)) : String(v == null ? "" : v);
   $("importFile").addEventListener("change", async ev => {
-    const f = ev.target.files && ev.target.files[0]; if (!f) return;
-    $("fileName").textContent = f.name;
+    const files = [...(ev.target.files || [])]; if (!files.length) return;
+    $("fileName").textContent = files.map(f => f.name).join(", ");
+    const pdfs = files.filter(f => /\.pdf$/i.test(f.name) || f.type === "application/pdf");
     try {
-      if (/\.(xlsx|xls)$/i.test(f.name)) {
-        $("importPreview").textContent = "Leyendo el archivo…";
-        const X = await loadXlsx();
-        const wb = X.read(await f.arrayBuffer(), { type: "array", cellDates: true });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        const rows = X.utils.sheet_to_json(ws, { header: 1, raw: true, defval: "" }).filter(r => r.some(c => String(c).trim()));
-        $("importText").value = rows.map(r => r.map(cellText).map(c => c.replace(/[\t\n]/g, " ")).join("\t")).join("\n");
+      if (pdfs.length) {
+        $("importPreview").textContent = "Leyendo el PDF…";
+        let lines = [], pages = 0;
+        for (const f of pdfs) { const r = await pdfToLines(f); lines = lines.concat(r.lines); pages += r.pages; }
+        pdfMode = true; table = null; pdfItems = lines; pdfText = lines.map(l => l.t).join("\n");
+        $("importText").value = pdfText;
+        refreshImport();
+        if (!lines.length) $("importPreview").textContent = `Leí ${pages} página${pages > 1 ? "s" : ""} pero no tienen texto. Parece un PDF escaneado o una foto; pide a Doctors Now el PDF original o la versión en Excel.`;
       } else {
-        $("importText").value = await f.text();
+        const f = files[0];
+        pdfMode = false;
+        if (/\.(xlsx|xls)$/i.test(f.name)) {
+          $("importPreview").textContent = "Leyendo el archivo…";
+          const X = await loadXlsx();
+          const wb = X.read(await f.arrayBuffer(), { type: "array", cellDates: true });
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          const rows = X.utils.sheet_to_json(ws, { header: 1, raw: true, defval: "" }).filter(r => r.some(c => String(c).trim()));
+          $("importText").value = rows.map(r => r.map(cellText).map(c => c.replace(/[\t\n]/g, " ")).join("\t")).join("\n");
+        } else {
+          $("importText").value = await f.text();
+        }
+        refreshImport();
       }
-      refreshImport();
-    } catch { $("importPreview").textContent = "No pude leer ese archivo. Ábrelo en Excel, copia la tabla y pégala aquí."; }
+    } catch { $("importPreview").textContent = "No pude leer ese archivo. Revisa tu conexión a internet (se necesita para abrir PDF) e inténtalo otra vez."; }
     ev.target.value = "";
   });
 
@@ -804,7 +898,7 @@ label.btn { display: inline-block; cursor: pointer; }
       viewStart = periodStart(last, settings.startDay);
       refreshLocal(); render();
       toast(`${bodies.length} pacientes importados` + (old.length ? ` · ${old.length} reemplazados` : ""));
-      $("importText").value = ""; $("fileName").textContent = ""; table = null; refreshImport();
+      $("importText").value = ""; $("fileName").textContent = ""; table = null; pdfMode = false; refreshImport();
       $("importPanel").hidden = true;
     } catch { toast("No se pudo terminar la importación. Revisa los días afectados e inténtalo otra vez."); $("importDo").disabled = false; }
   });

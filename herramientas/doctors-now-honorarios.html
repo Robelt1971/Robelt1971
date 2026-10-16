@@ -214,16 +214,20 @@ label.btn { display: inline-block; cursor: pointer; }
 
   <section class="panel" id="history">
     <div class="hist-head">
-      <h2>Historial por mes</h2>
-      <div class="seg" id="histMode" role="group" aria-label="Agrupar por">
-        <button data-mode="ciclo" aria-pressed="true">Ciclo de pago</button>
-        <button data-mode="mes" aria-pressed="false">Mes calendario</button>
+      <h2>Historial por mes y año</h2>
+      <div class="actions">
+        <div class="seg" id="histMode" role="group" aria-label="Agrupar por">
+          <button data-mode="ciclo" aria-pressed="true">Ciclo de pago</button>
+          <button data-mode="mes" aria-pressed="false">Mes calendario</button>
+          <button data-mode="anio" aria-pressed="false">Año</button>
+        </div>
+        <button class="btn primary" id="exportXlsx">Exportar a Excel</button>
       </div>
     </div>
     <p id="histEmpty" hidden>Todavía no hay pacientes. Cuando agregues o importes casos, aquí verás el total de cada mes.</p>
     <div class="tablebox" id="histTable">
       <table class="hist">
-        <thead><tr><th>Mes</th><th>Pacientes</th><th>Online</th><th>Visitas</th><th>Procedimientos</th><th>Total</th></tr></thead>
+        <thead><tr><th id="histFirst">Mes</th><th>Pacientes</th><th>Online</th><th>Visitas</th><th>Procedimientos</th><th>Total</th></tr></thead>
         <tbody id="histBody"></tbody>
       </table>
     </div>
@@ -348,7 +352,7 @@ label.btn { display: inline-block; cursor: pointer; }
         col.onSnapshot(snap => onEntries(snap.docs.map(d => ({ id: d.id, ...d.data() }))), e => showStatus("No se pudo leer: " + (e && e.code || "error")));
         cfg.onSnapshot(snap => onSettings(snap.exists ? snap.data() : null), () => {});
       },
-      async add(list) { const ids = []; for (const e of list) { const ref = await col.add(e); ids.push(ref.id); } return ids; },
+      async add(list, onProgress) { const ids = []; for (const e of list) { const ref = await col.add(e); ids.push(ref.id); if (onProgress) onProgress(ids.length); } return ids; },
       async update(id, body) { await col.doc(id).set(body); },
       async remove(id) { await col.doc(id).delete(); },
       async saveSettings(s) { await cfg.set(s); },
@@ -544,43 +548,38 @@ label.btn { display: inline-block; cursor: pointer; }
     const body = $("histBody"); body.replaceChildren();
     if (!entries.length) { $("histEmpty").hidden = false; $("histTable").hidden = true; return; }
     $("histEmpty").hidden = true; $("histTable").hidden = false;
-    const keys = new Map();
-    for (const e of entries) {
-      let p, label;
-      if (histMode === "ciclo") { const s = periodStart(e.fecha, settings.startDay); p = periodOf(s); label = periodName(p, settings.startDay); }
-      else { const d = parseIso(e.fecha); const s = new Date(d.getFullYear(), d.getMonth(), 1); p = { s, e: new Date(d.getFullYear(), d.getMonth() + 1, 0) }; p.start = iso(p.s); p.end = iso(p.e); label = `${MONTHS_LONG[d.getMonth()]} ${d.getFullYear()}`; }
-      if (!keys.has(p.start)) keys.set(p.start, { p, label });
-    }
-    const years = {};
+    $("histFirst").textContent = histMode === "anio" ? "Año" : histMode === "ciclo" ? "Ciclo" : "Mes";
     const viewing = periodOf(viewStart).start;
-    for (const { p, label } of [...keys.values()].sort((a, b) => b.p.start.localeCompare(a.p.start))) {
-      const d = periodData(p);
-      const y = p.e.getFullYear();
-      years[y] = years[y] || { total: 0, n: 0 };
-      years[y].total += d.total; years[y].n += d.list.length;
-      const tr = el("tr", histMode === "ciclo" && p.start === viewing ? "current" : "");
-      const name = el("td");
-      if (histMode === "ciclo") {
-        const b = el("button", "linkish", label); b.title = "Ver este ciclo";
-        b.addEventListener("click", () => { viewStart = p.s; editing = null; render(); window.scrollTo({ top: 0, behavior: "smooth" }); });
-        name.append(b);
-      } else name.textContent = label;
-      name.append(el("small", null, ` ${fmtShort(p.s)} – ${fmtShort(p.e)}`));
-      tr.append(name,
-        el("td", "num", String(d.list.length)),
-        el("td", "num", String(d.types.online ? d.types.online.n : 0)),
-        el("td", "num", String(d.types.visita ? d.types.visita.n : 0)),
-        el("td", "num", money(d.procTotal)),
-        el("td", "num strong", money(d.total)));
-      body.append(tr);
+    const groups = historyGroups(histMode).reverse();
+    const cells = d => [
+      el("td", "num", String(d.n)), el("td", "num", String(d.online)), el("td", "num", String(d.visita)),
+      el("td", "num", money(d.proc)), el("td", "num strong", money(d.total)),
+    ];
+    const sum = list => list.reduce((a, { data: d }) => ({
+      n: a.n + d.list.length, online: a.online + (d.types.online ? d.types.online.n : 0), visita: a.visita + (d.types.visita ? d.types.visita.n : 0),
+      proc: a.proc + d.procTotal, total: a.total + d.total,
+    }), { n: 0, online: 0, visita: 0, proc: 0, total: 0 });
+    if (histMode === "anio") {
+      for (const g of groups) { const tr = el("tr"); const name = el("td", null, g.label); tr.append(name, ...cells(sum([g]))); body.append(tr); }
+      if (groups.length > 1) { const tr = el("tr", "year"); tr.append(el("td", null, "Total general"), ...cells(sum(groups))); body.append(tr); }
+      return;
     }
-    for (const y of Object.keys(years).sort().reverse()) {
-      const tr = el("tr", "year");
-      const td = el("td", null, `Total ${y}`);
-      const n = el("td", "num", String(years[y].n));
-      const sp = el("td"); sp.colSpan = 3;
-      tr.append(td, n, sp, el("td", "num strong", money(years[y].total)));
-      body.append(tr);
+    const byYear = new Map();
+    for (const g of groups) { const y = g.p.e.getFullYear(); if (!byYear.has(y)) byYear.set(y, []); byYear.get(y).push(g); }
+    for (const [y, list] of byYear) {
+      const head = el("tr", "year"); head.append(el("td", null, String(y)), ...cells(sum(list))); body.append(head);
+      for (const { p, label, data: d } of list) {
+        const tr = el("tr", histMode === "ciclo" && p.start === viewing ? "current" : "");
+        const name = el("td");
+        if (histMode === "ciclo") {
+          const b = el("button", "linkish", label); b.title = "Ver este ciclo";
+          b.addEventListener("click", () => { viewStart = p.s; editing = null; render(); window.scrollTo({ top: 0, behavior: "smooth" }); });
+          name.append(b);
+        } else name.textContent = label;
+        name.append(el("small", null, `${fmtShort(p.s)} – ${fmtShort(p.e)}`));
+        tr.append(name, ...cells(sum([{ data: d }])));
+        body.append(tr);
+      }
     }
   }
   for (const b of document.querySelectorAll("#histMode button")) b.addEventListener("click", () => {
@@ -743,10 +742,22 @@ label.btn { display: inline-block; cursor: pointer; }
     // Orden de la fecha: si algún primer número pasa de 12 es día/mes; si el segundo, mes/día. Si no se sabe, EE. UU.
     let dmy = 0, mdy = 0;
     if (best.date >= 0) for (const r of data) { const p = dateParts(r[best.date]); if (p && p.a) { if (p.a > 12) dmy++; if (p.b > 12) mdy++; } }
-    const order = dmy > mdy ? "dmy" : "mdy";
+    let order = dmy > mdy ? "dmy" : "mdy";
     let ambiguous = 0;
     if (best.date >= 0) for (const r of data) { const p = dateParts(r[best.date]); if (p && p.a) ambiguous++; }
-    return { rows, data, header, ncol, map: { ...best, order }, orderKnown: dmy !== mdy || !ambiguous };
+    let dn = null;
+    if (header) {
+      const find = re => header.findIndex(h => re.test(String(h || "")));
+      const cols = { date: find(/date/i), enc: find(/encounter/i), status: find(/status/i), ct: find(/case/i),
+        proc: header.findIndex(h => /^\s*proc(edure)?s?\s*$/i.test(String(h || ""))), pf: find(/proc.*fee/i), vf: find(/visit.*fee/i), inf: find(/inject.*fee/i) };
+      if (cols.date >= 0 && cols.enc >= 0 && (cols.pf >= 0 || cols.vf >= 0 || cols.inf >= 0)) dn = cols;
+    }
+    if (dn) {
+      dmy = 0; mdy = 0; ambiguous = 0;
+      for (const r of data) { const p = dateParts(r[dn.date]); if (p && p.a) { ambiguous++; if (p.a > 12) dmy++; if (p.b > 12) mdy++; } }
+      order = dmy > mdy ? "dmy" : "mdy";
+    }
+    return { rows, data, header, ncol, dn, map: { ...best, order }, orderKnown: dmy !== mdy || !ambiguous };
   }
   function colLabel(t, c) {
     const L = c < 26 ? String.fromCharCode(65 + c) : "C" + (c + 1);
@@ -771,6 +782,18 @@ label.btn { display: inline-block; cursor: pointer; }
       return { out, skipped };
     }
     const { map } = table;
+    if (table.dn) {
+      const c = table.dn, at = (r, k) => (c[k] >= 0 ? r[c[k]] : "");
+      for (const r of table.data) {
+        const fecha = toIsoDate(dateParts(at(r, "date")), map.order);
+        if (!fecha) { skip("sin fecha válida"); continue; }
+        if (/cancel|no.?show|void|anulad/i.test(at(r, "status"))) { skip("cancelados"); continue; }
+        const d = dnClassify({ enc: at(r, "enc"), ct: at(r, "ct"), proc: at(r, "proc"), pf: at(r, "pf"), vf: at(r, "vf"), inf: at(r, "inf") });
+        const monto = price(d.tipo) + d.extrasTotal; delete d.extrasTotal;
+        out.push({ fecha, d, monto, warn: d.extra ? `Cargo extra de ${money(d.extra)} sin procedimiento reconocido; quedó como ajuste.` : "" });
+      }
+      return { out, skipped };
+    }
     for (const r of table.data) {
       const fecha = map.date >= 0 ? toIsoDate(dateParts(r[map.date]), map.order) : null;
       if (!fecha) { skip("sin fecha válida"); continue; }
@@ -821,6 +844,7 @@ label.btn { display: inline-block; cursor: pointer; }
       $("mapOrder").value = table.map.order;
     } else table = null;
     $("mapping").hidden = !table;
+    if (table && table.dn) $("mapping").classList.add("pdf");
     rebuildPreview();
   }
   function rebuildPreview() {
@@ -834,6 +858,7 @@ label.btn { display: inline-block; cursor: pointer; }
       msg += ` · del ${fmtShort(parseIso(ds[0]))} al ${fmtShort(parseIso(ds[ds.length - 1]))} ${parseIso(ds[ds.length - 1]).getFullYear()}`;
     }
     if (skipTxt) msg += ` · omitidas: ${skipTxt}`;
+    if (table && table.dn && out.length) msg = "Formato de Doctors Now · " + msg;
     if (table && table.map && !table.orderKnown && table.map.date >= 0 && out.length) msg += " · Revisa que las fechas estén bien leídas (mes/día o día/mes).";
     if (!$("importText").value.trim()) msg = "Elige un PDF o pega tus filas.";
     $("importPreview").textContent = msg;
@@ -1048,8 +1073,11 @@ label.btn { display: inline-block; cursor: pointer; }
     const now = Date.now();
     const bodies = rows.map((e, i) => { const b = bodyFor(e.fecha, e.d, now + i); b.monto = e.monto; return b; });
     try {
-      for (const e of old) await store.remove(e.id);
-      await store.add(bodies);
+      const big = old.length + bodies.length > 40;
+      let done = 0;
+      const step = () => { done++; if (big && done % 10 === 0) $("importDo").textContent = `Guardando… ${Math.round(done * 100 / (old.length + bodies.length))}%`; };
+      for (const e of old) { await store.remove(e.id); step(); }
+      await store.add(bodies, step);
       editing = null;
       const last = [...dates].sort().pop();
       viewStart = periodStart(last, settings.startDay);
@@ -1096,6 +1124,90 @@ label.btn { display: inline-block; cursor: pointer; }
   }
 
   // ---- arranque ----
+  // ---- exportar historial a Excel ----
+  function historyGroups(mode) {
+    const keys = new Map();
+    for (const e of entries) {
+      let p, label;
+      if (mode === "ciclo") { p = periodOf(periodStart(e.fecha, settings.startDay)); label = periodName(p, settings.startDay); }
+      else if (mode === "anio") { const y = parseIso(e.fecha).getFullYear(); p = { s: new Date(y, 0, 1), e: new Date(y, 11, 31) }; p.start = iso(p.s); p.end = iso(p.e); label = String(y); }
+      else { const d = parseIso(e.fecha); const s = new Date(d.getFullYear(), d.getMonth(), 1); p = { s, e: new Date(d.getFullYear(), d.getMonth() + 1, 0) }; p.start = iso(p.s); p.end = iso(p.e); label = `${MONTHS_LONG[d.getMonth()]} ${d.getFullYear()}`; }
+      if (!keys.has(p.start)) keys.set(p.start, { p, label });
+    }
+    return [...keys.values()].sort((a, b) => a.p.start.localeCompare(b.p.start)).map(g => ({ ...g, data: periodData(g.p) }));
+  }
+  function summarySheet(X, mode, title) {
+    const head = [title, "Desde", "Hasta", "Pacientes", "Online", "Visitas", "Consultas $", "Procedimientos $", "Ajustes $", "Total $"];
+    const rows = [head], years = {};
+    for (const { p, label, data: d } of historyGroups(mode)) {
+      rows.push([label, p.s, p.e, d.list.length, d.types.online ? d.types.online.n : 0, d.types.visita ? d.types.visita.n : 0, d.consultas, d.procTotal, d.extras, d.total]);
+      const y = p.e.getFullYear(); years[y] = years[y] || [0, 0, 0, 0, 0, 0, 0];
+      [d.list.length, d.types.online ? d.types.online.n : 0, d.types.visita ? d.types.visita.n : 0, d.consultas, d.procTotal, d.extras, d.total].forEach((v, i) => { years[y][i] += v; });
+    }
+    rows.push([]);
+    for (const y of Object.keys(years).sort()) rows.push([`Total ${y}`, "", "", ...years[y]]);
+    const ws = X.utils.aoa_to_sheet(rows, { cellDates: true });
+    ws["!cols"] = [{ wch: 20 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 8 }, { wch: 8 }, { wch: 13 }, { wch: 16 }, { wch: 11 }, { wch: 12 }];
+    formatCols(X, ws, { 1: "dd/mm/yyyy", 2: "dd/mm/yyyy", 6: "$#,##0.00", 7: "$#,##0.00", 8: "$#,##0.00", 9: "$#,##0.00" });
+    return ws;
+  }
+  function patientsSheet(X) {
+    const procCols = ALL_PROCS.map(p => p.name);
+    const rows = [["Fecha", "Ciclo", "Tipo", ...procCols, "Consulta $", "Procedimientos $", "Ajuste $", "Monto $"]];
+    const list = entries.map(normalize).sort((a, b) => a.fecha.localeCompare(b.fecha) || (a.creado || 0) - (b.creado || 0));
+    for (const e of list) {
+      const p = periodOf(periodStart(e.fecha, settings.startDay));
+      let procSum = 0;
+      const counts = ALL_PROCS.map(pr => {
+        const n = e.tipo === "online" ? 0 : (e.procs[pr.k] || 0);
+        procSum += n * (e.precios && e.precios[pr.k] != null ? Number(e.precios[pr.k]) : price(pr.k));
+        return n || "";
+      });
+      const extra = e.extra || 0;
+      rows.push([parseIso(e.fecha), periodName(p, settings.startDay), (TYPES.find(t => t.k === e.tipo) || TYPES[1]).name, ...counts, e.monto - procSum - extra, procSum, extra || "", e.monto]);
+    }
+    const ws = X.utils.aoa_to_sheet(rows, { cellDates: true });
+    ws["!cols"] = [{ wch: 12 }, { wch: 14 }, { wch: 16 }, ...procCols.map(n => ({ wch: Math.max(10, n.length + 2) })), { wch: 11 }, { wch: 16 }, { wch: 10 }, { wch: 10 }];
+    const n = 3 + procCols.length;
+    formatCols(X, ws, { 0: "dd/mm/yyyy", [n]: "$#,##0.00", [n + 1]: "$#,##0.00", [n + 2]: "$#,##0.00", [n + 3]: "$#,##0.00" });
+    return ws;
+  }
+  function formatCols(X, ws, fmts) {
+    const range = X.utils.decode_range(ws["!ref"]);
+    for (let r = 1; r <= range.e.r; r++) for (const c in fmts) {
+      const cell = ws[X.utils.encode_cell({ r, c: Number(c) })];
+      if (cell && (cell.t === "n" || cell.t === "d")) cell.z = fmts[c];
+    }
+  }
+  async function saveFile(filename, buf) {
+    const downloads = window.claude && typeof window.claude.use === "function" ? await window.claude.use("downloads").catch(() => null) : null;
+    if (downloads) {
+      try { await downloads.save({ filename, data: new Blob([buf]) }); toast("Excel guardado"); }
+      catch (e) { if (e && e.code !== "declined") toast("No se pudo guardar el archivo en esta vista."); }
+      return;
+    }
+    // Copia en el escritorio: descarga normal del navegador.
+    const url = URL.createObjectURL(new Blob([buf], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+    const a = document.createElement("a"); a.href = url; a.download = filename; document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    toast("Excel descargado");
+  }
+  $("exportXlsx").addEventListener("click", async () => {
+    if (!entries.length) { toast("Todavía no hay pacientes para exportar."); return; }
+    const btn = $("exportXlsx"); btn.disabled = true; const old = btn.textContent; btn.textContent = "Preparando…";
+    try {
+      const X = await loadXlsx();
+      const wb = X.utils.book_new();
+      X.utils.book_append_sheet(wb, summarySheet(X, "ciclo", "Ciclo de pago"), "Por ciclo");
+      X.utils.book_append_sheet(wb, summarySheet(X, "mes", "Mes"), "Por mes");
+      X.utils.book_append_sheet(wb, summarySheet(X, "anio", "Año"), "Por año");
+      X.utils.book_append_sheet(wb, patientsSheet(X), "Pacientes");
+      const buf = X.write(wb, { type: "array", bookType: "xlsx", cellDates: true });
+      await saveFile(`Honorarios Doctors Now ${todayIso}.xlsx`, buf);
+    } catch { toast("No se pudo crear el Excel. Revisa tu conexión a internet e inténtalo otra vez."); }
+    btn.disabled = false; btn.textContent = old;
+  });
+
   async function boot() {
     let db = null;
     if (window.claude && typeof window.claude.use === "function") {

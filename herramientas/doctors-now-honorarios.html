@@ -112,7 +112,18 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
 
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
 .panel p { margin: 0; color: var(--muted); font-size: 0.88rem; max-width: 62ch; }
-.panel textarea { width: 100%; min-height: 130px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink); padding: 10px; font-family: var(--font-num); font-size: 0.82rem; }
+.panel textarea { width: 100%; min-height: 130px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink); padding: 10px; font-family: var(--font-num); font-size: 0.82rem; white-space: pre; overflow-wrap: normal; overflow-x: auto; }
+.mapping { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+.mapping .field { flex-direction: column; align-items: stretch; gap: 3px; font-size: 0.82rem; color: var(--muted); }
+select { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); padding: 6px 8px; font: inherit; font-size: 0.88rem; max-width: 100%; }
+select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tablebox { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+.preview { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.preview th { text-align: left; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); padding: 6px 10px; background: var(--bg); }
+.preview td { padding: 6px 10px; border-top: 1px solid var(--line); white-space: nowrap; }
+.preview td.warn { color: var(--warn); }
+.check { display: flex; gap: 8px; align-items: center; font-size: 0.88rem; }
+label.btn { display: inline-block; cursor: pointer; }
 .prices { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
 .field { display: flex; gap: 8px; align-items: center; justify-content: space-between; font-size: 0.9rem; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 9px 14px; border-radius: 10px; font-size: 0.9rem; display: flex; gap: 12px; align-items: center; max-width: calc(100% - 32px); }
@@ -154,19 +165,32 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
     <table class="ledger"><tbody id="pledger"></tbody></table>
     <div class="actions">
       <button class="btn" id="copy">Copiar resumen</button>
-      <button class="btn" id="toggleImport">Pegar notas</button>
+      <button class="btn" id="toggleImport">Importar Excel</button>
       <button class="btn" id="toggleSettings">Precios y ciclo</button>
     </div>
   </section>
 
   <section class="panel" id="importPanel" hidden>
-    <h2>Pegar notas escritas</h2>
-    <p>Pega líneas como <span class="num">75 dólares 25/9/26</span>, una por paciente. $75 cuenta como online y $150 como visita. $190 es visita con una inyección; $230 es visita con 2 inyecciones u oído bilateral (ábrelo para indicar cuál). Otros montos se reparten en procedimientos y luego puedes corregirlos.</p>
-    <textarea id="importText" placeholder="75 dólares 25/9/26&#10;230 dólares 25/9/26"></textarea>
+    <h2>Importar casos</h2>
+    <p>Copia la tabla de tus casos desde Excel, Google Sheets o Medical Cases y pégala aquí, o elige el archivo. Solo se guardan la fecha, el tipo, los procedimientos y el monto. Los nombres y las demás columnas se ignoran.</p>
     <div class="actions">
-      <span class="status" id="importPreview">Sin líneas reconocidas.</span>
-      <button class="btn primary" id="importDo" disabled>Importar</button>
+      <label class="btn" for="importFile">Elegir archivo Excel o CSV</label>
+      <input id="importFile" type="file" accept=".xlsx,.xls,.csv,.tsv,.txt" hidden>
+      <span class="status" id="fileName"></span>
     </div>
+    <textarea id="importText" placeholder="Pega aquí las filas copiadas de Excel (con o sin encabezados)&#10;o notas como: 75 dólares 25/9/26"></textarea>
+    <div class="mapping" id="mapping" hidden>
+      <div class="field"><label for="mapDate">Columna de fecha</label><select id="mapDate"></select></div>
+      <div class="field"><label for="mapOrder">Las fechas están en</label><select id="mapOrder"><option value="mdy">mes/día/año (EE. UU.)</option><option value="dmy">día/mes/año</option></select></div>
+      <div class="field"><label for="mapMoney">Columna de monto</label><select id="mapMoney"></select></div>
+      <div class="field"><label for="mapText">Columna de tipo o servicio</label><select id="mapText"></select></div>
+    </div>
+    <div class="status" id="importPreview">Pega tus filas o elige un archivo.</div>
+    <div class="tablebox" id="previewBox" hidden>
+      <table class="preview"><thead><tr><th>Fecha</th><th>Tipo y procedimientos</th><th>Monto</th><th></th></tr></thead><tbody id="previewBody"></tbody></table>
+    </div>
+    <label class="check"><input type="checkbox" id="importReplace" checked> Reemplazar lo que ya tengo en esas fechas, para no contar dos veces</label>
+    <div class="actions"><button class="btn primary" id="importDo" disabled>Importar</button></div>
   </section>
 
   <section class="panel" id="settingsPanel" hidden>
@@ -527,8 +551,75 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
     });
   });
 
-  // ---- importar notas ----
-  let parsed = [];
+  // ---- importar desde Excel, CSV o notas ----
+  // Solo se guardan fecha, tipo, procedimientos y monto: el texto de las filas (nombres, notas) nunca se guarda.
+  const TYPE_KW = {
+    online: /online|en l[ií]nea|virtual|tele|video/i,
+    visita: /visit|visita|domicil|home|house|presencial|in.?person|office/i,
+  };
+  const PROC_KW = [
+    { k: "oido", re: /o[ií]dos?|ears?\b|cerumen|lavage|irrigat/i, bil: /bilat|ambos|both|2\s*o[ií]dos|2\s*ears/i },
+    { k: "inyeccion", re: /inyecci[oó]n(?:es)?|inject\w*|shots?\b|\bim\b|intramusc\w*/i },
+    { k: "herida", re: /heridas?|curaci[oó]n(?:es)?|wounds?|dressing/i },
+    { k: "absceso", re: /absces\w*|drenaj\w*|drain\w*|i\s*&\s*d/i },
+    { k: "sutura", re: /sutur\w*|stitch\w*|laceraci\w*/i },
+  ];
+  function countIn(text, re) {
+    const before = text.match(new RegExp("(\\d+)\\s*(?:x\\s*)?(?:" + re.source + ")", "i"));
+    const after = text.match(new RegExp("(?:" + re.source + ")\\s*(?:x|×)\\s*(\\d+)", "i"));
+    const n = Number((before || after || [])[1]);
+    return n > 0 && n <= 10 ? n : 1;
+  }
+  function classify(text) {
+    if (!text) return null;
+    const procs = {};
+    for (const p of PROC_KW) if (p.re.test(text)) procs[p.k] = p.bil && p.bil.test(text) ? 2 : countIn(text, p.re);
+    const tipo = TYPE_KW.online.test(text) ? "online" : (TYPE_KW.visita.test(text) || Object.keys(procs).length) ? "visita" : null;
+    if (!tipo) return null;
+    return { tipo, procs: tipo === "online" ? {} : procs, extra: 0 };
+  }
+
+  const MON = { ene: 1, jan: 1, feb: 2, mar: 3, abr: 4, apr: 4, may: 5, jun: 6, jul: 7, ago: 8, aug: 8, sep: 9, set: 9, oct: 10, nov: 11, dic: 12, dec: 12 };
+  function dateParts(raw) {
+    const s = String(raw == null ? "" : raw).trim().toLowerCase();
+    let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (m) return { y: +m[1], m: +m[2], d: +m[3] };
+    m = s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2}|\d{4})\b/);
+    if (m) { let y = +m[3]; if (y < 100) y += 2000; return { a: +m[1], b: +m[2], y }; }
+    m = s.match(/^(?:[a-zé]+,?\s+)?([a-zé]{3})[a-zé]*\.?\s+(\d{1,2}),?\s+(\d{4})/);
+    if (m && MON[m[1]]) return { y: +m[3], m: MON[m[1]], d: +m[2] };
+    m = s.match(/^(?:[a-zé]+,?\s+)?(\d{1,2})\s+(?:de\s+)?([a-zé]{3})[a-zé]*\.?,?\s+(?:de\s+)?(\d{4})/);
+    if (m && MON[m[2]]) return { y: +m[3], m: MON[m[2]], d: +m[1] };
+    return null;
+  }
+  function toIsoDate(p, order) {
+    if (!p) return null;
+    const mo = p.m || (order === "mdy" ? p.a : p.b);
+    const d = p.m ? p.d : (order === "mdy" ? p.b : p.a);
+    const dt = new Date(p.y, mo - 1, d);
+    return dt.getMonth() === mo - 1 && dt.getDate() === d ? iso(dt) : null;
+  }
+  function parseMoney(raw) {
+    const s = String(raw == null ? "" : raw).replace(/usd|d[oó]lares|\$|\s/gi, "");
+    if (!/^-?\d{1,3}(,\d{3})*(\.\d+)?$|^-?\d+(\.\d+)?$/.test(s)) return null;
+    return Number(s.replace(/,/g, ""));
+  }
+  function splitRow(line, delim) {
+    if (delim === "\t") return line.split("\t");
+    const out = []; let cur = "", q = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (q) { if (c === '"' && line[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') q = false; else cur += c; }
+      else if (c === '"') q = true; else if (c === delim) { out.push(cur); cur = ""; } else cur += c;
+    }
+    out.push(cur); return out;
+  }
+  function parseTable(text) {
+    const lines = text.replace(/\r/g, "").split("\n").filter(l => l.trim());
+    if (!lines.length) return [];
+    const delim = lines.some(l => l.includes("\t")) ? "\t" : (lines[0].split(";").length > lines[0].split(",").length ? ";" : ",");
+    return lines.map(l => splitRow(l, delim).map(c => c.trim()));
+  }
   function parseNotes(text) {
     const out = [];
     for (const line of text.split(/\n/)) {
@@ -541,27 +632,181 @@ button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px
     }
     return out;
   }
-  $("importText").addEventListener("input", () => {
-    parsed = parseNotes($("importText").value);
-    $("importPreview").textContent = parsed.length
-      ? `${parsed.length} pacientes encontrados · total ${money(parsed.reduce((a, e) => a + e.monto, 0))}`
-      : "Sin líneas reconocidas.";
-    $("importDo").disabled = !parsed.length;
-    $("importDo").textContent = parsed.length ? `Importar ${parsed.length}` : "Importar";
-  });
-  $("importDo").addEventListener("click", async () => {
-    const n = parsed.length; $("importDo").disabled = true;
-    const now = Date.now();
-    const rows = parsed.map((e, i) => {
-      const inf = inferFromAmount(e.monto);
-      const b = bodyFor(e.fecha, inf, now + i);
-      b.monto = e.monto; // lo escrito a mano manda
-      return b;
+
+  const HINT = {
+    date: /fecha|date|d[ií]a|day|servic.*date/i,
+    money: /monto|amount|fee|pago|pay|total|price|precio|\$|cobro|honorario|rate|tarifa/i,
+    text: /tipo|type|servic|descrip|procedim|visit|motivo|reason|nota|note|categor/i,
+  };
+  let table = null; // { rows, header, hasHeader, map }
+  function analyzeTable(rows) {
+    const ncol = Math.max(...rows.map(r => r.length));
+    const isDateCell = c => !!dateParts(c);
+    const hasHeader = !rows[0].some(isDateCell) && rows.slice(1, 6).some(r => r.some(isDateCell));
+    const header = hasHeader ? rows[0] : null;
+    const data = hasHeader ? rows.slice(1) : rows;
+    const score = (col, fn) => data.length ? data.filter(r => fn(r[col])).length / data.length : 0;
+    const hint = (col, re) => header && re.test(header[col] || "") ? 0.5 : 0;
+    let best = { date: -1, money: -1, text: -1 }, top = { date: 0.5, money: 0.5, text: 0.2 };
+    for (let c = 0; c < ncol; c++) {
+      const sd = score(c, isDateCell) + hint(c, HINT.date);
+      if (sd > top.date) { top.date = sd; best.date = c; }
+    }
+    for (let c = 0; c < ncol; c++) {
+      if (c === best.date) continue;
+      const sm = score(c, v => { const n = parseMoney(v); return n != null && n >= 1 && n <= 5000; }) + hint(c, HINT.money);
+      if (sm > top.money) { top.money = sm; best.money = c; }
+      const st = score(c, v => !!classify(v)) + hint(c, HINT.text) * (score(c, v => !!classify(v)) > 0 ? 1 : 0);
+      if (st > top.text) { top.text = st; best.text = c; }
+    }
+    // Orden de la fecha: si algún primer número pasa de 12 es día/mes; si el segundo, mes/día. Si no se sabe, EE. UU.
+    let dmy = 0, mdy = 0;
+    if (best.date >= 0) for (const r of data) { const p = dateParts(r[best.date]); if (p && p.a) { if (p.a > 12) dmy++; if (p.b > 12) mdy++; } }
+    const order = dmy > mdy ? "dmy" : "mdy";
+    let ambiguous = 0;
+    if (best.date >= 0) for (const r of data) { const p = dateParts(r[best.date]); if (p && p.a) ambiguous++; }
+    return { rows, data, header, ncol, map: { ...best, order }, orderKnown: dmy !== mdy || !ambiguous };
+  }
+  function colLabel(t, c) {
+    const L = c < 26 ? String.fromCharCode(65 + c) : "C" + (c + 1);
+    const sample = t.header ? t.header[c] : (t.data[0] || [])[c];
+    const s = String(sample || "").slice(0, 24);
+    return s ? `${L}: ${s}` : L;
+  }
+  function fillSelect(id, t, val) {
+    const s = $(id); s.replaceChildren();
+    const none = el("option", null, "— ninguna —"); none.value = "-1"; s.append(none);
+    for (let c = 0; c < t.ncol; c++) { const o = el("option", null, colLabel(t, c)); o.value = String(c); s.append(o); }
+    s.value = String(val);
+  }
+
+  // Convierte la tabla (o las notas) en pacientes listos para guardar.
+  function buildImport() {
+    const out = [], skipped = {};
+    const skip = why => { skipped[why] = (skipped[why] || 0) + 1; };
+    if (!table) {
+      for (const n of parseNotes($("importText").value)) out.push({ fecha: n.fecha, d: inferFromAmount(n.monto), monto: n.monto, warn: "" });
+      return { out, skipped };
+    }
+    const { map } = table;
+    for (const r of table.data) {
+      const fecha = map.date >= 0 ? toIsoDate(dateParts(r[map.date]), map.order) : null;
+      if (!fecha) { skip("sin fecha válida"); continue; }
+      const amt = map.money >= 0 ? parseMoney(r[map.money]) : null;
+      const cls = map.text >= 0 ? classify(r[map.text]) : null;
+      if (amt == null && !cls) { skip("sin monto ni tipo reconocible"); continue; }
+      if (amt === 0) { skip("monto en 0"); continue; }
+      let d = cls ? { ...cls, procs: { ...cls.procs } } : inferFromAmount(amt);
+      let warn = "";
+      if (cls && amt != null) {
+        const diff = amt - computeMonto(cls);
+        if (diff) { d.extra = diff; warn = `El monto no cuadra con el servicio por ${money(diff)}; quedó como ajuste.`; }
+      }
+      out.push({ fecha, d, monto: amt != null ? amt : computeMonto(d), warn });
+    }
+    return { out, skipped };
+  }
+
+  let built = { out: [], skipped: {} };
+  function refreshImport() {
+    const text = $("importText").value;
+    const rows = parseTable(text);
+    const isTable = rows.length && Math.max(...rows.map(r => r.length)) >= 2;
+    if (isTable) {
+      const prevMap = table && table.rows.length === rows.length && table.ncol === Math.max(...rows.map(r => r.length)) ? table.map : null;
+      table = analyzeTable(rows);
+      if (prevMap) table.map = prevMap;
+      fillSelect("mapDate", table, table.map.date);
+      fillSelect("mapMoney", table, table.map.money);
+      fillSelect("mapText", table, table.map.text);
+      $("mapOrder").value = table.map.order;
+    } else table = null;
+    $("mapping").hidden = !table;
+    rebuildPreview();
+  }
+  function rebuildPreview() {
+    built = buildImport();
+    const { out, skipped } = built;
+    const total = out.reduce((a, e) => a + e.monto, 0);
+    const skipTxt = Object.entries(skipped).map(([w, n]) => `${n} ${w}`).join(", ");
+    let msg = out.length ? `${out.length} pacientes listos · total ${money(total)}` : "No encontré filas con fecha y monto o tipo.";
+    if (out.length) {
+      const ds = out.map(e => e.fecha).sort();
+      msg += ` · del ${fmtShort(parseIso(ds[0]))} al ${fmtShort(parseIso(ds[ds.length - 1]))} ${parseIso(ds[ds.length - 1]).getFullYear()}`;
+    }
+    if (skipTxt) msg += ` · omitidas: ${skipTxt}`;
+    if (table && !table.orderKnown && table.map.date >= 0 && out.length) msg += " · Revisa que las fechas estén bien leídas (mes/día o día/mes).";
+    if (!$("importText").value.trim()) msg = "Pega tus filas o elige un archivo.";
+    $("importPreview").textContent = msg;
+    const body = $("previewBody"); body.replaceChildren();
+    for (const e of out.slice(0, 12)) {
+      const tr = el("tr");
+      const d = parseIso(e.fecha);
+      const parts = chipParts({ ...e.d, monto: e.monto });
+      tr.append(el("td", "num", `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`),
+        el("td", null, parts.tipo + (parts.procs ? " · " + parts.procs : "")), el("td", "num", money(e.monto)), el("td", "warn", e.warn ? "⚠" : ""));
+      if (e.warn) tr.title = e.warn;
+      body.append(tr);
+    }
+    if (out.length > 12) { const tr = el("tr"); const td = el("td", "status", `y ${out.length - 12} más…`); td.colSpan = 4; tr.append(td); body.append(tr); }
+    $("previewBox").hidden = !out.length;
+    $("importDo").disabled = !out.length;
+    $("importDo").textContent = out.length ? `Importar ${out.length}` : "Importar";
+  }
+  $("importText").addEventListener("input", refreshImport);
+  for (const [id, key] of [["mapDate", "date"], ["mapMoney", "money"], ["mapText", "text"]])
+    $(id).addEventListener("change", () => { if (table) { table.map[key] = Number($(id).value); rebuildPreview(); } });
+  $("mapOrder").addEventListener("change", () => { if (table) { table.map.order = $("mapOrder").value; table.orderKnown = true; rebuildPreview(); } });
+
+  let xlsxLoading = null;
+  function loadXlsx() {
+    if (window.XLSX) return Promise.resolve(window.XLSX);
+    return xlsxLoading = xlsxLoading || new Promise((res, rej) => {
+      const s = document.createElement("script");
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+      s.onload = () => res(window.XLSX); s.onerror = () => { xlsxLoading = null; rej(new Error("xlsx")); };
+      document.head.append(s);
     });
-    try { await store.add(rows); refreshLocal(); toast(`${n} pacientes importados`); }
-    catch { toast("No se pudieron importar todas las líneas. Revisa la lista del día."); }
-    $("importText").value = ""; parsed = [];
-    $("importPreview").textContent = "Sin líneas reconocidas."; $("importDo").textContent = "Importar";
+  }
+  const cellText = v => v instanceof Date ? iso(new Date(v.getTime() + 60000)) : String(v == null ? "" : v);
+  $("importFile").addEventListener("change", async ev => {
+    const f = ev.target.files && ev.target.files[0]; if (!f) return;
+    $("fileName").textContent = f.name;
+    try {
+      if (/\.(xlsx|xls)$/i.test(f.name)) {
+        $("importPreview").textContent = "Leyendo el archivo…";
+        const X = await loadXlsx();
+        const wb = X.read(await f.arrayBuffer(), { type: "array", cellDates: true });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = X.utils.sheet_to_json(ws, { header: 1, raw: true, defval: "" }).filter(r => r.some(c => String(c).trim()));
+        $("importText").value = rows.map(r => r.map(cellText).map(c => c.replace(/[\t\n]/g, " ")).join("\t")).join("\n");
+      } else {
+        $("importText").value = await f.text();
+      }
+      refreshImport();
+    } catch { $("importPreview").textContent = "No pude leer ese archivo. Ábrelo en Excel, copia la tabla y pégala aquí."; }
+    ev.target.value = "";
+  });
+
+  $("importDo").addEventListener("click", async () => {
+    const rows = built.out; if (!rows.length) return;
+    $("importDo").disabled = true;
+    const dates = new Set(rows.map(e => e.fecha));
+    const replace = $("importReplace").checked;
+    const old = replace ? entries.filter(e => dates.has(e.fecha)) : [];
+    const now = Date.now();
+    const bodies = rows.map((e, i) => { const b = bodyFor(e.fecha, e.d, now + i); b.monto = e.monto; return b; });
+    try {
+      for (const e of old) await store.remove(e.id);
+      await store.add(bodies);
+      editing = null;
+      const last = [...dates].sort().pop();
+      viewStart = periodStart(last, settings.startDay);
+      refreshLocal(); render();
+      toast(`${bodies.length} pacientes importados` + (old.length ? ` · ${old.length} reemplazados` : ""));
+      $("importText").value = ""; $("fileName").textContent = ""; table = null; refreshImport();
+      $("importPanel").hidden = true;
+    } catch { toast("No se pudo terminar la importación. Revisa los días afectados e inténtalo otra vez."); $("importDo").disabled = false; }
   });
   $("toggleImport").addEventListener("click", () => { $("importPanel").hidden = !$("importPanel").hidden; });
 

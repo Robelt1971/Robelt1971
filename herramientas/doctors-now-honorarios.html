@@ -3,7 +3,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
 <style>
-/* Layout: libro de honorarios — resumen del ciclo arriba, luego una fila por día (hoy primero) con botones de monto rápido. */
+/* Layout: libro de honorarios — resumen del ciclo arriba, luego una fila por día (hoy primero); cada paciente es una ficha que se abre para marcar procedimientos. */
 :root {
   --bg: #f3f6f6;
   --surface: #ffffff;
@@ -12,6 +12,8 @@
   --line: #d6e1e0;
   --accent: #0b6e6c;
   --accent-soft: #dcefee;
+  --proc: #7a4b9e;
+  --proc-soft: #efe6f6;
   --chip: #e8eeee;
   --warn: #a64b1f;
   --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
@@ -21,16 +23,19 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0d1716; --surface: #142221; --ink: #e2eeed; --muted: #8fa7a5;
-    --line: #243937; --accent: #4fc2bd; --accent-soft: #1b3735; --chip: #1d2f2e; --warn: #f0976a;
+    --line: #243937; --accent: #4fc2bd; --accent-soft: #1b3735; --proc: #c9a2e8; --proc-soft: #2c2236;
+    --chip: #1d2f2e; --warn: #f0976a;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
   --bg: #0d1716; --surface: #142221; --ink: #e2eeed; --muted: #8fa7a5;
-  --line: #243937; --accent: #4fc2bd; --accent-soft: #1b3735; --chip: #1d2f2e; --warn: #f0976a;
+  --line: #243937; --accent: #4fc2bd; --accent-soft: #1b3735; --proc: #c9a2e8; --proc-soft: #2c2236;
+  --chip: #1d2f2e; --warn: #f0976a;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body {
   background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.45;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -43,7 +48,7 @@ h2 { font-size: 1.05rem; font-weight: 700; }
 .num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
 .eyebrow { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
 button { font: inherit; color: inherit; cursor: pointer; }
-button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .top { display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
 .top a { color: var(--accent); font-size: 0.85rem; }
 .status { font-size: 0.8rem; color: var(--muted); }
@@ -59,9 +64,13 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .stat { display: flex; flex-direction: column; gap: 2px; }
 .stat b { font-family: var(--font-num); font-size: 1.1rem; font-weight: 600; }
-.breakdown { display: flex; flex-wrap: wrap; gap: 6px; }
-.breakdown span { background: var(--chip); border-radius: 999px; padding: 3px 10px; font-size: 0.85rem; }
-.actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ledger { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.ledger td { padding: 5px 0; border-top: 1px solid var(--line); }
+.ledger td:nth-child(2), .ledger td:nth-child(3) { text-align: right; font-family: var(--font-num); font-variant-numeric: tabular-nums; white-space: nowrap; padding-left: 12px; }
+.ledger tr.sub td { font-weight: 700; color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; padding-top: 10px; }
+.ledger tr.sub td:nth-child(3) { color: var(--ink); font-size: 0.9rem; letter-spacing: 0; text-transform: none; }
+.ledger .p td:first-child { color: var(--proc); }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 8px 12px; font-size: 0.9rem; }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); font-weight: 700; }
 .btn.danger { color: var(--warn); }
@@ -76,23 +85,40 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .day-head .d small { font-weight: 400; color: var(--muted); margin-left: 6px; }
 .day-head .t { font-family: var(--font-num); font-weight: 600; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { display: inline-flex; align-items: center; gap: 4px; background: var(--chip); border: 0; border-radius: 8px; padding: 4px 6px 4px 9px; font-family: var(--font-num); font-size: 0.85rem; }
-.chip .x { color: var(--muted); padding: 0 3px; font-family: var(--font-body); }
-.chip:hover .x { color: var(--warn); }
-.none { color: var(--muted); font-size: 0.85rem; }
+.chip { display: inline-flex; align-items: baseline; gap: 6px; background: var(--chip); border: 1px solid transparent; border-radius: 8px; padding: 4px 9px; font-size: 0.84rem; text-align: left; max-width: 100%; }
+.chip .m { font-family: var(--font-num); font-weight: 600; }
+.chip .pr { color: var(--proc); }
+.chip.open { border-color: var(--accent); background: var(--accent-soft); }
 .quick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.quick .q { border: 1px dashed var(--accent); background: var(--accent-soft); color: var(--accent); border-radius: 8px; padding: 5px 10px; font-family: var(--font-num); font-size: 0.85rem; font-weight: 600; }
-.quick input { width: 84px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 8px; padding: 5px 8px; font-family: var(--font-num); font-size: 0.85rem; }
+.quick .q { border: 1px dashed var(--accent); background: var(--accent-soft); color: var(--accent); border-radius: 8px; padding: 6px 11px; font-size: 0.86rem; font-weight: 700; }
+.quick .q span { font-family: var(--font-num); font-weight: 600; margin-left: 4px; }
+
+.editor { border: 1px solid var(--accent); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: var(--bg); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; align-self: flex-start; }
+.seg button { border: 0; background: var(--surface); padding: 6px 14px; font-size: 0.88rem; }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); font-weight: 700; }
+.procs { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; }
+.proc { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--surface); border: 1px solid var(--line); border-radius: 9px; padding: 6px 8px; min-width: 0; }
+.proc.on { border-color: var(--proc); background: var(--proc-soft); }
+.proc .n { font-size: 0.86rem; min-width: 0; }
+.proc .n small { display: block; color: var(--muted); font-family: var(--font-num); font-size: 0.75rem; }
+.stepper { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.stepper button { width: 30px; height: 30px; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); font-weight: 700; }
+.stepper output { width: 22px; text-align: center; font-family: var(--font-num); font-weight: 600; }
+.ed-foot { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; }
+.ed-foot .sum { font-family: var(--font-num); font-weight: 600; font-size: 1.05rem; }
+.extra { display: flex; gap: 6px; align-items: center; font-size: 0.86rem; color: var(--muted); }
+.extra input, .field input { width: 90px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); padding: 5px 8px; font-family: var(--font-num); }
 
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
 .panel p { margin: 0; color: var(--muted); font-size: 0.88rem; max-width: 62ch; }
 .panel textarea { width: 100%; min-height: 130px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); color: var(--ink); padding: 10px; font-family: var(--font-num); font-size: 0.82rem; }
-.field { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; font-size: 0.9rem; }
-.field input { border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); padding: 6px 8px; font-family: var(--font-num); }
+.prices { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.field { display: flex; gap: 8px; align-items: center; justify-content: space-between; font-size: 0.9rem; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--bg); padding: 9px 14px; border-radius: 10px; font-size: 0.9rem; display: flex; gap: 12px; align-items: center; max-width: calc(100% - 32px); }
 .toast button { background: none; border: 0; color: var(--bg); text-decoration: underline; font-weight: 700; }
 @media (max-width: 420px) { .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (prefers-reduced-motion: no-preference) { .chip, .q, .btn { transition: background .15s, transform .1s; } .q:active { transform: scale(.95); } }
+@media (prefers-reduced-motion: no-preference) { .chip, .q, .btn, .proc { transition: background .15s, border-color .15s, transform .1s; } .q:active { transform: scale(.95); } }
 </style>
 
 <div class="wrap">
@@ -125,17 +151,17 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
       <div class="stat"><span class="eyebrow">Días trabajados</span><b id="pdays">0</b></div>
       <div class="stat"><span class="eyebrow">Promedio / día</span><b id="pavg">$0</b></div>
     </div>
-    <div class="breakdown" id="pbreak"></div>
+    <table class="ledger"><tbody id="pledger"></tbody></table>
     <div class="actions">
       <button class="btn" id="copy">Copiar resumen</button>
       <button class="btn" id="toggleImport">Pegar notas</button>
-      <button class="btn" id="toggleSettings">Ajustes</button>
+      <button class="btn" id="toggleSettings">Precios y ciclo</button>
     </div>
   </section>
 
   <section class="panel" id="importPanel" hidden>
     <h2>Pegar notas escritas</h2>
-    <p>Pega líneas como <span class="num">75 dólares 25/9/26</span> (una por consulta). Antes de guardar verás cuántas se encontraron.</p>
+    <p>Pega líneas como <span class="num">75 dólares 25/9/26</span>, una por paciente. $75 cuenta como online y $150 como visita. Lo que pase de $150 se reparte en procedimientos, y luego puedes abrir cada paciente para corregirlo.</p>
     <textarea id="importText" placeholder="75 dólares 25/9/26&#10;230 dólares 25/9/26"></textarea>
     <div class="actions">
       <span class="status" id="importPreview">Sin líneas reconocidas.</span>
@@ -144,10 +170,11 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   </section>
 
   <section class="panel" id="settingsPanel" hidden>
-    <h2>Ajustes</h2>
-    <div class="field"><label for="startDay">El ciclo empieza el día</label><input id="startDay" type="number" min="1" max="28" style="width:70px"><span class="status">de cada mes (ej. 25 → 25 sep a 24 oct)</span></div>
-    <div class="field"><label for="quickAmts">Montos rápidos</label><input id="quickAmts" type="text" style="width:220px"><span class="status">separados por coma</span></div>
-    <div class="actions"><button class="btn primary" id="saveSettings">Guardar ajustes</button></div>
+    <h2>Precios y ciclo</h2>
+    <p>Un precio nuevo se aplica a los pacientes que agregues o edites a partir de ahora. Los ya guardados conservan su monto.</p>
+    <div class="prices" id="priceFields"></div>
+    <div class="field" style="justify-content:flex-start"><label for="startDay">El ciclo empieza el día</label><input id="startDay" type="number" min="1" max="28" style="width:70px"><span class="status">de cada mes (25 → del 25 sep al 24 oct)</span></div>
+    <div class="actions"><button class="btn primary" id="saveSettings">Guardar</button></div>
   </section>
 
   <section class="days" id="days"></section>
@@ -156,14 +183,30 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 
 <script>
 (() => {
-  const DEFAULTS = { startDay: 25, quick: [75, 150, 190, 200, 230] };
+  const TYPES = [
+    { k: "online", name: "Consulta online", short: "Online" },
+    { k: "visita", name: "Visita", short: "Visita" },
+  ];
+  const PROCS = [
+    { k: "oido", name: "Lavado de oído", per: "por oído", short: n => n > 1 ? `${n} oídos` : "1 oído" },
+    { k: "inyeccion", name: "Inyección", per: "por inyección", short: n => n > 1 ? `${n} iny.` : "1 iny." },
+    { k: "herida", name: "Curación de herida", per: "por curación", short: n => n > 1 ? `${n} curaciones` : "curación" },
+    { k: "absceso", name: "Drenaje de absceso", per: "por drenaje", short: n => n > 1 ? `${n} drenajes` : "drenaje" },
+    { k: "sutura", name: "Sutura", per: "por sutura", short: n => n > 1 ? `${n} suturas` : "sutura" },
+  ];
+  // Notas antiguas: $40 extra sin decir si fue oído o inyección. Solo aparece si se usa.
+  const LEGACY = { k: "p40", name: "Oído o inyección (sin detalle)", per: "en notas antiguas", short: n => `${n}× oído/iny.`, legacy: true };
+  const ALL_PROCS = [...PROCS, LEGACY];
+  const DEFAULT_PRICES = { online: 75, visita: 150, oido: 40, inyeccion: 40, herida: 50, absceso: 200, sutura: 150, p40: 40 };
+  const DEFAULTS = { startDay: 25, prices: DEFAULT_PRICES };
   const MONTHS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
   const WEEKDAYS = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
   const LS_KEY = "dn-honorarios-v1";
   const $ = id => document.getElementById(id);
   const money = n => "$" + (Math.round(n * 100) / 100).toLocaleString("en-US", { maximumFractionDigits: 2 });
+  const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 
-  // ---- fechas (siempre locales, formato YYYY-MM-DD) ----
+  // ---- fechas (locales, YYYY-MM-DD) ----
   const pad = n => String(n).padStart(2, "0");
   const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const parseIso = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
@@ -174,11 +217,11 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
     if (d.getDate() < startDay) s.setMonth(s.getMonth() - 1);
     return s;
   }
-  function periodOf(startDate) {
-    const end = new Date(startDate.getFullYear(), startDate.getMonth() + 1, startDate.getDate() - 1);
-    return { start: iso(startDate), end: iso(end), s: startDate, e: end };
+  function periodOf(s) {
+    const e = new Date(s.getFullYear(), s.getMonth() + 1, s.getDate() - 1);
+    return { start: iso(s), end: iso(e), s, e };
   }
-  function shiftPeriod(startDate, months) { return new Date(startDate.getFullYear(), startDate.getMonth() + months, startDate.getDate()); }
+  const shiftPeriod = (s, months) => new Date(s.getFullYear(), s.getMonth() + months, s.getDate());
   function periodName(p, startDay) {
     if (startDay === 1) return `${MONTHS[p.s.getMonth()]} ${p.s.getFullYear()}`;
     const y = p.s.getFullYear() === p.e.getFullYear() ? p.e.getFullYear() : `${p.s.getFullYear()}/${p.e.getFullYear()}`;
@@ -187,22 +230,59 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   const fmtShort = d => `${d.getDate()} ${MONTHS[d.getMonth()]}`;
 
   // ---- estado ----
-  let entries = [];            // {id, fecha, monto, creado}
-  let settings = { ...DEFAULTS };
-  let viewStart = null;        // Date de inicio del ciclo mostrado
+  let entries = [];
+  let settings = { startDay: DEFAULTS.startDay, prices: { ...DEFAULT_PRICES } };
+  let viewStart = null;
   let store = null;
+  let editing = null; // { id, draft }
 
-  // ---- almacenamiento: base de datos del artifact, o el navegador como respaldo ----
+  // ---- modelo de paciente ----
+  // Guardado: { fecha, tipo, procs: {oido: n, ...}, extra, monto, creado }. "monto" queda fijo al guardar.
+  const price = k => Number(settings.prices[k] ?? DEFAULT_PRICES[k] ?? 0);
+  function computeMonto(d) {
+    let m = price(d.tipo) + Number(d.extra || 0);
+    if (d.tipo !== "online") for (const p of ALL_PROCS) m += (d.procs[p.k] || 0) * price(p.k);
+    return m;
+  }
+  // Reparte un monto suelto (notas a mano) en tipo + procedimientos.
+  function inferFromAmount(amt) {
+    const procs = {};
+    if (amt < price("visita")) return { tipo: "online", procs, extra: amt - price("online") };
+    let rest = amt - price("visita");
+    const single = PROCS.find(p => p.k !== "oido" && p.k !== "inyeccion" && price(p.k) === rest);
+    if (rest === 0) return { tipo: "visita", procs, extra: 0 };
+    if (single) { procs[single.k] = 1; return { tipo: "visita", procs, extra: 0 }; }
+    if (rest % price("p40") === 0) { procs.p40 = rest / price("p40"); return { tipo: "visita", procs, extra: 0 }; }
+    return { tipo: "visita", procs, extra: rest };
+  }
+  function normalize(e) {
+    const monto = Number(e.monto) || 0;
+    const base = e.tipo ? { tipo: e.tipo, procs: { ...(e.procs || {}) }, extra: Number(e.extra) || 0 } : inferFromAmount(monto);
+    return { ...e, ...base, monto };
+  }
+  function chipParts(e) {
+    const t = TYPES.find(x => x.k === e.tipo) || TYPES[1];
+    const pr = ALL_PROCS.filter(p => e.procs[p.k] > 0).map(p => p.short(e.procs[p.k]));
+    if (e.extra) pr.push(`${e.extra > 0 ? "+" : "−"}${money(Math.abs(e.extra))}`);
+    return { tipo: t.short, procs: pr.join(" · ") };
+  }
+
+  // ---- almacenamiento ----
   function localStore() {
     const read = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; } catch { return {}; } };
     const write = obj => { try { localStorage.setItem(LS_KEY, JSON.stringify(obj)); } catch {} };
-    let data = read();
+    const data = read();
+    data.entries = data.entries || [];
+    const newId = () => "l" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
     return {
       label: "Guardado en este navegador",
-      start(onEntries, onSettings) { onEntries(data.entries || []); onSettings(data.settings || null); },
-      async add(list) { data.entries = (data.entries || []).concat(list.map(e => ({ id: "l" + Math.random().toString(36).slice(2, 10), ...e }))); write(data); return data.entries; },
-      async remove(id) { data.entries = (data.entries || []).filter(e => e.id !== id); write(data); return data.entries; },
+      local: true,
+      start(onEntries, onSettings) { onEntries(data.entries); onSettings(data.settings || null); },
+      async add(list) { const ids = []; for (const e of list) { const id = newId(); ids.push(id); data.entries.push({ id, ...e }); } write(data); return ids; },
+      async update(id, body) { data.entries = data.entries.map(e => e.id === id ? { id, ...body } : e); write(data); },
+      async remove(id) { data.entries = data.entries.filter(e => e.id !== id); write(data); },
       async saveSettings(s) { data.settings = s; write(data); },
+      current() { return data.entries; },
     };
   }
   function dbStore(db) {
@@ -214,11 +294,13 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
         col.onSnapshot(snap => onEntries(snap.docs.map(d => ({ id: d.id, ...d.data() }))), e => showStatus("No se pudo leer: " + (e && e.code || "error")));
         cfg.onSnapshot(snap => onSettings(snap.exists ? snap.data() : null), () => {});
       },
-      async add(list) { for (const e of list) await col.add(e); },
+      async add(list) { const ids = []; for (const e of list) { const ref = await col.add(e); ids.push(ref.id); } return ids; },
+      async update(id, body) { await col.doc(id).set(body); },
       async remove(id) { await col.doc(id).delete(); },
       async saveSettings(s) { await cfg.set(s); },
     };
   }
+  const refreshLocal = () => { if (store && store.local) { entries = store.current().slice(); render(); } };
 
   function showStatus(t) { $("status").textContent = t; }
   let toastTimer = null, undoFn = null;
@@ -228,17 +310,28 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   }
   $("toastUndo").addEventListener("click", () => { if (undoFn) undoFn(); $("toast").hidden = true; undoFn = null; });
 
-  // ---- cálculo ----
+  // ---- cálculo del ciclo ----
   function periodData(p) {
-    const list = entries.filter(e => e.fecha >= p.start && e.fecha <= p.end);
-    const total = list.reduce((a, e) => a + Number(e.monto), 0);
-    const byDay = {}, byAmt = {};
+    const list = entries.filter(e => e.fecha >= p.start && e.fecha <= p.end).map(normalize);
+    const byDay = {};
+    const types = {}, procs = {};
+    let total = 0, consultas = 0, procTotal = 0, extras = 0;
     for (const e of list) {
       (byDay[e.fecha] = byDay[e.fecha] || []).push(e);
-      byAmt[e.monto] = (byAmt[e.monto] || 0) + 1;
+      total += e.monto;
+      // El monto guardado manda; consulta + procedimientos se reparten con los precios con que se guardó.
+      const base = e.monto - (e.extra || 0);
+      let pSum = 0;
+      if (e.tipo !== "online") for (const pr of ALL_PROCS) {
+        const n = e.procs[pr.k] || 0; if (!n) continue;
+        const v = n * (e.precios && e.precios[pr.k] != null ? Number(e.precios[pr.k]) : price(pr.k));
+        procs[pr.k] = procs[pr.k] || { n: 0, v: 0 }; procs[pr.k].n += n; procs[pr.k].v += v; pSum += v;
+      }
+      types[e.tipo] = types[e.tipo] || { n: 0, v: 0 }; types[e.tipo].n++; types[e.tipo].v += base - pSum;
+      consultas += base - pSum; procTotal += pSum; extras += e.extra || 0;
     }
     for (const k in byDay) byDay[k].sort((a, b) => (a.creado || 0) - (b.creado || 0));
-    return { list, total, byDay, byAmt, days: Object.keys(byDay).length };
+    return { list, total, byDay, types, procs, consultas, procTotal, extras, days: Object.keys(byDay).length };
   }
 
   // ---- render ----
@@ -252,93 +345,179 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
     $("pdays").textContent = data.days;
     $("pavg").textContent = money(data.days ? data.total / data.days : 0);
     $("next").disabled = p.start > todayIso;
-
-    const br = $("pbreak"); br.replaceChildren();
-    Object.keys(data.byAmt).map(Number).sort((a, b) => a - b).forEach(a => {
-      const s = document.createElement("span"); s.className = "num";
-      s.textContent = `${data.byAmt[a]} × ${money(a)} = ${money(a * data.byAmt[a])}`; br.append(s);
-    });
+    renderLedger(data);
 
     const box = $("days"); box.replaceChildren();
-    const days = [];
-    for (let d = new Date(p.e); d >= p.s; d.setDate(d.getDate() - 1)) days.push(iso(d));
-    for (const day of days) box.append(dayRow(day, data.byDay[day] || []));
+    for (let d = new Date(p.e); d >= p.s; d.setDate(d.getDate() - 1)) {
+      const day = iso(d);
+      if (day > todayIso && !data.byDay[day]) continue; // días futuros vacíos no se muestran
+      box.append(dayRow(day, data.byDay[day] || []));
+    }
+  }
+
+  function ledgerRow(tb, cells, cls) {
+    const tr = el("tr", cls); cells.forEach(c => tr.append(el("td", null, c))); tb.append(tr);
+  }
+  function renderLedger(data) {
+    const tb = $("pledger"); tb.replaceChildren();
+    if (!data.list.length) return;
+    ledgerRow(tb, ["Consultas", "", money(data.consultas)], "sub");
+    for (const t of TYPES) if (data.types[t.k]) ledgerRow(tb, [t.name, `${data.types[t.k].n} ×`, money(data.types[t.k].v)]);
+    if (data.procTotal) {
+      ledgerRow(tb, ["Procedimientos", "", money(data.procTotal)], "sub");
+      for (const pr of ALL_PROCS) if (data.procs[pr.k]) ledgerRow(tb, [pr.name, `${data.procs[pr.k].n} ×`, money(data.procs[pr.k].v)], "p");
+    }
+    if (data.extras) ledgerRow(tb, ["Ajustes sueltos", "", money(data.extras)], "sub");
   }
 
   function dayRow(day, list) {
     const d = parseIso(day);
-    const row = document.createElement("article");
     const future = day > todayIso;
-    row.className = "day" + (day === todayIso ? " today" : "") + (future ? " future" : "") + (!future && !list.length ? " empty-past" : "");
-    const total = list.reduce((a, e) => a + Number(e.monto), 0);
-    const head = document.createElement("div"); head.className = "day-head";
-    const name = document.createElement("div"); name.className = "d";
-    name.textContent = `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`;
-    const small = document.createElement("small");
-    small.textContent = day === todayIso ? "hoy" : list.length ? `${list.length} paciente${list.length > 1 ? "s" : ""}` : "";
-    name.append(small);
-    const t = document.createElement("div"); t.className = "t"; t.textContent = list.length ? money(total) : "";
-    head.append(name, t); row.append(head);
+    const row = el("article", "day" + (day === todayIso ? " today" : "") + (future ? " future" : "") + (!future && !list.length ? " empty-past" : ""));
+    const total = list.reduce((a, e) => a + e.monto, 0);
+    const head = el("div", "day-head");
+    const name = el("div", "d", `${WEEKDAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}`);
+    name.append(el("small", null, day === todayIso ? "hoy" : list.length ? `${list.length} paciente${list.length > 1 ? "s" : ""}` : ""));
+    head.append(name, el("div", "t", list.length ? money(total) : ""));
+    row.append(head);
 
     if (list.length) {
-      const chips = document.createElement("div"); chips.className = "chips";
+      const chips = el("div", "chips");
       for (const e of list) {
-        const c = document.createElement("button"); c.className = "chip"; c.title = "Quitar esta consulta";
-        c.setAttribute("aria-label", `Quitar consulta de ${money(e.monto)} del ${day}`);
-        c.innerHTML = `<span></span><span class="x" aria-hidden="true">×</span>`;
-        c.firstChild.textContent = money(e.monto);
-        c.addEventListener("click", () => removeEntry(e));
+        const parts = chipParts(e);
+        const c = el("button", "chip" + (editing && editing.id === e.id ? " open" : ""));
+        c.setAttribute("aria-label", `Editar paciente: ${parts.tipo} ${parts.procs} ${money(e.monto)}`);
+        c.setAttribute("aria-expanded", editing && editing.id === e.id ? "true" : "false");
+        c.append(el("span", null, parts.tipo));
+        if (parts.procs) c.append(el("span", "pr", parts.procs));
+        c.append(el("span", "m", money(e.monto)));
+        c.addEventListener("click", () => openEditor(e));
         chips.append(c);
       }
       row.append(chips);
+      const open = editing && list.find(e => e.id === editing.id);
+      if (open) row.append(editorView(open));
     }
     if (!future) {
-      const q = document.createElement("div"); q.className = "quick";
-      for (const a of settings.quick) {
-        const b = document.createElement("button"); b.className = "q"; b.textContent = "+" + a;
-        b.setAttribute("aria-label", `Agregar consulta de ${money(a)} el ${day}`);
-        b.addEventListener("click", () => addEntries([{ fecha: day, monto: a }]));
+      const q = el("div", "quick");
+      for (const t of TYPES) {
+        const b = el("button", "q", "+ " + t.short);
+        b.append(el("span", null, money(price(t.k))));
+        b.setAttribute("aria-label", `Agregar ${t.name} el ${day}`);
+        b.addEventListener("click", () => addPatient(day, t.k));
         q.append(b);
       }
-      const inp = document.createElement("input"); inp.type = "number"; inp.min = "0"; inp.step = "any"; inp.placeholder = "otro $";
-      inp.id = "otro-" + day; inp.setAttribute("aria-label", `Otro monto para el ${day}`);
-      inp.addEventListener("keydown", ev => { if (ev.key === "Enter" && Number(inp.value) > 0) { addEntries([{ fecha: day, monto: Number(inp.value) }]); inp.value = ""; } });
-      q.append(inp);
       row.append(q);
     }
     return row;
   }
 
-  // ---- acciones ----
-  async function addEntries(list) {
-    const now = Date.now();
-    const rows = list.map((e, i) => ({ fecha: e.fecha, monto: e.monto, creado: now + i }));
-    try {
-      const res = await store.add(rows);
-      if (res) { entries = res; render(); }
-      if (rows.length === 1) toast(`Agregado ${money(rows[0].monto)} · ${fmtShort(parseIso(rows[0].fecha))}`);
-    } catch (e) { toast("No se pudo guardar. Revisa tu conexión e inténtalo otra vez."); }
+  function openEditor(e) {
+    if (editing && editing.id === e.id) { editing = null; render(); return; }
+    editing = { id: e.id, draft: { tipo: e.tipo, procs: { ...e.procs }, extra: e.extra || 0 } };
+    render();
   }
-  async function removeEntry(e) {
+
+  function editorView(e) {
+    const draft = editing.draft;
+    const box = el("div", "editor");
+    const seg = el("div", "seg"); seg.setAttribute("role", "group"); seg.setAttribute("aria-label", "Tipo de consulta");
+    for (const t of TYPES) {
+      const b = el("button", null, `${t.short} ${money(price(t.k))}`);
+      b.setAttribute("aria-pressed", draft.tipo === t.k ? "true" : "false");
+      b.addEventListener("click", () => { draft.tipo = t.k; render(); });
+      seg.append(b);
+    }
+    box.append(seg);
+
+    if (draft.tipo !== "online") {
+      const grid = el("div", "procs");
+      for (const pr of ALL_PROCS) {
+        const n = draft.procs[pr.k] || 0;
+        if (pr.legacy && !n) continue;
+        const item = el("div", "proc" + (n ? " on" : ""));
+        const label = el("div", "n", pr.name); label.append(el("small", null, `${money(price(pr.k))} ${pr.per}`));
+        const st = el("div", "stepper");
+        const minus = el("button", null, "−"); minus.setAttribute("aria-label", `Quitar ${pr.name}`);
+        const out = el("output", null, String(n));
+        const plus = el("button", null, "+"); plus.setAttribute("aria-label", `Agregar ${pr.name}`);
+        minus.addEventListener("click", () => { draft.procs[pr.k] = Math.max(0, n - 1); render(); });
+        plus.addEventListener("click", () => { draft.procs[pr.k] = n + 1; render(); });
+        st.append(minus, out, plus);
+        item.append(label, st);
+        grid.append(item);
+      }
+      box.append(grid);
+    }
+
+    const ex = el("label", "extra", "Ajuste $");
+    const exIn = el("input"); exIn.type = "number"; exIn.step = "any"; exIn.id = "extra-" + e.id; exIn.value = draft.extra || "";
+    exIn.placeholder = "0";
+    exIn.addEventListener("input", () => { draft.extra = Number(exIn.value) || 0; sum.textContent = money(computeMonto(draft)); });
+    ex.append(exIn);
+    box.append(ex);
+
+    const foot = el("div", "ed-foot");
+    const sum = el("span", "sum", money(computeMonto(draft)));
+    const acts = el("div", "actions");
+    const del = el("button", "btn danger", "Quitar paciente");
+    const close = el("button", "btn", "Cerrar");
+    const save = el("button", "btn primary", "Guardar");
+    del.addEventListener("click", () => removePatient(e));
+    close.addEventListener("click", () => { editing = null; render(); });
+    save.addEventListener("click", () => savePatient(e));
+    acts.append(del, close, save);
+    foot.append(sum, acts);
+    box.append(foot);
+    return box;
+  }
+
+  function bodyFor(fecha, d, creado) {
+    const procs = {};
+    if (d.tipo !== "online") for (const pr of ALL_PROCS) if (d.procs[pr.k] > 0) procs[pr.k] = d.procs[pr.k];
+    const precios = { [d.tipo]: price(d.tipo) };
+    for (const k in procs) precios[k] = price(k);
+    return { fecha, tipo: d.tipo, procs, extra: Number(d.extra) || 0, monto: computeMonto({ ...d, procs }), precios, creado };
+  }
+
+  // ---- acciones ----
+  async function addPatient(day, tipo) {
+    const body = bodyFor(day, { tipo, procs: {}, extra: 0 }, Date.now());
     try {
-      const res = await store.remove(e.id);
-      if (res) { entries = res; render(); }
-      toast(`Quitado ${money(e.monto)} · ${fmtShort(parseIso(e.fecha))}`, () => addEntries([{ fecha: e.fecha, monto: e.monto }]));
+      const [id] = await store.add([body]);
+      if (tipo === "visita") editing = { id, draft: { tipo, procs: {}, extra: 0 } };
+      refreshLocal(); render();
+      toast(tipo === "visita" ? `Visita agregada · marca los procedimientos si hubo` : `Online agregada · ${money(body.monto)}`);
+    } catch { toast("No se pudo guardar. Revisa tu conexión e inténtalo otra vez."); }
+  }
+  async function savePatient(e) {
+    const body = bodyFor(e.fecha, editing.draft, e.creado || Date.now());
+    try { await store.update(e.id, body); editing = null; refreshLocal(); render(); toast(`Guardado · ${money(body.monto)}`); }
+    catch { toast("No se pudo guardar el cambio. Inténtalo otra vez."); }
+  }
+  async function removePatient(e) {
+    const { id, ...body } = e;
+    try {
+      await store.remove(id); editing = null; refreshLocal(); render();
+      toast(`Paciente quitado · ${money(e.monto)}`, async () => { await store.add([body]); refreshLocal(); });
     } catch { toast("No se pudo quitar. Inténtalo otra vez."); }
   }
 
-  $("prev").addEventListener("click", () => { viewStart = shiftPeriod(viewStart, -1); render(); });
-  $("next").addEventListener("click", () => { viewStart = shiftPeriod(viewStart, 1); render(); });
+  $("prev").addEventListener("click", () => { viewStart = shiftPeriod(viewStart, -1); editing = null; render(); });
+  $("next").addEventListener("click", () => { viewStart = shiftPeriod(viewStart, 1); editing = null; render(); });
 
   $("copy").addEventListener("click", () => {
     const p = periodOf(viewStart), data = periodData(p);
     const lines = [`Doctors Now · ${periodName(p, settings.startDay)} (${fmtShort(p.s)} – ${fmtShort(p.e)})`,
-      `Total: ${money(data.total)} · ${data.list.length} pacientes · ${data.days} días`];
-    Object.keys(data.byAmt).map(Number).sort((a, b) => a - b).forEach(a => lines.push(`  ${data.byAmt[a]} × ${money(a)} = ${money(a * data.byAmt[a])}`));
+      `Total: ${money(data.total)} · ${data.list.length} pacientes · ${data.days} días`, ""];
+    for (const t of TYPES) if (data.types[t.k]) lines.push(`${t.name}: ${data.types[t.k].n} = ${money(data.types[t.k].v)}`);
+    for (const pr of ALL_PROCS) if (data.procs[pr.k]) lines.push(`${pr.name}: ${data.procs[pr.k].n} = ${money(data.procs[pr.k].v)}`);
+    if (data.extras) lines.push(`Ajustes sueltos: ${money(data.extras)}`);
     lines.push("");
     Object.keys(data.byDay).sort().forEach(day => {
       const l = data.byDay[day]; const d = parseIso(day);
-      lines.push(`${d.getDate()}/${d.getMonth() + 1}: ${l.map(e => e.monto).join(" + ")} = ${money(l.reduce((a, e) => a + Number(e.monto), 0))}`);
+      const items = l.map(e => { const c = chipParts(e); return `${c.tipo}${c.procs ? " + " + c.procs : ""} ${money(e.monto)}`; });
+      lines.push(`${d.getDate()}/${d.getMonth() + 1} (${money(l.reduce((a, e) => a + e.monto, 0))}): ${items.join("; ")}`);
     });
     const text = lines.join("\n");
     navigator.clipboard.writeText(text).then(() => toast("Resumen copiado"), () => {
@@ -363,34 +542,57 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   $("importText").addEventListener("input", () => {
     parsed = parseNotes($("importText").value);
     $("importPreview").textContent = parsed.length
-      ? `${parsed.length} consultas encontradas · total ${money(parsed.reduce((a, e) => a + e.monto, 0))}`
+      ? `${parsed.length} pacientes encontrados · total ${money(parsed.reduce((a, e) => a + e.monto, 0))}`
       : "Sin líneas reconocidas.";
     $("importDo").disabled = !parsed.length;
     $("importDo").textContent = parsed.length ? `Importar ${parsed.length}` : "Importar";
   });
   $("importDo").addEventListener("click", async () => {
     const n = parsed.length; $("importDo").disabled = true;
-    await addEntries(parsed);
-    toast(`${n} consultas importadas`); $("importText").value = ""; parsed = [];
+    const now = Date.now();
+    const rows = parsed.map((e, i) => {
+      const inf = inferFromAmount(e.monto);
+      const b = bodyFor(e.fecha, inf, now + i);
+      b.monto = e.monto; // lo escrito a mano manda
+      return b;
+    });
+    try { await store.add(rows); refreshLocal(); toast(`${n} pacientes importados`); }
+    catch { toast("No se pudieron importar todas las líneas. Revisa la lista del día."); }
+    $("importText").value = ""; parsed = [];
     $("importPreview").textContent = "Sin líneas reconocidas."; $("importDo").textContent = "Importar";
   });
   $("toggleImport").addEventListener("click", () => { $("importPanel").hidden = !$("importPanel").hidden; });
+
+  // ---- precios y ciclo ----
+  function fillSettingsForm() {
+    const box = $("priceFields"); box.replaceChildren();
+    for (const item of [...TYPES, ...PROCS]) {
+      const f = el("div", "field");
+      const lab = el("label", null, item.name); lab.htmlFor = "price-" + item.k;
+      const inp = el("input"); inp.type = "number"; inp.min = "0"; inp.step = "any"; inp.id = "price-" + item.k; inp.value = price(item.k);
+      f.append(lab, inp); box.append(f);
+    }
+    $("startDay").value = settings.startDay;
+  }
   $("toggleSettings").addEventListener("click", () => {
-    $("settingsPanel").hidden = !$("settingsPanel").hidden;
-    $("startDay").value = settings.startDay; $("quickAmts").value = settings.quick.join(", ");
+    const panel = $("settingsPanel"); panel.hidden = !panel.hidden; if (!panel.hidden) fillSettingsForm();
   });
   $("saveSettings").addEventListener("click", async () => {
+    const prices = { ...settings.prices };
+    for (const item of [...TYPES, ...PROCS]) { const v = Number($("price-" + item.k).value); if (v >= 0) prices[item.k] = v; }
     const sd = Math.min(28, Math.max(1, parseInt($("startDay").value, 10) || DEFAULTS.startDay));
-    const q = $("quickAmts").value.split(/[,\s]+/).map(Number).filter(n => n > 0);
-    const next = { startDay: sd, quick: q.length ? q : DEFAULTS.quick };
+    const next = { startDay: sd, prices };
     applySettings(next);
-    try { await store.saveSettings(next); toast("Ajustes guardados"); } catch { toast("No se pudieron guardar los ajustes."); }
+    try { await store.saveSettings(next); toast("Precios y ciclo guardados"); } catch { toast("No se pudieron guardar los ajustes."); }
     $("settingsPanel").hidden = true;
   });
 
   function applySettings(s) {
     const prevSd = settings.startDay;
-    settings = { startDay: Number(s && s.startDay) || DEFAULTS.startDay, quick: (s && Array.isArray(s.quick) && s.quick.length) ? s.quick.map(Number) : DEFAULTS.quick };
+    settings = {
+      startDay: Number(s && s.startDay) || DEFAULTS.startDay,
+      prices: { ...DEFAULT_PRICES, ...((s && s.prices) || {}) },
+    };
     if (!viewStart || prevSd !== settings.startDay) viewStart = periodStart(todayIso, settings.startDay);
     render();
   }

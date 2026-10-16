@@ -128,7 +128,7 @@ tenant_settings(sync_mode, local_cache_policy, backup_target)
   sincronización ya usa siempre la versión 2.
 - ~~Un cliente de API común con el token y la renovación de sesión; arreglar compras; cookie
   `Partitioned` para que la sesión sobreviva dentro del iframe de Justice.~~ Hecho
-  (Medical#18). La IA todavía no usa ese cliente y recibe 401.
+  (Medical#18). La IA lo usa desde Medical#51 y ya no recibe 401.
 - Los respaldos se guardan en el disco temporal de Railway y no incluyen las tablas
   clínicas. Sustituidos (Medical#25) por respaldos completos cifrados a S3, **pendientes de
   activar**. Los logs tampoco usan ya esa ruta (Medical#26, #29).

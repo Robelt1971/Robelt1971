@@ -90,10 +90,13 @@ Teléfonos: 4 teléfonos de guardia (médico, enfermero, psicólogo y psiquiatra
 rotación semanal. El resto del personal usa su propio celular y recibe una asignación de teléfono
 (telefoontoelage).
 
+Equipos para el expediente electrónico: 4 Microsoft Surface (laptop y tablet en uno) con MiFi
+para el médico, el enfermero, el psicólogo y la psiquiatra de guardia; pasan de mano con la rotación.
+
 ## 6. Quién paga qué
 
 - **Servicio Central:** salarios (con turnos y guardias), educación continua, material básico
-  (tests psicológicos, estetoscopios, otoscopios, termómetros, oxímetros), los 3 autos centrales, los 4 teléfonos de guardia, la telefoontoelage, la unidad de administración,
+  (tests psicológicos, estetoscopios, otoscopios, termómetros, oxímetros), los 3 autos centrales, los 4 teléfonos de guardia, las 4 Microsoft Surface con MiFi, la telefoontoelage, la unidad de administración,
   la subcontratación de dentistas, fisioterapeutas, optometristas y otros, y el expediente
   electrónico (reparto del costo por confirmar).
 - **Cada institución:** oficinas e insumos de oficina, aparatos (ECG, DEA, electrocauterio, camillas,

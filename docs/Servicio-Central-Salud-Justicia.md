@@ -105,6 +105,8 @@ para el médico, el enfermero, el psicólogo y la psiquiatra de guardia; pasan d
 ## 6b. Medicamentos de KPA y Guarda Nos Costa (decisión del Ministro)
 
 KIA sigue pagando sus propios medicamentos. La decisión es solo para KPA y GNC.
+El presupuesto central (opción B) cubre solo medicamentos. Las referencias al hospital (HOH), a IMSAN,
+a especialistas, dentistas y otros profesionales médicos siguen a cargo de cada institución.
 Las farmacias de Botica di Servicio paralizaron las cuentas de KPA y GNC por irregularidades en los
 pagos, y GNC no tiene presupuesto para medicamentos. Opciones: A) partida propia en cada institución;
 B) presupuesto en el Servicio Central, cuya administración garantiza el pago a tiempo a la farmacia

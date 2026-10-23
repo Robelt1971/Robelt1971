@@ -102,6 +102,14 @@ para el médico, el enfermero, el psicólogo y la psiquiatra de guardia; pasan d
 - **Cada institución:** oficinas e insumos de oficina, aparatos (ECG, DEA, electrocauterio, camillas,
   neveras), medicamentos y atención de terceros, autos de KPA y bonos de gasolina semanales.
 
+## 6b. Medicamentos de KPA y Guarda Nos Costa (decisión del Ministro)
+
+Las farmacias de Botica di Servicio paralizaron las cuentas de KPA y GNC por irregularidades en los
+pagos, y GNC no tiene presupuesto para medicamentos. Opciones: A) partida propia en cada institución;
+B) presupuesto en el Servicio Central, cuya administración garantiza el pago a tiempo a la farmacia
+(**propuesta**); C) fondo del Ministerio administrado por el Servicio Central. En cualquier opción:
+saldar las cuentas paralizadas y fijar plazos de pago con la farmacia. Es la decisión 7.
+
 ## 7. Unidad de administración
 
 El Servicio Central maneja su propio presupuesto y compra sus propios equipos médicos, así que

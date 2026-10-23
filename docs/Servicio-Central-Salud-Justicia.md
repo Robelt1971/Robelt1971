@@ -11,7 +11,7 @@
 El Departamento de Justicia Familiar pasa a ser el techo, con un nombre nuevo. Debajo:
 
 - Departamento Médico Central (el jefe del departamento médico dirige toda la estructura médica).
-- Slachtofferhulp.
+- Slachtofferhulp (equipo existente, pasa bajo el techo tal como está).
 - Otros profesionales de Justicia Familiar (por definir).
 - Comisión de casos de la comunidad: analiza los casos problemáticos y les da una ruta individual.
 
@@ -50,10 +50,11 @@ Wayaca a pedido), Guarda Nos Costa y otras instituciones de Justicia que lo amer
 | Psicólogos, externos | 0 | 2 | 2 | KPA, GNC y otras |
 | Terapeuta en adicciones | 0 | 1 | 1 | Central; KIA 3 días por semana; sin guardias |
 | Ortopedagogo | 0 | 1 | 1 | TBS, o unidad forense de KIA si no hay TBS; sin guardias |
-| Unidad de administración | – | por definir | por definir | Oficina central: presupuesto, compras, RR. HH. |
-| **Total personal de salud** | **9** | **29** | **20** | |
+| Administración | 0 | 2 | 2 | Oficina central: presupuesto y finanzas; compras, RR. HH. y contratos |
+| Slachtofferhulp, equipo existente | [n] | [n] | – | Pasa bajo el techo tal como está |
+| **Total** | **9 + [n]** | **31 + [n]** | **22** | |
 
-No incluye al personal de Slachtofferhulp ni a los demás profesionales de Justicia Familiar.
+[n] = personal actual de Slachtofferhulp (cifra pendiente). No incluye a los demás profesionales de Justicia Familiar.
 
 ## 4. Distribución diaria (propuesta)
 
@@ -101,13 +102,20 @@ rotación semanal. El resto del personal usa su propio celular y recibe una asig
 ## 7. Unidad de administración
 
 El Servicio Central maneja su propio presupuesto y compra sus propios equipos médicos, así que
-necesita una unidad de administración: presupuesto y finanzas (salarios, turnos, guardias, informes
+necesita una unidad de administración de 2 personas: presupuesto y finanzas (salarios, turnos, guardias, informes
 al Ministerio), compras y equipos (equipos y tests propios, inventario, renovación cada 3 años,
 teléfonos, autos y gasolina), personal (RR. HH., nómina, roles, certificaciones) y contratos (MoU con
-cada institución, proveedores subcontratados, facturas). Tamaño por definir con Finanzas y RR. HH.
+cada institución, proveedores subcontratados, facturas). Perfiles por confirmar con Finanzas y RR. HH.
 del Ministerio.
 
-## 8. Expediente médico electrónico
+## 8. Personas de contacto
+
+Cada institución (KIA, KPA, GNC y las que se sumen) designa una persona de contacto y un suplente,
+para llamar cuando un proceso no fluye: acceso, transporte, equipos, medicamentos o bonos. Se reúnen
+cada mes con el Jefe del Departamento Médico. El Servicio Central también designa el suyo (el Jefe,
+con un suplente). Nombres y teléfonos van en cada MoU y los mantiene al día la administración.
+
+## 8b. Expediente médico electrónico
 
 La plataforma no está decidida; la elige el Ministerio. La presentación solo explica por qué importa:
 un expediente que sigue a la persona por toda la cadena (arresto, detención, atención, salida),
@@ -127,5 +135,7 @@ respaldos y ubicación de los datos fijada por el Ministerio.
 7. Quién paga a los proveedores subcontratados y el expediente electrónico.
 8. Qué otras instituciones de Justicia entran primero.
 9. Reglamento de la comisión: frecuencia, criterios de entrada y confidencialidad.
-10. Tamaño y perfiles de la unidad de administración, y monto de la telefoontoelage.
-11. Revisión del texto en papiamento y neerlandés por un hablante nativo.
+10. Perfiles de las 2 personas de administración, y monto de la telefoontoelage.
+11. Número de personas del equipo existente de Slachtofferhulp.
+12. Suplente del Jefe del Departamento Médico como contacto del Servicio Central.
+13. Revisión del texto en papiamento y neerlandés por un hablante nativo.

@@ -51,10 +51,10 @@ Wayaca a pedido), Guarda Nos Costa y otras instituciones de Justicia que lo amer
 | Terapeuta en adicciones | 0 | 1 | 1 | Central; KIA 3 días por semana; sin guardias |
 | Ortopedagogo | 0 | 1 | 1 | TBS, o unidad forense de KIA si no hay TBS; sin guardias |
 | Administración | 0 | 2 | 2 | Oficina central: presupuesto y finanzas; compras, RR. HH. y contratos |
-| Slachtofferhulp, equipo existente | [n] | [n] | – | Pasa bajo el techo tal como está |
-| **Total** | **9 + [n]** | **31 + [n]** | **22** | |
+| Slachtofferhulp, equipo existente | existente | existente | – | Personal del Gobierno que ya existe; sin presupuesto nuevo |
+| **Total** | **9** | **31** | **22** | |
 
-[n] = personal actual de Slachtofferhulp (cifra pendiente). No incluye a los demás profesionales de Justicia Familiar.
+No incluye a los demás profesionales de Justicia Familiar.
 
 ## 4. Distribución diaria (propuesta)
 
@@ -150,6 +150,5 @@ respaldos y ubicación de los datos fijada por el Ministerio.
 8. Qué otras instituciones de Justicia entran primero.
 9. Reglamento de la comisión: frecuencia, criterios de entrada y confidencialidad.
 10. Perfiles de las 2 personas de administración, y monto de la telefoontoelage.
-11. Número de personas del equipo existente de Slachtofferhulp.
 12. Suplente del Jefe del Departamento Médico como contacto del Servicio Central.
 13. Revisión del texto en papiamento y neerlandés por un hablante nativo.
